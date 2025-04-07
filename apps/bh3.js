@@ -1,0 +1,118 @@
+import api from "../model/api.js"
+import cfg from "../model/config.js"
+import { getRedisKeys } from "../model/util.js"
+import plugin from "../../../lib/plugins/plugin.js"
+
+let bh3Reg = `(崩坏三|崩坏3|崩三|崩3|bbb|三崩子)`
+
+export class bh3Push extends plugin {
+  constructor() {
+    super({
+      name: '崩坏3版本监控',
+      dsc: '崩坏3版本更新及预下载推送',
+      event: 'message',
+      priority: 7000,
+      rule: [
+        {
+          reg: `^#*${bh3Reg}?版本监控$`,
+          fnc: 'bh3Check',
+          permission: 'master'
+        },
+        {
+          reg: `^#*(开启|关闭)${bh3Reg}版本推送$`,
+          fnc: 'bh3PushSet',
+          permission: 'master'
+        },
+        {
+          reg: `^#*${bh3Reg}当前版本$`,
+          fnc: 'bh3Ver'
+        },
+        {
+          reg: `^#*获取${bh3Reg}下载链接$`,
+          fnc: 'bh3DownloadLinks'
+        },
+        {
+          reg: `^#*获取${bh3Reg}预下载链接$`,
+          fnc: 'bh3PreDownloadLinks'
+        }
+      ]
+    })
+
+    this.task = {
+      cron: '0/1 * * * * *',
+      name: '崩坏3版本监控',
+      fnc: () => api.autoCheck('bh3'),
+      log: false
+    }
+  }
+
+  async bh3Check() {
+    await api.checkVersion(false, 'bh3')
+    return this.reply('✅ 已执行手动检查', true)
+  }
+  
+  async bh3PushSet() {
+    const e = this.e
+    const groupId = String(e.group_id)
+    if (!e.isGroup) {
+        return this.reply('❌ 该功能仅限群聊中使用', true)
+    }
+
+    const isEnable = e.msg.includes('开启')
+    
+    cfg.updateGameConfig('bh3', (config) => {
+        config.pushGroups = config.pushGroups || []
+        if (isEnable) {
+            if (!config.pushGroups.includes(groupId)) {
+                config.pushGroups.push(groupId)
+            }
+        } else {
+            config.pushGroups = config.pushGroups.filter(id => id !== groupId)
+        }
+        config.enable = isEnable
+    })
+
+    const action = isEnable ? `已添加本群到推送列表（ID：${groupId}）` : '已移除本群推送'
+    return this.reply(`✅ 已${isEnable ? '开启' : '关闭'}崩坏3版本推送，${action}`, true)
+}
+
+  async bh3Ver() {
+    const { main, pre } = getRedisKeys('bh3')
+    const [mainVer, preVer] = await Promise.all([
+      redis.get(main),
+      redis.get(pre)
+    ])
+    
+    const msg = [
+      '📌 崩坏3当前版本信息',
+      `正式版本：${mainVer || '未知'}`,
+      `预下载版本：${preVer || '未开启'}`
+    ].join('\n')
+    
+    return this.reply(msg, true)
+  }
+
+  async bh3DownloadLinks() {
+    try {
+      const { data } = await api.getDownloadData('bh3')
+      if (!data) return this.reply('当前没有可用的正式版本下载', true)
+      
+      const msg = api.formatDownloadInfo('bh3', data)
+      return this.reply(await Bot.makeForwardArray([msg]));
+    } catch (err) {
+      return this.reply(`❌ 获取失败：${err.message}`, true)
+    }
+  }
+
+  async bh3PreDownloadLinks() {
+    try {
+      const { data } = await api.getDownloadData('bh3', 'pre')
+      if (!data) return this.reply('🚫 崩坏3当前未开放预下载', true)
+      
+      const msg = api.formatDownloadInfo('bh3',data, 'pre')
+      return this.reply(await Bot.makeForwardArray([msg]))
+    } catch (err) {
+      return this.reply(`❌ 预下载获取失败：${err.message}`, true)
+    }
+  }
+}

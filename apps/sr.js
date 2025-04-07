@@ -1,0 +1,118 @@
+import api from "../model/api.js"
+import cfg from "../model/config.js"
+import { getRedisKeys } from "../model/util.js"
+import plugin from "../../../lib/plugins/plugin.js"
+
+let srReg = `(sr|SR|星铁|星穹铁道|铁道|崩坏星穹铁道)`
+
+export class srPush extends plugin {
+  constructor() {
+    super({
+      name: '星铁版本监控',
+      dsc: '星铁版本更新及预下载推送',
+      event: 'message',
+      priority: 7000,
+      rule: [
+        {
+          reg: `^#*${srReg}?版本监控$`,
+          fnc: 'srCheck',
+          permission: 'master'
+        },
+        {
+          reg: `^#*(开启|关闭)${srReg}版本推送$`,
+          fnc: 'srPushSet',
+          permission: 'master'
+        },
+        {
+          reg: `^#*${srReg}当前版本$`,
+          fnc: 'srVer'
+        },
+        {
+          reg: `^#*获取${srReg}下载链接$`,
+          fnc: 'srDownloadLinks'
+        },
+        {
+          reg: `^#*获取${srReg}预下载链接$`,
+          fnc: 'srPreDownloadLinks'
+        }
+      ]
+    })
+
+    this.task = {
+      cron: '0/1 * * * * *',
+      name: '星铁版本监控',
+      fnc: () => api.autoCheck('sr'),
+      log: false
+    }
+  }
+
+  async srCheck() {
+    await api.checkVersion(false, 'sr')
+    return this.reply('✅ 已执行手动检查', true)
+  }
+  
+  async srPushSet() {
+    const e = this.e
+    const groupId = String(e.group_id)
+    if (!e.isGroup) {
+        return this.reply('❌ 该功能仅限群聊中使用', true)
+    }
+
+    const isEnable = e.msg.includes('开启')
+    
+    cfg.updateGameConfig('sr', (config) => {
+        config.pushGroups = config.pushGroups || []
+        if (isEnable) {
+            if (!config.pushGroups.includes(groupId)) {
+                config.pushGroups.push(groupId)
+            }
+        } else {
+            config.pushGroups = config.pushGroups.filter(id => id !== groupId)
+        }
+        config.enable = isEnable
+    })
+
+    const action = isEnable ? `已添加本群到推送列表（ID：${groupId}）` : '已移除本群推送'
+    return this.reply(`✅ 已${isEnable ? '开启' : '关闭'}星铁版本推送，${action}`, true)
+}
+
+  async srVer() {
+    const { main, pre } = getRedisKeys('sr')
+    const [mainVer, preVer] = await Promise.all([
+      redis.get(main),
+      redis.get(pre)
+    ])
+    
+    const msg = [
+      '📌 星铁当前版本信息',
+      `正式版本：${mainVer || '未知'}`,
+      `预下载版本：${preVer || '未开启'}`
+    ].join('\n')
+    
+    return this.reply(msg, true)
+  }
+
+  async srDownloadLinks() {
+    try {
+      const { data } = await api.getDownloadData('sr')
+      if (!data) return this.reply('当前没有可用的正式版本下载', true)
+      
+      const msg = api.formatDownloadInfo('sr', data)
+      return this.reply(await Bot.makeForwardArray([msg]));
+    } catch (err) {
+      return this.reply(`❌ 获取失败：${err.message}`, true)
+    }
+  }
+
+  async srPreDownloadLinks() {
+    try {
+      const { data } = await api.getDownloadData('sr', 'pre')
+      if (!data) return this.reply('🚫 星铁当前未开放预下载', true)
+      
+      const msg = api.formatDownloadInfo('sr', data, 'pre')
+      return this.reply(await Bot.makeForwardArray([msg]))
+    } catch (err) {
+      return this.reply(`❌ 预下载获取失败：${err.message}`, true)
+    }
+  }
+}
