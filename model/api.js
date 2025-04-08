@@ -33,7 +33,7 @@ class apitools {
 
       const data = await res.json()
       const gameData = data?.data?.game_packages?.[0]
-      if (!gameData) throw new Error('游戏数据解析失败')
+      if (!gameData) throw new Error(`${getGameName(game)}游戏数据解析失败`)
 
       await this.processMainVersion(game, gameData.main?.major?.version)
       await this.processPreDownload(game, gameData.pre_download?.major)
@@ -106,22 +106,22 @@ class apitools {
     const gameName = getGameName(game)
     const templates = {
       main: [
-        `🎉 ${gameName}游戏版本更新通知`,
-        `🔄 版本变更：${oldVersion} → ${newVersion}`,
-        '⚠️ 服务器进入维护状态',
-        '⏰ 请及时更新客户端',
-        `发送【#获取${gameName}下载链接】获取下载链接`
+        `✨ ${gameName}游戏版本更新通知`,
+        `🚀 版本变更：${oldVersion} → ${newVersion}`,
+        '🌌 服务器进入维护状态',
+        '⏳ 请及时更新客户端',
+        `💾 发送【#获取${gameName}下载链接】获取下载链接`
       ],
       pre: [
-        `🔔 ${gameName}预下载资源已开放`,
+        `🎁 ${gameName}预下载资源已开放`,
         oldVersion ? `🔄 版本更新：${oldVersion} → ${newVersion}` : `📦 新版本：${newVersion}`,
-        '⏳ 请提前下载游戏资源',
-        `发送【#获取${gameName}预下载链接】获取预下载链接`
+        '📥 请提前下载游戏资源',
+        `🚪 发送【#获取${gameName}预下载链接】获取预下载链接`
       ],
       'pre-remove': [
-        `📴 ${gameName}预下载资源已关闭`,
-        `旧版本：${oldVersion}`,
-        `ℹ️ 正式版本${newVersion}即将上线`
+        `🌙 ${gameName}预下载资源已关闭`,
+        `📅 旧版本：${oldVersion}`,
+        `🔒 正式版本${newVersion}即将上线`
       ]
     }
 
@@ -164,51 +164,53 @@ class apitools {
   }
 
   formatDownloadInfo(game, pkgData, type, patchData) {
-    if (!pkgData) return '暂无可用下载资源'
+    if (!pkgData) return '🌫️ 暂无可用下载资源'
     
     const gameName = getGameName(game)
     const isPre = type === 'pre'
     
     let msg = [
-      `📥 ${gameName}${isPre ? '预下载' : '正式'}版本（${pkgData.version}）`,
-      '🔧 客户端分卷包：'
+      `🎮 ${gameName}${isPre ? '预下载' : '正式'}版本（${pkgData.version}）`,
+      '📦 客户端分卷包：'
     ]
 
-    // 统一处理分卷包
+    msg.push('\n▂▂▂▂▂▂▂▂▂▂▂▂\n📦 客户端分卷包')
     pkgData.game_pkgs.forEach((pkg, i) => {
       msg.push(
-        `${i+1}. ${pkg.url}`,
-        `大小：${this.formatSize(pkg.size)}`,
-        `MD5：${pkg.md5.toUpperCase()}\n`
+        `${i+1}. 🗃️ 链接：${pkg.url}`,
+        `⚖️ 大小：${this.formatSize(pkg.size)}`,
+        `🔍 MD5：${pkg.md5}\n`
       )
     })
 
     // 统一处理语音包
-    msg.push('\n🎧 语音资源包：')
+    msg.push('\n▂▂▂▂▂▂▂▂▂▂▂▂\n🎧 语言资源包')
     pkgData.audio_pkgs.forEach(audio => {
       msg.push(
-        `🌐 ${audio.language.toUpperCase()}：`,
-        `链接：${audio.url}`,
-        `MD5：${audio.md5}\n`
+        `🌍 语言类型：${audio.language.toUpperCase()}`,
+        `🗃️ 链接：${audio.url}`,
+        `⚖️ 大小：${this.formatSize(audio.size)}`,
+        `🔍 MD5：${audio.md5}\n`
       )
     })
 
-    msg.push('\n🎧 差分资源包：')
+    msg.push('\n▂▂▂▂▂▂▂▂▂▂▂▂\n🔄 增量更新')
     patchData.game_pkgs.forEach((pkg, i) => {
       msg.push(
-        `${i+1}. ${pkg.url}`,
-        `大小：${this.formatSize(pkg.size)}`,
-        `MD5：${pkg.md5.toUpperCase()}\n`
+        `${i+1}. 🧩 链接：${pkg.url}`,
+        `⚖️ ${this.formatSize(pkg.size)}`,
+        `🧪 ${pkg.md5}\n`
       )
     })
-
-    // 统一处理语音包
-    msg.push('\n🎧 差分语音资源包：')
+  
+    // 差分语音模块
+    msg.push('\n▂▂▂▂▂▂▂▂▂▂▂▂\n🎶 增量语音')
     patchData.audio_pkgs.forEach(audio => {
       msg.push(
-        `🌐 ${audio.language.toUpperCase()}：`,
-        `链接：${audio.url}`,
-        `MD5：${audio.md5}\n`
+        `🌍 语言类型：${audio.language.toUpperCase()}`, 
+        `🧩 链接：${audio.url}`,
+        `⚖️ 大小：${this.formatSize(audio.size)}`,
+        `🔍 MD5：${audio.md5}\n`
       )
     })
 
