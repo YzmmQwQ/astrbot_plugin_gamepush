@@ -94,10 +94,10 @@ export class ysPush extends plugin {
 
   async ysDownloadLinks() {
     try {
-      const { data } = await api.getDownloadData('ys')
+      const { data, patch } = await api.getDownloadData('ys', 'main')
       if (!data) return this.reply('当前没有可用的正式版本下载', true)
       
-      const msg = api.formatDownloadInfo('ys', data)
+      const msg = api.formatDownloadInfo('ys', data, 'main', patch)
       return this.reply(await Bot.makeForwardArray([msg]));
     } catch (err) {
       return this.reply(`❌ 获取失败：${err.message}`, true)
@@ -106,10 +106,10 @@ export class ysPush extends plugin {
 
   async ysPreDownloadLinks() {
     try {
-      const { data } = await api.getDownloadData('ys', 'pre')
+      const { data, patch } = await api.getDownloadData('ys', 'pre')
       if (!data) return this.reply('🚫 原神当前未开放预下载', true)
       
-      const msg = api.formatDownloadInfo('ys', data, 'pre')
+      const msg = api.formatDownloadInfo('ys', data, 'pre', patch)
       return this.reply(await Bot.makeForwardArray([msg]))
     } catch (err) {
       return this.reply(`❌ 预下载获取失败：${err.message}`, true)

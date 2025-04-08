@@ -94,10 +94,10 @@ export class srPush extends plugin {
 
   async srDownloadLinks() {
     try {
-      const { data } = await api.getDownloadData('sr')
+      const { data, patch } = await api.getDownloadData('sr', 'main')
       if (!data) return this.reply('当前没有可用的正式版本下载', true)
       
-      const msg = api.formatDownloadInfo('sr', data)
+      const msg = api.formatDownloadInfo('sr', data, 'main', patch)
       return this.reply(await Bot.makeForwardArray([msg]));
     } catch (err) {
       return this.reply(`❌ 获取失败：${err.message}`, true)
@@ -106,10 +106,10 @@ export class srPush extends plugin {
 
   async srPreDownloadLinks() {
     try {
-      const { data } = await api.getDownloadData('sr', 'pre')
+      const { data, patch } = await api.getDownloadData('sr', 'pre')
       if (!data) return this.reply('🚫 星铁当前未开放预下载', true)
       
-      const msg = api.formatDownloadInfo('sr', data, 'pre')
+      const msg = api.formatDownloadInfo('sr', data, 'pre', patch)
       return this.reply(await Bot.makeForwardArray([msg]))
     } catch (err) {
       return this.reply(`❌ 预下载获取失败：${err.message}`, true)

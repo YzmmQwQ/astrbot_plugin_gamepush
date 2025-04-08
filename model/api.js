@@ -152,16 +152,19 @@ class apitools {
     if (type === 'pre') {
       return {
         data: packageData.pre_download?.major,
+        patch: packageData.pre_download?.patches[0],
         type: 'pre'
       }
-    }
-    return {
-      data: packageData.main?.major,
-      type: 'main'
+    } else if (type === 'main') {
+      return {
+        data: packageData.main?.major,
+        patch: packageData.main?.patches[0],
+        type: 'main'
+      }
     }
   }
 
-  formatDownloadInfo(game, pkgData, type) {
+  formatDownloadInfo(game, pkgData, type, patchData) {
     if (!pkgData) return '暂无可用下载资源'
     
     const gameName = getGameName(game)
@@ -184,6 +187,25 @@ class apitools {
     // 统一处理语音包
     msg.push('\n🎧 语音资源包：')
     pkgData.audio_pkgs.forEach(audio => {
+      msg.push(
+        `🌐 ${audio.language.toUpperCase()}：`,
+        `链接：${audio.url}`,
+        `MD5：${audio.md5}\n`
+      )
+    })
+
+    msg.push('\n🎧 差分资源包：')
+    patchData.game_pkgs.forEach((pkg, i) => {
+      msg.push(
+        `${i+1}. ${pkg.url}`,
+        `大小：${this.formatSize(pkg.size)}`,
+        `MD5：${pkg.md5.toUpperCase()}\n`
+      )
+    })
+
+    // 统一处理语音包
+    msg.push('\n🎧 差分语音资源包：')
+    patchData.audio_pkgs.forEach(audio => {
       msg.push(
         `🌐 ${audio.language.toUpperCase()}：`,
         `链接：${audio.url}`,

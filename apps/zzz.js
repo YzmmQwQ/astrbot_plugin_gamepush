@@ -94,7 +94,7 @@ export class zzzPush extends plugin {
 
   async zzzDownloadLinks() {
     try {
-      const { data } = await api.getDownloadData('zzz')
+      const { data, patch } = await api.getDownloadData('zzz', 'main')
       if (!data) return this.reply('当前没有可用的正式版本下载', true)
       
       const msg = api.formatDownloadInfo('zzz', data)
@@ -106,10 +106,10 @@ export class zzzPush extends plugin {
 
   async zzzPreDownloadLinks() {
     try {
-      const { data } = await api.getDownloadData('zzz', 'pre')
+      const { data, patch } = await api.getDownloadData('zzz', 'pre')
       if (!data) return this.reply('🚫 绝区零当前未开放预下载', true)
       
-      const msg = api.formatDownloadInfo('zzz', data, 'pre')
+      const msg = api.formatDownloadInfo('zzz', data, 'pre', patch)
       return this.reply(await Bot.makeForwardArray([msg]))
     } catch (err) {
       return this.reply(`❌ 预下载获取失败：${err.message}`, true)
