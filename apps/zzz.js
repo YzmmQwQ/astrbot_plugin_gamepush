@@ -97,7 +97,7 @@ export class zzzPush extends plugin {
       const { data, patch } = await api.getDownloadData('zzz', 'main')
       if (!data) return this.reply('当前没有可用的正式版本下载', true)
       
-      const msg = api.formatDownloadInfo('zzz', data)
+      const msg = api.formatDownloadInfo('zzz', data, 'main', patch)
       return this.reply(await Bot.makeForwardArray([msg]));
     } catch (err) {
       return this.reply(`❌ 获取失败：${err.message}`, true)
