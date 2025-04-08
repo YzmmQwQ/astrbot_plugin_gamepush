@@ -198,8 +198,8 @@ class apitools {
     patchData.game_pkgs.forEach((pkg, i) => {
       msg.push(
         `${i+1}. 🧩 链接：${pkg.url}`,
-        `⚖️ ${this.formatSize(pkg.size)}`,
-        `🧪 ${pkg.md5}\n`
+        `⚖️ 大小：${this.formatSize(pkg.size)}`,
+        `🧪 MD5: ${pkg.md5}\n`
       )
     })
   
