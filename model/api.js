@@ -138,7 +138,6 @@ class apitools {
     gameConfig.pushGroups.forEach(groupId => {
       Bot.pickGroup(groupId).sendMsg(msg)
     })
-    console.log('[推送成功]', msg)
   }
 
   async getDownloadData(game, type = 'main') {

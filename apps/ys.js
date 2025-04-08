@@ -39,7 +39,7 @@ export class ysPush extends plugin {
     })
 
     this.task = {
-      cron: '0/1 * * * * *',
+      cron: '0 0/10 * * * *',
       name: '原神版本监控',
       fnc: () => api.autoCheck('ys'),
       log: false

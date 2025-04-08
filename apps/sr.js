@@ -39,7 +39,7 @@ export class srPush extends plugin {
     })
 
     this.task = {
-      cron: '0/1 * * * * *',
+      cron: '0 0/10 * * * *',
       name: '星铁版本监控',
       fnc: () => api.autoCheck('sr'),
       log: false
