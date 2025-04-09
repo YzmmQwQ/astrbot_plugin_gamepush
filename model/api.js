@@ -120,7 +120,6 @@ class apitools {
       ],
       'pre-remove': [
         `🌙 ${gameName}预下载资源已关闭`,
-        `📅 旧版本：${oldVersion}`,
         `🔒 正式版本${newVersion}即将上线`
       ]
     }
