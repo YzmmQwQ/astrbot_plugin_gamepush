@@ -3,7 +3,7 @@ import YAML from 'yaml'
 import path from 'node:path'
 import { GAME_CONFIG } from './util.js'
 
-const CONFIG_PATH = './data/GamePush-Plugin/versionPush.yaml'
+const CONFIG_PATH = './data/GamePush-Plugin.yaml'
 
 class Config {
     constructor() {
@@ -33,7 +33,7 @@ class Config {
         const content = fs.readFileSync(CONFIG_PATH, 'utf8')
         return YAML.parse(content) || {}
       } catch (err) {
-        console.error('配置加载失败，使用默认值', err)
+        logger.error('[GamePush-Plugin] 配置加载失败，使用默认值', err)
         return this.generateDefaultConfig()
       }
     }

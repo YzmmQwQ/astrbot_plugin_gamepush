@@ -19,22 +19,22 @@ class apitools {
     try {
       // 参数校验
       if (!game || !GAME_CONFIG[game]) {
-        throw new Error(`无效的游戏标识: ${game}`)
+        throw new Error(`[GamePush-Plugin] 无效的游戏标识: ${game}`)
       }
 
       const apiUrl = game === 'sr' ? getGameAPI(game) : getGameCheckAPI(game)
-      logger.debug(`[${getGameName(game)}] 请求API: ${apiUrl}`)
+      logger.debug(`[GamePush-Plugin][${getGameName(game)}] 请求API: ${apiUrl}`)
 
       const res = await fetch(apiUrl)
       if (!res.ok) {
         const body = await res.text()
-        throw new Error(`API请求失败：HTTP ${res.status} - ${body.slice(0, 100)}`)
+        throw new Error(`[GamePush-Plugin] API请求失败：HTTP ${res.status} - ${body.slice(0, 100)}`)
       }
 
       const data = await res.json()
       const gameData = data?.data?.game_packages?.[0]
       const gameCheckData = data?.data?.game_branches?.[0]
-      if (!gameData && !gameCheckData) throw new Error(`${getGameName(game)}游戏数据解析失败`)
+      if (!gameData && !gameCheckData) throw new Error(`[GamePush-Plugin] ${getGameName(game)}游戏数据解析失败`)
 
       if(game === 'sr') {
         await this.processMainVersion(game, gameData.main?.major?.version)
@@ -45,8 +45,8 @@ class apitools {
       }
 
     } catch (err) {
-      logger.error(`[${getGameName(game)}版本监控] 错误`, err)
-      if (!auto) this.reply(`❌ 检查失败：${err.message}`)
+      logger.error(`[GamePush-Plugin][${getGameName(game)}版本监控] 错误`, err)
+      if (!auto) this.reply(`[GamePush-Plugin] ❌ 检查失败：${err.message}`)
     }
   }
 
@@ -116,13 +116,13 @@ class apitools {
         `🚀 版本变更：${oldVersion} → ${newVersion}`,
         '🌌 服务器进入维护状态',
         '⏳ 请及时更新客户端',
-        `💾 发送【#获取${gameName}下载链接】获取下载链接`
+        ...(game !== 'ys' ? [`💾 发送【#获取${gameName}下载链接】获取下载链接`] : [])
       ],
       pre: [
         `🎁 ${gameName}预下载资源已开放`,
         oldVersion ? `🔄 版本更新：${oldVersion} → ${newVersion}` : `📦 新版本：${newVersion}`,
         '📥 请提前下载游戏资源',
-        ...(game !== 'gs' ? [`🚪 发送【#获取${gameName}预下载链接】获取预下载链接`] : [])
+        ...(game !== 'ys' ? [`🚪 发送【#获取${gameName}预下载链接】获取预下载链接`] : [])
       ],
       'pre-remove': [
         `🌙 ${gameName}预下载资源已关闭`,
@@ -136,7 +136,7 @@ class apitools {
 
   sendToGroups(msg, game, gameConfig) {
     if (!gameConfig?.pushGroups?.length) {
-      logger.warn(`[${getGameName(game)}] 未配置推送群组`)
+      logger.debug(`[GamePush-Plugin][${getGameName(game)}] 未配置推送群组`)
       return
     }
 

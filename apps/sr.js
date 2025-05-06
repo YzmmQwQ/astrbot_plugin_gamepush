@@ -14,7 +14,7 @@ export class srPush extends plugin {
       priority: 7000,
       rule: [
         {
-          reg: `^#*${srReg}?版本监控$`,
+          reg: `^#*${srReg}版本监控$`,
           fnc: 'srCheck',
           permission: 'master'
         },
@@ -57,7 +57,7 @@ export class srPush extends plugin {
     if (!e.isGroup) {
         return this.reply('❌ 该功能仅限群聊中使用', true)
     }
-
+t6
     const isEnable = e.msg.includes('开启')
     
     cfg.updateGameConfig('sr', (config) => {

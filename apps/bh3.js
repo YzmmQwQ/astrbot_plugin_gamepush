@@ -14,7 +14,7 @@ export class bh3Push extends plugin {
       priority: 7000,
       rule: [
         {
-          reg: `^#*${bh3Reg}?版本监控$`,
+          reg: `^#*${bh3Reg}版本监控$`,
           fnc: 'bh3Check',
           permission: 'master'
         },

@@ -14,7 +14,7 @@ export class zzzPush extends plugin {
       priority: 7000,
       rule: [
         {
-          reg: `^#*${zzzReg}?版本监控$`,
+          reg: `^#*${zzzReg}版本监控$`,
           fnc: 'zzzCheck',
           permission: 'master'
         },

@@ -14,7 +14,7 @@ export class ysPush extends plugin {
       priority: 7000,
       rule: [
         {
-          reg: `^#*${ysReg}?版本监控$`,
+          reg: `^#*${ysReg}版本监控$`,
           fnc: 'ysCheck',
           permission: 'master'
         },

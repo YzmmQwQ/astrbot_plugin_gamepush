@@ -31,12 +31,12 @@ export const GAME_CONFIG = {
 }
 
 export const getGameAPI = (game) => {
-  if (!GAME_CONFIG[game]) throw new Error(`无效的游戏标识: ${game}`)
+  if (!GAME_CONFIG[game]) throw new Error(`[GamePush-Plugin] 无效的游戏标识: ${game}`)
   return `${API_BASE}?launcher_id=${LAUNCHER_ID}&game_ids[]=${GAME_CONFIG[game].id}`
 }
 
 export const getGameCheckAPI = (game) => {
-  if (!GAME_CONFIG[game]) throw new Error(`无效的游戏标识: ${game}`)
+  if (!GAME_CONFIG[game]) throw new Error(`[GamePush-Plugin] 无效的游戏标识: ${game}`)
   return `${Check_API}?launcher_id=${LAUNCHER_ID}&game_ids[]=${GAME_CONFIG[game].id}`
 }
 
