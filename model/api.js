@@ -2,8 +2,10 @@
 import fetch from 'node-fetch'
 import cfg from "./config.js"
 import { getGameCheckAPI, getGameAPI, getGameName, getRedisKeys, GAME_CONFIG } from "./util.js"
+import base from './base.js'
+import puppeteer from '../../../lib/puppeteer/puppeteer.js'
 
-class apitools {
+class apitools extends base {
   async autoCheck(game = '') {
     try {
       const gameConfig = cfg.getGameConfig(game)
@@ -105,7 +107,7 @@ class apitools {
     return false
   }
 
-  pushNotify({ type, game, newVersion, oldVersion }) {
+  async pushNotify({ type, game, newVersion, oldVersion }) {
     const config =  cfg.getGameConfig(game)
     let msg = []
     
@@ -130,8 +132,31 @@ class apitools {
       ]
     }
 
-    msg = templates[type].join('\n')
-    this.sendToGroups(msg, game, config)
+    const messages = templates[type]
+
+    try {
+      // 生成截图数据
+      const data = {
+        ...this.getScreenData(game), // 从base.js获取基础数据
+        messages,
+        gameName: this.getGameName(game),
+        date: new Date().toLocaleDateString(),
+        type,
+        newVersion,
+        oldVersion
+      }
+  
+      // 直接调用puppeteer截图
+      const img = await puppeteer.screenshot('GamePush-Plugin/notice', data)
+      
+      // 发送图片消息
+      this.sendToGroups(img, game, config)
+    } catch (err) {
+      logger.error(`[${this.getGameName(game)}截图失败]`, err)
+      // 降级为文本消息
+      const textMsg = messages.join('\n')
+      this.sendToGroups(textMsg, game, config)
+    }
   }
 
   sendToGroups(msg, game, gameConfig) {
