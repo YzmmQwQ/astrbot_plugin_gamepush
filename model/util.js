@@ -7,8 +7,8 @@ export const GAME_CONFIG = {
   ys: {
     id: '1Z8W5NHUQb',
     name: '原神',
-    redisKey: 'yz:MHY:YS',
-    preKey: 'yz:MHY:YS:PRE'
+    redisKey: 'YZ:MHY:YS',
+    preKey: 'YZ:MHY:YS:PRE'
   },
   sr: {
     id: '64kMb5iAWu',
