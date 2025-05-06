@@ -30,10 +30,6 @@ export class ysPush extends plugin {
         {
           reg: `^#*获取${ysReg}下载链接$`,
           fnc: 'ysDownloadLinks'
-        },
-        {
-          reg: `^#*获取${ysReg}预下载链接$`,
-          fnc: 'ysPreDownloadLinks'
         }
       ]
     })
@@ -101,18 +97,6 @@ export class ysPush extends plugin {
       return this.reply(await Bot.makeForwardArray([msg]));
     } catch (err) {
       return this.reply(`❌ 获取失败：${err.message}`, true)
-    }
-  }
-
-  async ysPreDownloadLinks() {
-    try {
-      const { data, patch } = await api.getDownloadData('ys', 'pre')
-      if (!data) return this.reply('🚫 原神当前未开放预下载', true)
-      
-      const msg = api.formatDownloadInfo('ys', data, 'pre', patch)
-      return this.reply(await Bot.makeForwardArray([msg]))
-    } catch (err) {
-      return this.reply(`❌ 预下载获取失败：${err.message}`, true)
     }
   }
 }

@@ -1,7 +1,7 @@
 // model/api.js
 import fetch from 'node-fetch'
 import cfg from "./config.js"
-import { getGameAPI, getGameName, getRedisKeys, GAME_CONFIG } from "./util.js"
+import { getGameCheckAPI, getGameAPI, getGameName, getRedisKeys, GAME_CONFIG } from "./util.js"
 
 class apitools {
   async autoCheck(game = '') {
@@ -22,7 +22,7 @@ class apitools {
         throw new Error(`无效的游戏标识: ${game}`)
       }
 
-      const apiUrl = getGameAPI(game)
+      const apiUrl = game === 'sr' ? getGameAPI(game) : getGameCheckAPI(game)
       logger.debug(`[${getGameName(game)}] 请求API: ${apiUrl}`)
 
       const res = await fetch(apiUrl)
@@ -33,10 +33,16 @@ class apitools {
 
       const data = await res.json()
       const gameData = data?.data?.game_packages?.[0]
-      if (!gameData) throw new Error(`${getGameName(game)}游戏数据解析失败`)
+      const gameCheckData = data?.data?.game_branches?.[0]
+      if (!gameData && !gameCheckData) throw new Error(`${getGameName(game)}游戏数据解析失败`)
 
-      await this.processMainVersion(game, gameData.main?.major?.version)
-      await this.processPreDownload(game, gameData.pre_download?.major)
+      if(game === 'sr') {
+        await this.processMainVersion(game, gameData.main?.major?.version)
+        await this.processPreDownload(game, gameData.pre_download?.major)
+      } else {
+        await this.processMainVersion(game, gameCheckData.main?.tag)
+        await this.processPreDownload(game, gameCheckData.pre_download)
+      }
 
     } catch (err) {
       logger.error(`[${getGameName(game)}版本监控] 错误`, err)
@@ -63,7 +69,7 @@ class apitools {
 
   async processPreDownload(game, preData) {
     const { pre: preKey } = getRedisKeys(game)
-    const currentPre = preData?.version
+    const currentPre = game === 'sr' ? preData?.version : preData?.tag
     const storedPre = await redis.get(preKey)
 
     if (currentPre) {

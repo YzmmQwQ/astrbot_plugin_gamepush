@@ -1,5 +1,6 @@
 // model/util.js
 export const API_BASE = 'https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGamePackages'
+export const Check_API = 'https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGameBranches'
 export const LAUNCHER_ID = 'jGHBHlcOq1'
 
 export const GAME_CONFIG = {
@@ -32,6 +33,11 @@ export const GAME_CONFIG = {
 export const getGameAPI = (game) => {
   if (!GAME_CONFIG[game]) throw new Error(`无效的游戏标识: ${game}`)
   return `${API_BASE}?launcher_id=${LAUNCHER_ID}&game_ids[]=${GAME_CONFIG[game].id}`
+}
+
+export const getGameCheckAPI = (game) => {
+  if (!GAME_CONFIG[game]) throw new Error(`无效的游戏标识: ${game}`)
+  return `${Check_API}?launcher_id=${LAUNCHER_ID}&game_ids[]=${GAME_CONFIG[game].id}`
 }
 
 export const getGameName = (game) => GAME_CONFIG[game]?.name || '未知游戏'
