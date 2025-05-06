@@ -122,7 +122,7 @@ class apitools {
         `🎁 ${gameName}预下载资源已开放`,
         oldVersion ? `🔄 版本更新：${oldVersion} → ${newVersion}` : `📦 新版本：${newVersion}`,
         '📥 请提前下载游戏资源',
-        `🚪 发送【#获取${gameName}预下载链接】获取预下载链接`
+        ...(game !== 'gs' ? [`🚪 发送【#获取${gameName}预下载链接】获取预下载链接`] : [])
       ],
       'pre-remove': [
         `🌙 ${gameName}预下载资源已关闭`,
