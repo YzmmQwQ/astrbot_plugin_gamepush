@@ -58,6 +58,21 @@ class Config {
         updater(config)
         this.saveConfig(config)
     }
+
+    
+    getDefaultPushGroups() {
+      const config = this.loadConfig();
+      const groups = new Set();
+      
+      // 收集所有游戏的推送群组
+      Object.values(config).forEach(gameConfig => {
+        if (gameConfig?.pushGroups) {
+          gameConfig.pushGroups.forEach(group => groups.add(group));
+        }
+      });
+      
+      return Array.from(groups);
+    }
 }
 
 const cfg = new Config()

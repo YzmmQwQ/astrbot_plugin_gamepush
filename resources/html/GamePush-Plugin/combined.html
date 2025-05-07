@@ -1,4 +1,4 @@
-<!-- plugins/GamePush-Plugin/resources/html/GamePush-Plugin/GamePush-Plugin.html -->
+<!-- combined.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -24,7 +24,7 @@
 
     .container {
       max-width: 600px;
-      margin: 0 auto;
+      margin: 20px auto;
       background: var(--card-bg);
       border-radius: 12px;
       padding: 24px;
@@ -42,7 +42,6 @@
       height: 50px;
       margin-right: 15px;
       border-radius: 8px;
-      content: url("{{icon}}"); /* 使用URL格式路径 */
     }
 
     .title {
@@ -63,12 +62,6 @@
       text-indent: -1em;
     }
 
-    .version {
-      color: #666;
-      font-size: 14px;
-      margin: 8px 0;
-    }
-
     .footer {
       margin-top: 20px;
       color: #888;
@@ -78,21 +71,22 @@
   </style>
 </head>
 <body>
+  {{ each games }}
   <div class="container">
     <div class="header">
-      <img class="game-icon" src="{{icon}}">
-      <h1 class="title">{{gameName}}更新通知</h1>
+      <img class="game-icon" src="{{ $value.icon }}">
+      <h1 class="title">{{ $value.gameName }}更新通知</h1>
     </div>
-    
     <div class="message-list">
-    {{ each messages }}
-      <div class="message-item">{{$value}}</div>
+      {{ each $value.messages }}
+      <div class="message-item">{{ $value }}</div>
       {{ /each }}
     </div>
-
-    <div class="footer">
-      Created by {{yunzaiName}} & GamePush-Plugin • {{date}}
-    </div>
+  </div>
+  {{ /each }}
+  
+  <div class="footer">
+    Created by {{ yunzaiName }} & GamePush-Plugin • {{ date }}
   </div>
 </body>
 </html>
