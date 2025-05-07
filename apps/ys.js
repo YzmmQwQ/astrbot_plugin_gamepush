@@ -26,10 +26,6 @@ export class ysPush extends plugin {
         {
           reg: `^#*${ysReg}当前版本$`,
           fnc: 'ysVer'
-        },
-        {
-          reg: `^#*获取${ysReg}下载链接$`,
-          fnc: 'ysDownloadLinks'
         }
       ]
     })
@@ -86,17 +82,5 @@ export class ysPush extends plugin {
     ].join('\n')
     
     return this.reply(msg, true)
-  }
-
-  async ysDownloadLinks() {
-    try {
-      const { data, patch } = await api.getDownloadData('ys', 'main')
-      if (!data) return this.reply('当前没有可用的正式版本下载', true)
-      
-      const msg = api.formatDownloadInfo('ys', data, 'main', patch)
-      return this.reply(await Bot.makeForwardArray([msg]));
-    } catch (err) {
-      return this.reply(`❌ 获取失败：${err.message}`, true)
-    }
   }
 }
