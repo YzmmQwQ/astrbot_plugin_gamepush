@@ -124,12 +124,10 @@ class apitools extends base {
     this.delayTimer = setTimeout(async () => {
       if (this.dailyCache.length > 1) {
         await this.sendCombinedNotice()
-      } else if (this.dailyCache.length === 1) {
-        await this.sendSingleNotice(this.dailyCache[0])
-      }
+      } 
       this.dailyCache = []
-    }, 300000)
-
+    }, 360000)
+    
     const messages = this.generateMessages(type, game, newVersion, oldVersion)
     try {
       const data = {
@@ -141,7 +139,7 @@ class apitools extends base {
       const img = await puppeteer.screenshot('GamePush-Plugin/notice', data)
       this.sendToGroups(img, game, gameConfig)
     } catch (err) {
-      logger.error(`[推送失败] ${game}`, err)
+      logger.error(`[GamePush-Plugin][推送失败] ${game}`, err)
       this.sendToGroups(messages.join('\n'), game, gameConfig)
     }
   }
@@ -188,21 +186,7 @@ class apitools extends base {
         Bot.pickGroup(groupId).sendMsg(img)
       })
     } catch (err) {
-      logger.error('[合并推送失败]', err)
-    }
-  }
-
-  async sendSingleNotice(data) {
-    try {
-      const img = await puppeteer.screenshot('GamePush-Plugin/notice', {
-        ...this.getScreenData(data.game),
-        messages: this.generateMessages(data.type, data.game, data.newVersion, data.oldVersion),
-        gameName: data.gameName,
-        date: new Date().toLocaleDateString()
-      })
-      this.sendToGroups(img, data.game, cfg.getGameConfig(data.game))
-    } catch (err) {
-      logger.error(`[单条推送失败] ${data.game}`, err)
+      logger.error('[GamePush-Plugin][合并推送失败]', err)
     }
   }
 
