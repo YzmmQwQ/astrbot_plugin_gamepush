@@ -12,7 +12,7 @@ class apitools extends base {
         await this.checkVersion(true, game)
       }
     } catch (err) {
-      logger.error(`[${getGameName(game)}自动检查] 失败`, err)
+      logger.error(`[GamePush-Plugin][${getGameName(game)}自动检查] 失败`, err)
     }
   }
 
