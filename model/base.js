@@ -28,11 +28,11 @@ export default class base {
     return this.getScreenData(game)
   }
 
-  getScreenData(game, isCombined = false) {
+  getScreenData(game) {
     const basic = {
       saveId: `push_${game}_${Date.now()}`,
       cwd: this._path,
-      tplFile: path.join(this._path, `plugins/GamePush-Plugin/resources/html/GamePush-Plugin/${isCombined ? 'combined' : 'GamePush-Plugin'}.html`),
+      tplFile: path.join(this._path, `plugins/GamePush-Plugin/resources/html/GamePush-Plugin/GamePush-Plugin.html`),
       fontsPath: path.join(this._path, 'plugins/GamePush-Plugin/resources/fonts/'),
       pluResPath: path.join(this._path, 'plugins/GamePush-Plugin/resources/'),
       htmlSavePath: path.join(this._path, 'tmp', 'html', 'GamePush-Plugin'),

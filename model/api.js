@@ -110,42 +110,10 @@ class apitools extends base {
     return false
   }
 
-  async pushNotify(notifyData) {
-    const { type, game, newVersion, oldVersion } = notifyData
-    const gameConfig = cfg.getGameConfig(game)
+  async pushNotify({ type, game, newVersion, oldVersion }) {
+    const config =  cfg.getGameConfig(game)
     
-    this.dailyCache.push({
-      ...notifyData,
-      icon: this.getScreenData(game).icon,
-      gameName: this.getGameName(game)
-    })
-
-    clearTimeout(this.delayTimer)
-    this.delayTimer = setTimeout(async () => {
-      if (this.dailyCache.length > 1) {
-        await this.sendCombinedNotice()
-      } 
-      this.dailyCache = []
-    }, 360000)
-    
-    const messages = this.generateMessages(type, game, newVersion, oldVersion)
-    try {
-      const data = {
-        ...this.getScreenData(game),
-        messages,
-        gameName: this.getGameName(game),
-        date: new Date().toLocaleDateString()
-      }
-      const img = await puppeteer.screenshot('GamePush-Plugin/notice', data)
-      this.sendToGroups(img, game, gameConfig)
-    } catch (err) {
-      logger.error(`[GamePush-Plugin][推送失败] ${game}`, err)
-      this.sendToGroups(messages.join('\n'), game, gameConfig)
-    }
-  }
-
-  generateMessages(type, game, newVersion, oldVersion) {
-    const gameName = this.getGameName(game)
+    const gameName = getGameName(game)
     const templates = {
       main: [
         `✨ ${gameName}游戏版本更新通知`,
@@ -165,28 +133,27 @@ class apitools extends base {
         `🔒 正式版本${oldVersion}即将上线`
       ]
     }
-    return templates[type] || []
-  }
 
-  async sendCombinedNotice() {
-    const gamesData = this.dailyCache.map(item => ({
-      ...item,
-      messages: this.generateMessages(item.type, item.game, item.newVersion, item.oldVersion)
-    }));
-    const combinedData = {
-      ...this.getScreenData('', true),
-      games: gamesData,
-      date: new Date().toLocaleDateString()
-    };
+    const messages = templates[type]
 
     try {
-      const img = await puppeteer.screenshot('GamePush-Plugin/combined', combinedData)
-      const defaultGroups = cfg.getDefaultPushGroups()
-      defaultGroups.forEach(groupId => {
-        Bot.pickGroup(groupId).sendMsg(img)
-      })
+      const data = {
+        ...this.getScreenData(game),
+        messages,
+        gameName: this.getGameName(game),
+        date: new Date().toLocaleDateString(),
+        type,
+        newVersion,
+        oldVersion
+      }
+  
+      const img = await puppeteer.screenshot('GamePush-Plugin/notice', data)
+      
+      this.sendToGroups(img, game, config)
     } catch (err) {
-      logger.error('[GamePush-Plugin][合并推送失败]', err)
+      logger.error(`[GamePush-Plugin][${this.getGameName(game)}截图失败]`, err)
+      const textMsg = messages.join('\n')
+      this.sendToGroups(textMsg, game, config)
     }
   }
 
