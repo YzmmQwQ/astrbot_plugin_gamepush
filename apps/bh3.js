@@ -39,7 +39,7 @@ export class bh3Push extends plugin {
     })
 
     this.task = {
-      cron: '0 0/10 * * * *',
+      cron: '0 0/5 * * * *',
       name: '崩坏3版本监控',
       fnc: () => api.autoCheck('bh3'),
       log: false

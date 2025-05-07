@@ -14,7 +14,6 @@ export default class base {
     return `Yz:GamePush-Plugin:${this.model}:`
   }
 
-  // 原有方法保持不变，添加辅助方法
   getGameName(game) {
     const gameNames = {
       sr: '星穹铁道',
@@ -25,7 +24,6 @@ export default class base {
     return gameNames[game] || '未知游戏'
   }
 
-  // 原有方法保持不变
   screenData(game) {
     return this.getScreenData(game)
   }
@@ -37,9 +35,9 @@ export default class base {
       tplFile: path.join(this._path, 'plugins/GamePush-Plugin/resources/html/GamePush-Plugin/GamePush-Plugin.html'),
       fontsPath: path.join(this._path, 'plugins/GamePush-Plugin/resources/fonts/'),
       pluResPath: path.join(this._path, 'plugins/GamePush-Plugin/resources/'),
-      htmlSavePath: path.join(this._path, 'tmp', 'html', 'GamePush-Plugin'), // 新增存储路径[5](@ref)
-      htmlFileName: `${game}_${Date.now()}.html`,// 生成唯一文件名[2](@ref)
-      yunzaiName: cfg.package.name === 'miao-yunzai' ? 'Miao-Yunzai' : _.capitalize(cfg.package.name)
+      htmlSavePath: path.join(this._path, 'tmp', 'html', 'GamePush-Plugin'),
+      htmlFileName: `${game}_${Date.now()}.html`,
+      yunzaiName: cfg.package.name === 'miao-yunzai' ? 'Miao-Yunzai' : 'trss-yunzai'? 'TRSS-Yunzai' : _.capitalize(cfg.package.name)
     }
 
     const icons = {

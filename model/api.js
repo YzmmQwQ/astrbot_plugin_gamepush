@@ -1,4 +1,3 @@
-// model/api.js
 import fetch from 'node-fetch'
 import cfg from "./config.js"
 import { getGameCheckAPI, getGameAPI, getGameName, getRedisKeys, GAME_CONFIG } from "./util.js"
@@ -19,7 +18,6 @@ class apitools extends base {
 
   async checkVersion(auto = false, game = '') {
     try {
-      // 参数校验
       if (!game || !GAME_CONFIG[game]) {
         throw new Error(`[GamePush-Plugin] 无效的游戏标识: ${game}`)
       }
@@ -135,9 +133,8 @@ class apitools extends base {
     const messages = templates[type]
 
     try {
-      // 生成截图数据
       const data = {
-        ...this.getScreenData(game), // 从base.js获取基础数据
+        ...this.getScreenData(game),
         messages,
         gameName: this.getGameName(game),
         date: new Date().toLocaleDateString(),
@@ -146,14 +143,11 @@ class apitools extends base {
         oldVersion
       }
   
-      // 直接调用puppeteer截图
       const img = await puppeteer.screenshot('GamePush-Plugin/notice', data)
       
-      // 发送图片消息
       this.sendToGroups(img, game, config)
     } catch (err) {
-      logger.error(`[${this.getGameName(game)}截图失败]`, err)
-      // 降级为文本消息
+      logger.error(`[GamePush-Plugin][${this.getGameName(game)}截图失败]`, err)
       const textMsg = messages.join('\n')
       this.sendToGroups(textMsg, game, config)
     }
@@ -165,9 +159,9 @@ class apitools extends base {
       return
     }
 
-    gameConfig.pushGroups.forEach(groupId => {
-      Bot.pickGroup(groupId).sendMsg(msg)
-    })
+    for(const groupId of gameConfig.pushGroups) {
+        Bot.pickGroup(groupId).sendMsg(msg)
+    }
   }
 
   async getDownloadData(game, type = 'main') {
