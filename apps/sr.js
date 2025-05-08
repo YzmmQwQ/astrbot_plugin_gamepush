@@ -19,7 +19,7 @@ export class srPush extends plugin {
           permission: 'master'
         },
         {
-          reg: `^#*(开启|关闭)${srReg}版本推送$`,
+          reg: `^#*${srReg}(开启|关闭)版本推送$`,
           fnc: 'srPushSet',
           permission: 'master'
         },
@@ -28,11 +28,11 @@ export class srPush extends plugin {
           fnc: 'srVer'
         },
         {
-          reg: `^#*获取${srReg}下载链接$`,
+          reg: `^#*${srReg}获取下载链接$`,
           fnc: 'srDownloadLinks'
         },
         {
-          reg: `^#*获取${srReg}预下载链接$`,
+          reg: `^#*${srReg}获取预下载链接$`,
           fnc: 'srPreDownloadLinks'
         }
       ]
@@ -40,14 +40,14 @@ export class srPush extends plugin {
 
     this.task = {
       cron: '0 0/5 * * * *',
-      name: '星铁版本监控',
+      name: '[GamePush-Plugin] 星铁版本监控',
       fnc: () => api.autoCheck('sr'),
       log: false
     }
   }
 
   async srCheck() {
-    await api.checkVersion(false, 'sr')
+    await api.checkVersion(true, 'sr')
     return this.reply('✅ 已执行手动检查', true)
   }
   

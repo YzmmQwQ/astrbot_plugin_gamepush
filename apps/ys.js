@@ -19,7 +19,7 @@ export class ysPush extends plugin {
           permission: 'master'
         },
         {
-          reg: `^#*(开启|关闭)${ysReg}版本推送$`,
+          reg: `^#*${ysReg}(开启|关闭)版本推送$`,
           fnc: 'ysPushSet',
           permission: 'master'
         },
@@ -32,14 +32,14 @@ export class ysPush extends plugin {
 
     this.task = {
       cron: '0 0/5 * * * *',
-      name: '原神版本监控',
+      name: '[GamePush-Plugin] 原神版本监控',
       fnc: () => api.autoCheck('ys'),
       log: false
     }
   }
 
   async ysCheck() {
-    await api.checkVersion(false, 'ys')
+    await api.checkVersion(true, 'ys')
     return this.reply('✅ 已执行手动检查', true)
   }
   

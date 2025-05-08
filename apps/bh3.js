@@ -19,7 +19,7 @@ export class bh3Push extends plugin {
           permission: 'master'
         },
         {
-          reg: `^#*(开启|关闭)${bh3Reg}版本推送$`,
+          reg: `^#*${bh3Reg}(开启|关闭)版本推送$`,
           fnc: 'bh3PushSet',
           permission: 'master'
         },
@@ -28,11 +28,11 @@ export class bh3Push extends plugin {
           fnc: 'bh3Ver'
         },
         {
-          reg: `^#*获取${bh3Reg}下载链接$`,
+          reg: `^#*${bh3Reg}获取下载链接$`,
           fnc: 'bh3DownloadLinks'
         },
         {
-          reg: `^#*获取${bh3Reg}预下载链接$`,
+          reg: `^#*${bh3Reg}获取预下载链接$`,
           fnc: 'bh3PreDownloadLinks'
         }
       ]
@@ -40,14 +40,14 @@ export class bh3Push extends plugin {
 
     this.task = {
       cron: '0 0/5 * * * *',
-      name: '崩坏3版本监控',
+      name: '[GamePush-Plugin] 崩坏3版本监控',
       fnc: () => api.autoCheck('bh3'),
       log: false
     }
   }
 
   async bh3Check() {
-    await api.checkVersion(false, 'bh3')
+    await api.checkVersion(true, 'bh3')
     return this.reply('✅ 已执行手动检查', true)
   }
   

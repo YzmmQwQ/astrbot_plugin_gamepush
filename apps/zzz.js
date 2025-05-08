@@ -19,7 +19,7 @@ export class zzzPush extends plugin {
           permission: 'master'
         },
         {
-          reg: `^#*(开启|关闭)${zzzReg}版本推送$`,
+          reg: `^#*${zzzReg}(开启|关闭)版本推送$`,
           fnc: 'zzzPushSet',
           permission: 'master'
         },
@@ -28,11 +28,11 @@ export class zzzPush extends plugin {
           fnc: 'zzzVer'
         },
         {
-          reg: `^#*获取${zzzReg}下载链接$`,
+          reg: `^#*${zzzReg}获取下载链接$`,
           fnc: 'zzzDownloadLinks'
         },
         {
-          reg: `^#*获取${zzzReg}预下载链接$`,
+          reg: `^#*${zzzReg}获取预下载链接$`,
           fnc: 'zzzPreDownloadLinks'
         }
       ]
@@ -40,14 +40,14 @@ export class zzzPush extends plugin {
 
     this.task = {
       cron: '0 0/5 * * * *',
-      name: '绝区零版本监控',
+      name: '[GamePush-Plugin] 绝区零版本监控',
       fnc: () => api.autoCheck('zzz'),
       log: false
     }
   }
 
   async zzzCheck() {
-    await api.checkVersion(false, 'zzz')
+    await api.checkVersion(true, 'zzz')
     return this.reply('✅ 已执行手动检查', true)
   }
   
