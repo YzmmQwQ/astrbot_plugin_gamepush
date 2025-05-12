@@ -1,5 +1,9 @@
-export const API_BASE = 'https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGamePackages'
-export const Check_API = 'https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGameBranches'
+# 测试环境
+用于米哈游接口格式而做的请求api，请修改util.js为下面的代码
+
+``` shell
+export const API_BASE = 'https://127.0.0.1:2777/getGamePackages'
+export const Check_API = 'https://127.0.0.1:2777/getGameBranches'
 export const LAUNCHER_ID = 'jGHBHlcOq1'
 
 export const GAME_CONFIG = {
@@ -20,7 +24,7 @@ export const GAME_CONFIG = {
     name: '绝区零',
     redisKey: 'YZ:MHY:ZZZ',
     preKey: 'YZ:MHY:ZZZ:PRE',
-    url: 'https://prod-gf-cn.juequling.com/query_gateway'
+    url: 'https://127.0.0.1:2777/query_gateway'
   },
   bh3: {
     id: 'osvnlOc0S8',
@@ -53,3 +57,4 @@ export const getRedisKeys = (game) => {
     pre: config?.preKey
   }
 }
+```
