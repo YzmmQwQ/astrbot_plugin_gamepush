@@ -12,7 +12,7 @@ export const GAME_CONFIG = {
     name: '原神',
     redisKey: 'YZ:MHY:YS',
     preKey: 'YZ:MHY:YS:PRE',
-    url: 'https://cngfdispatch.yuanshen.com/query_cur_region',
+    url: 'http://127.0.0.1:2777/query_cur_region',
     query: 'lang=2&binary=1&time=9&account_type=1&dispatchSeed=5e448e13cbca54b5&key_id=4'
   },
   sr: {
@@ -26,7 +26,7 @@ export const GAME_CONFIG = {
     name: '绝区零',
     redisKey: 'YZ:MHY:ZZZ',
     preKey: 'YZ:MHY:ZZZ:PRE',
-    url: 'https://prod-gf-cn.juequling.com/query_gateway',
+    url: 'http://127.0.0.1:2777/query_gateway',
     query: 'rsa_ver=3&language=2&seed=7544d714f53fa9c8'
   },
   bh3: {
