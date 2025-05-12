@@ -7,7 +7,9 @@ export const GAME_CONFIG = {
     id: '1Z8W5NHUQb',
     name: '原神',
     redisKey: 'YZ:MHY:YS',
-    preKey: 'YZ:MHY:YS:PRE'
+    preKey: 'YZ:MHY:YS:PRE',
+    url: 'https://cngfdispatch.yuanshen.com/query_cur_region?version=CNRELWin5.6.0&lang=2&platform=3&binary=1&time=9&channel_id=1&sub_channel_id=1&account_type=1&dispatchSeed=5e448e13cbca54b5&key_id=4',
+    query: 'lang=2&binary=1&time=9&account_type=1&dispatchSeed=5e448e13cbca54b5&key_id=4'
   },
   sr: {
     id: '64kMb5iAWu',
@@ -20,7 +22,8 @@ export const GAME_CONFIG = {
     name: '绝区零',
     redisKey: 'YZ:MHY:ZZZ',
     preKey: 'YZ:MHY:ZZZ:PRE',
-    url: 'https://prod-gf-cn.juequling.com/query_gateway'
+    url: 'https://prod-gf-cn.juequling.com/query_gateway',
+    query: 'rsa_ver=3&language=2&seed=7544d714f53fa9c8'
   },
   bh3: {
     id: 'osvnlOc0S8',
@@ -42,7 +45,7 @@ export const getGameCheckAPI = (game) => {
 
 export const getGameSignAPI = (game, version)  => {
   if (!GAME_CONFIG[game]) throw new Error(`[GamePush-Plugin] 无效的游戏标识: ${game}`)
-  return `${GAME_CONFIG[game].url}?version=CNPRODWin${version}&rsa_ver=3&language=2&platform=3&seed=7544d714f53fa9c8&channel_id=1&sub_channel_id=1`
+  return `${GAME_CONFIG[game].auto_sign}?version=${game === 'ys' ? 'CNRELWin' : 'CNPRDWin'}:${version}&${GAME_CONFIG[game].query}&channel_id=1&sub_channel_id=1&platform=3`
 }
 
 export const getGameName = (game) => GAME_CONFIG[game]?.name || '未知游戏'
