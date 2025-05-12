@@ -8,7 +8,7 @@ let srReg = `(sr|SR|星铁|星穹铁道|铁道|崩坏星穹铁道)`
 export class srPush extends plugin {
   constructor() {
     super({
-      name: '星铁版本监控',
+      name: '[GamePush-Plugin]星铁功能',
       dsc: '星铁版本更新及预下载推送',
       event: 'message',
       priority: 7000,

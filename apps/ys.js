@@ -8,7 +8,7 @@ let ysReg = `(ys|YS|原神)`
 export class ysPush extends plugin {
   constructor() {
     super({
-      name: '原神版本监控',
+      name: '[GamePush-Plugin]原神功能',
       dsc: '原神版本更新及预下载推送',
       event: 'message',
       priority: 7000,

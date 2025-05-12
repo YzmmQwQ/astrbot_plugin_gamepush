@@ -8,7 +8,7 @@ let bh3Reg = `(崩坏三|崩坏3|崩三|崩3|bbb|三崩子)`
 export class bh3Push extends plugin {
   constructor() {
     super({
-      name: '崩坏3版本监控',
+      name: '[GamePush-Plugin]崩坏3功能',
       dsc: '崩坏3版本更新及预下载推送',
       event: 'message',
       priority: 7000,

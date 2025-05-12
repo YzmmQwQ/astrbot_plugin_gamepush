@@ -8,7 +8,7 @@ let zzzReg = `(绝区零|zzz|ZZZ)`
 export class zzzPush extends plugin {
   constructor() {
     super({
-      name: '绝区零版本监控',
+      name: '[GamePush-Plugin]绝区零功能',
       dsc: '绝区零版本更新及预下载推送',
       event: 'message',
       priority: 7000,

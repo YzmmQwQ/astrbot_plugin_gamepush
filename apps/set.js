@@ -5,8 +5,8 @@ let Reg = `(原神|星铁|绝区零|崩三)`
 export class Set extends plugin {
   constructor() {
     super({
-      name: '崩坏3版本监控',
-      dsc: '崩坏3版本更新及预下载推送',
+      name: '[GamePush-Plugin]Redis删除管理',
+      dsc: 'Redis删除管理',
       event: 'message',
       priority: 100,
       rule: [
