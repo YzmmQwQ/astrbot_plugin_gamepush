@@ -1,5 +1,5 @@
 # 测试环境
-用于米哈游接口格式而做的请求api，请修改util.js为下面的代码
+用于测试版本更新而做基于米哈游格式的WebApi，请修改util.js为下面的代码， 并运行WebApi项目[express](https://gitcode.com/rainbowwarmth/express) 重启Bot即可进入测试环境
 
 ``` shell
 export const API_BASE = 'https://127.0.0.1:2777/getGamePackages'
