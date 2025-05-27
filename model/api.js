@@ -29,7 +29,7 @@ class apitools extends base {
         throw new Error(`[GamePush-Plugin] 无效的游戏标识: ${game}`)
       }
 
-      const apiUrl = game === 'sr' ? getGameAPI(game) : getGameCheckAPI(game)
+      const apiUrl = getGameCheckAPI(game)
       logger.debug(`[GamePush-Plugin][${getGameName(game)}] 请求API: ${apiUrl}`)
 
       const res = await fetch(apiUrl)
@@ -43,13 +43,8 @@ class apitools extends base {
       const gameCheckData = data?.data?.game_branches?.[0]
       if (!gameData && !gameCheckData) throw new Error(`[GamePush-Plugin] ${getGameName(game)}游戏数据解析失败`)
 
-      if (game === 'sr') {
-        await this.processMainVersion(game, gameData.main?.major?.version)
-        await this.processPreDownload(game, gameData.pre_download?.major)
-      } else {
-        await this.processMainVersion(game, gameCheckData.main?.tag)
-        await this.processPreDownload(game, gameCheckData.pre_download)
-      }
+      await this.processMainVersion(game, gameCheckData.main?.tag)
+      await this.processPreDownload(game, gameCheckData.pre_download)
 
     } catch (err) {
       logger.error(`[GamePush-Plugin][${getGameName(game)}版本监控] 错误`, err)
@@ -165,7 +160,7 @@ class apitools extends base {
 
   async processPreDownload(game, preData) {
     const { pre: preKey } = getRedisKeys(game)
-    const currentPre = game === 'sr' ? preData?.version : preData?.tag
+    const currentPre = preData?.tag
     const storedPre = await redis.get(preKey)
 
     if (currentPre) {
