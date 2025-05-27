@@ -300,28 +300,37 @@ class apitools extends base {
     }
   }
 
-  async getDownloadData(game, type = 'main') {
+async getDownloadData(game, type = 'main') {
     const apiUrl = getGameAPI(game)
     const res = await fetch(apiUrl)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     
     const data = await res.json()
     const packageData = data?.data?.game_packages?.[0]
-    
+    const safeGetPatch = (patchArray) => {
+      if (!patchArray || patchArray.length === 0) {
+        return { 
+          game_pkgs: [],
+          audio_pkgs: [] 
+        }
+      }
+      return patchArray[0]
+    }
+
     if (type === 'pre') {
       return {
         data: packageData.pre_download?.major,
-        patch: packageData.pre_download?.patches[0],
+        patch: safeGetPatch(packageData.pre_download?.patches),
         type: 'pre'
       }
     } else if (type === 'main') {
       return {
         data: packageData.main?.major,
-        patch: packageData.main?.patches[0],
+        patch: safeGetPatch(packageData.main?.patches),
         type: 'main'
       }
     }
-  }
+}
 
   formatDownloadInfo(game, pkgData, type, patchData) {
     if (!pkgData) return '🌫️ 暂无可用下载资源'
