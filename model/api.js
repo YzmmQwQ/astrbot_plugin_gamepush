@@ -225,7 +225,7 @@ class apitools extends base {
 
         messages.push(
           '📢 请及时更新客户端',
-          ...(game !== 'ys' ? [`💾 发送【#获取${gameName}下载】获取客户端`] : [])
+          ...(game !== 'ys' ? [`💾 发送【#${gameName}获取下载】获取客户端`] : [])
         )
 
         return messages.flat()
@@ -234,7 +234,7 @@ class apitools extends base {
         `🎁 ${gameName}预下载资源已开放`,
         oldVersion ? `🔄 版本更新：${oldVersion} → ${newVersion}` : `📦 新版本：${newVersion}`,
         '📥 请提前下载游戏资源',
-        ...(game !== 'ys' ? [`🚪 发送【#获取${gameName}预下载】获取链接`] : [])
+        ...(game !== 'ys' ? [`🚪 发送【#${gameName}获取预下载】获取链接`] : [])
       ],
       'pre-remove': () => [
         `🌙 ${gameName}预下载资源已关闭`,
