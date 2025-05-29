@@ -1,5 +1,5 @@
-export const API_BASE = 'http://127.0.0.1:2777/getGamePackages'
-export const Check_API = 'http://127.0.0.1:2777/getGameBranches'
+export const API_BASE = 'https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGamePackages'
+export const Check_API = 'https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGameBranches'
 export const LAUNCHER_ID = 'jGHBHlcOq1'
 export const Game_Seed = `https://raw.gitcode.com/rainbowwarmth/GameData/raw/main/seed.json`
 
@@ -9,7 +9,7 @@ export const GAME_CONFIG = {
     name: '原神',
     redisKey: 'YZ:MHY:YS',
     preKey: 'YZ:MHY:YS:PRE',
-    url: 'http://127.0.0.1:2777/query_cur_region',
+    url: 'https://cngfdispatch.yuanshen.com/query_cur_region',
     query: 'lang=2&binary=1&time=9&account_type=1&key_id=4'
   },
   sr: {
@@ -23,7 +23,7 @@ export const GAME_CONFIG = {
     name: '绝区零',
     redisKey: 'YZ:MHY:ZZZ',
     preKey: 'YZ:MHY:ZZZ:PRE',
-    url: 'http://127.0.0.1:2777/query_gateway',
+    url: 'https://prod-gf-cn.juequling.com/query_gateway',
     query: 'rsa_ver=3&language=2'
   },
   bh3: {
