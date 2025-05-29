@@ -5,6 +5,7 @@
 export const API_BASE = 'https://127.0.0.1:2777/getGamePackages'
 export const Check_API = 'https://127.0.0.1:2777/getGameBranches'
 export const LAUNCHER_ID = 'jGHBHlcOq1'
+export const Game_Seed = `https://raw.gitcode.com/rainbowwarmth/GameData/raw/main/seed.json`
 
 export const GAME_CONFIG = {
   ys: {
@@ -13,7 +14,7 @@ export const GAME_CONFIG = {
     redisKey: 'YZ:MHY:YS',
     preKey: 'YZ:MHY:YS:PRE',
     url: 'http://127.0.0.1:2777/query_cur_region',
-    query: 'lang=2&binary=1&time=9&account_type=1&dispatchSeed=5e448e13cbca54b5&key_id=4'
+    query: 'lang=2&binary=1&time=9&account_type=1&key_id=4'
   },
   sr: {
     id: '64kMb5iAWu',
@@ -27,7 +28,7 @@ export const GAME_CONFIG = {
     redisKey: 'YZ:MHY:ZZZ',
     preKey: 'YZ:MHY:ZZZ:PRE',
     url: 'http://127.0.0.1:2777/query_gateway',
-    query: 'rsa_ver=3&language=2&seed=7544d714f53fa9c8'
+    query: 'rsa_ver=3&language=2'
   },
   bh3: {
     id: 'osvnlOc0S8',
@@ -49,7 +50,7 @@ export const getGameCheckAPI = (game) => {
 
 export const getGameSignAPI = (game, version)  => {
   if (!GAME_CONFIG[game]) throw new Error(`[GamePush-Plugin] 无效的游戏标识: ${game}`)
-  return `${GAME_CONFIG[game].url}?version=${game === 'ys' ? 'CNRELWin' : 'CNPRDWin'}:${version}&${GAME_CONFIG[game].query}&channel_id=1&sub_channel_id=1&platform=3`
+  return `${GAME_CONFIG[game].url}?version=${game === 'ys' ? 'CNRELWin' : 'CNPRDWin'}:${version}&${GAME_CONFIG[game].query}&${game === 'ys'? dispatchSeed : seed}=${game_seed}&channel_id=1&sub_channel_id=1&platform=3`
 }
 
 export const getGameName = (game) => GAME_CONFIG[game]?.name || '未知游戏'

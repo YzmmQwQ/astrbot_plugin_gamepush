@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 import cfg from "./config.js"
-import { getGameCheckAPI, getGameAPI, getGameName, getRedisKeys, GAME_CONFIG, getGameSignAPI } from "./util.js"
+import { getGameCheckAPI, getGameAPI, getGameName, getRedisKeys, GAME_CONFIG, getGameSignAPI, Game_Seed } from "./util.js"
 import base from './base.js'
 import puppeteer from '../../../lib/puppeteer/puppeteer.js'
 
@@ -82,10 +82,12 @@ class apitools extends base {
     try {
       const gameConfig = GAME_CONFIG[game]
       if (!gameConfig?.url) return { supported: false }
-
+      let res = await fetch(Game_Seed)
+      const data = await res.json()
+      const seed = game === 'ys' ? data.ys_seed : data.zzz_seed 
       const urls = [
-        getGameSignAPI(game, oldVer),
-        getGameSignAPI(game, newVer)
+        getGameSignAPI(game, oldVer, seed),
+        getGameSignAPI(game, newVer, seed)
       ];
 
       const responses = await Promise.all(
