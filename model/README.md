@@ -2,8 +2,8 @@
 用于测试版本更新而做基于米哈游格式的WebApi，请修改util.js为下面的代码， 并运行WebApi项目[express](https://gitcode.com/rainbowwarmth/express) 重启Bot即可进入测试环境
 
 ``` shell
-export const API_BASE = 'https://127.0.0.1:2777/getGamePackages'
-export const Check_API = 'https://127.0.0.1:2777/getGameBranches'
+export const API_BASE = 'http://127.0.0.1:2777/getGamePackages'
+export const Check_API = 'http://127.0.0.1:2777/getGameBranches'
 export const LAUNCHER_ID = 'jGHBHlcOq1'
 export const Game_Seed = `https://raw.gitcode.com/rainbowwarmth/GameData/raw/main/seed.json`
 
