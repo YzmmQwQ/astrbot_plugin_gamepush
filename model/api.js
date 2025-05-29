@@ -7,9 +7,6 @@ import puppeteer from '../../../lib/puppeteer/puppeteer.js'
 class apitools extends base {
   constructor() {
     super();
-    this.dailyCache = []
-    this.delayTimer = null
-    this.postUpdateChecks = new Map()
   }
 
   async autoCheck(game = '') {
@@ -112,7 +109,7 @@ class apitools extends base {
     return false;
   }
 
-  async pushNotify({ type, game, newVersion, oldVersion, serverStatus = {} }) {
+  async pushNotify({ type, game, newVersion, oldVersion }) {
     const config = cfg.getGameConfig(game)
     const gameName = getGameName(game)
 
