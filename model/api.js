@@ -56,9 +56,6 @@ class apitools extends base {
     const stored = await redis.get(redisKey) || '0.0.0'
     
     if (this.compareVersions(currentVersion, stored)) {
-      
-      this.startPostUpdateCheck(game, currentVersion)
-      
       await redis.set(redisKey, currentVersion)
       this.pushNotify({
         type: 'main',
