@@ -5,13 +5,6 @@ import base from './base.js'
 import puppeteer from '../../../lib/puppeteer/puppeteer.js'
 
 class apitools extends base {
-  constructor() {
-    super();
-    this.dailyCache = []
-    this.delayTimer = null
-    this.postUpdateChecks = new Map()
-  }
-
   async autoCheck(game = '') {
     try {
       const gameConfig = cfg.getGameConfig(game)
@@ -108,35 +101,85 @@ class apitools extends base {
     return false;
   }
 
-  async pushNotify({ type, game, newVersion, oldVersion, serverStatus = {} }) {
+  async pushNotify({ type, game, newVersion, oldVersion}) {
     const config = cfg.getGameConfig(game)
     const gameName = getGameName(game)
-
-    const templates = {
-      main: () => {
-        const messages = [
-          `✨ ${gameName}游戏版本更新通知`,
-          `🚀 版本变更：${oldVersion} → ${newVersion}`
-        ]
-
-        messages.push(
-          '📢 请及时更新客户端',
-          ...(game !== 'ys' ? [`💾 发送【#${gameName}获取下载】获取客户端`] : [])
-        )
-
-        return messages.flat()
-      },
-      pre: () => [
-        `🎁 ${gameName}预下载资源已开放`,
-        oldVersion ? `🔄 版本更新：${oldVersion} → ${newVersion}` : `📦 新版本：${newVersion}`,
-        '📥 请提前下载游戏资源',
-        ...(game !== 'ys' ? [`🚪 发送【#${gameName}获取预下载】获取链接`] : [])
-      ],
-      'pre-remove': () => [
-        `🌙 ${gameName}预下载资源已关闭`,
-        `🔒 正式版本${oldVersion}即将上线`
-      ]
+    let formattedTotalSize = ''
+    let incrementalSize = ''
+    
+    if (type === 'main' || type === 'pre') {
+    try{
+      const downloadData = await this.getDownloadData(game, type)
+      let totalSize = 0
+    
+    if (downloadData.data?.game_pkgs) {
+      downloadData.data.game_pkgs.forEach(pkg => {
+        totalSize += parseInt(pkg.size || '0', 10)
+      })
     }
+    
+    if (downloadData.data?.audio_pkgs) {
+      const chineseAudio = downloadData.data.audio_pkgs.find(a => 
+        a.language.toLowerCase() === 'zh-cn'
+      )
+      if (chineseAudio) totalSize += parseInt(chineseAudio.size || '0', 10)
+    }
+    
+    formattedTotalSize = this.formatSize(totalSize)
+    
+    let patchTotalSize = 0
+
+    if (downloadData.patch?.game_pkgs) {
+      downloadData.patch.game_pkgs.forEach(pkg => {
+        patchTotalSize += parseInt(pkg.size || '0', 10)
+      })
+    }
+
+    if (downloadData.patch?.audio_pkgs) {
+      const chineseAudio = downloadData.patch.audio_pkgs.find(a => 
+        a.language.toLowerCase() === 'zh-cn'
+      )
+      if (chineseAudio) totalSize += parseInt(chineseAudio.size || '0', 10)
+    }
+  
+    incrementalSize = this.formatSize(patchTotalSize)
+  } catch (err) {
+      logger.error(`[GamePush-Plugin][${gameName}大小计算失败]`, err);
+      formattedTotalSize = '（大小计算失败）';
+      incrementalSize = '（计算失败）';
+    }
+  }
+  
+  const templates = {
+    main: () => {
+      const messages = [
+        `✨ ${gameName}游戏版本更新通知`,
+        `🚀 版本变更：${oldVersion} → ${newVersion}`,
+        formattedTotalSize && `📦 完整大小（含中文语音）：${formattedTotalSize}`,
+        incrementalSize && `🔄 增量更新大小：约${incrementalSize}`,
+      ]
+      
+      messages.push(
+        '📢 请及时更新客户端',
+        ...(game !== 'ys' ? [`💾 发送【#${gameName}获取下载】获取客户端`] : [])
+      )
+      
+      return messages.flat()
+    },
+    
+    pre: () => [
+      `🎁 ${gameName}预下载资源已开放`,
+      oldVersion ? `🔄 版本更新：${oldVersion} → ${newVersion}` : `📦 新版本：${newVersion}`,
+      formattedTotalSize && `📦 完整大小（含中文语音）：${formattedTotalSize}`,
+      incrementalSize && `⏬ 增量包大小：约${incrementalSize}`,
+      '📥 请提前下载游戏资源',
+      ...(game !== 'ys' ? [`🚪 发送【#${gameName}获取预下载】获取链接`] : [])
+    ],
+    'pre-remove': () => [
+      `🌙 ${gameName}预下载资源已关闭`,
+      `🔒 正式版本${oldVersion}即将上线`
+    ]
+  }
 
     try {
       const data = {
@@ -244,7 +287,6 @@ formatDownloadInfo(game, pkgData, type, patchData) {
     patch_clent.push(patchMsg)
   }
 
-  // 5. 增量语音标题和所有增量语音（第五条消息）
   if (patchData.audio_pkgs.length > 0) {
     let audioPatchMsg = '🎶 增量语音资源：\n▂▂▂▂▂▂▂▂▂▂▂▂\n'
     patchData.audio_pkgs.forEach(audio => {
