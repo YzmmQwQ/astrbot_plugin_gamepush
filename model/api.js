@@ -1,12 +1,15 @@
 import fetch from 'node-fetch'
 import cfg from "./config.js"
-import { getGameCheckAPI, getGameAPI, getGameName, getRedisKeys, GAME_CONFIG} from "./util.js"
+import { getGameCheckAPI, getGameAPI, getGameName, getRedisKeys, GAME_CONFIG } from "./util.js"
 import base from './base.js'
 import puppeteer from '../../../lib/puppeteer/puppeteer.js'
 
 class apitools extends base {
   constructor() {
     super();
+    this.dailyCache = []
+    this.delayTimer = null
+    this.postUpdateChecks = new Map()
   }
 
   async autoCheck(game = '') {
@@ -56,6 +59,13 @@ class apitools extends base {
     const stored = await redis.get(redisKey) || '0.0.0'
     
     if (this.compareVersions(currentVersion, stored)) {
+    let serverStatus = {};
+    if (['ys', 'zzz'].includes(game)) {
+      serverStatus = await this.checkServerStatus(game, stored, currentVersion)
+      
+      this.startPostUpdateCheck(game, currentVersion)
+    }
+      
       await redis.set(redisKey, currentVersion)
       this.pushNotify({
         type: 'main',
@@ -66,6 +76,85 @@ class apitools extends base {
       });
 
     }
+  }
+
+  async checkServerStatus(game, oldVer, newVer) {
+    try {
+      const gameConfig = GAME_CONFIG[game]
+      if (!gameConfig?.url) return { supported: false }
+      const urls = [
+        getGameSignAPI(game, oldVer, seed),
+        getGameSignAPI(game, newVer, seed)
+      ];
+
+      const responses = await Promise.all(
+        urls.map(url => fetch(url).then(res => res.text()))
+      );
+
+      logger.debug(urls)
+
+      return {
+        supported: true,
+        oldStopped: responses[0].length < 800,
+        newLaunched: responses[1].length > 800,
+        rawData: { old: responses[0], new: responses[1] }
+      };
+    } catch (err) {
+      logger.error(`[GamePush-Plugin][${getGameName(game)}状态检测] 异常`, err)
+      return {
+        supported: true,
+        error: err.message.slice(0, 100)
+      };
+    }
+  }
+
+  // 新增持续检测逻辑（修改检测间隔）
+  async startPostUpdateCheck(game, version) {
+    const CHECK_INTERVAL = 2 * 60 * 1000
+    const MAX_DURATION = 6 * 60 * 60 * 1000
+    
+    // 停止已有检测
+    if (this.postUpdateChecks.has(game)) {
+      clearInterval(this.postUpdateChecks.get(game).timer)
+    }
+
+    const startTime = Date.now()
+    let isNotified = false
+
+    const checkTask = async () => {
+      try {
+        // 超时终止
+        if (Date.now() - startTime > MAX_DURATION) {
+          clearInterval(timer);
+          this.postUpdateChecks.delete(game);
+          logger.debug(`[GamePush-Plugin][${getGameName(game)}] 持续检测已超时终止`)
+          return;
+        }
+
+        // 执行检测
+        const url = getGameSignAPI(game, version)
+        const res = await fetch(url)
+        const text = await res.text()
+        
+        if (text.length > 10000) {
+          clearInterval(timer);
+          this.postUpdateChecks.delete(game)
+          this.sendServerLaunchNotice(game, version)
+          isNotified = true
+        }
+
+        logger.debug(`[GamePush-Plugin][${game} ${version}] 检测结果: ${text.length}字符`)
+      } catch (err) {
+        logger.error(`[GamePush-Plugin][持续检测] 异常`, err)
+      }
+    }
+
+    // 立即执行首次检测
+    checkTask()
+    
+    // 创建定时器
+    const timer = setInterval(checkTask, CHECK_INTERVAL)
+    this.postUpdateChecks.set(game, { timer, version, startTime })
   }
 
   async processPreDownload(game, preData) {
@@ -106,7 +195,7 @@ class apitools extends base {
     return false;
   }
 
-  async pushNotify({ type, game, newVersion, oldVersion }) {
+  async pushNotify({ type, game, newVersion, oldVersion, serverStatus = {} }) {
     const config = cfg.getGameConfig(game)
     const gameName = getGameName(game)
 
@@ -116,6 +205,17 @@ class apitools extends base {
           `✨ ${gameName}游戏版本更新通知`,
           `🚀 版本变更：${oldVersion} → ${newVersion}`
         ]
+
+        if (serverStatus.supported) {
+          messages.push(
+            serverStatus.error 
+              ? `⚠️ 服务器状态异常: ${serverStatus.error}`
+              : [
+                  serverStatus.oldStopped && '🛑 旧版本服务已终止',
+                  serverStatus.newLaunched ? '✅ 新版本现已开放' : '⏳ 新版本维护中'
+                ].filter(Boolean)
+          )
+        }
 
         messages.push(
           '📢 请及时更新客户端',
@@ -167,6 +267,33 @@ class apitools extends base {
     }
   }
 
+  // 新增开服通知方法
+  async sendServerLaunchNotice(game, version) {
+    const config = cfg.getGameConfig(game);
+    const gameName = getGameName(game);
+    
+    const msg = [
+      `🎉 ${gameName}版本${version}已开服`,
+      `🕒 开服时间：${new Date().toLocaleString()}`,
+      '👉 请及时登录游戏体验新内容'
+    ];
+
+    try {
+      const data = {
+        ...this.getScreenData(game),
+        messages: msg,
+        gameName,
+        date: new Date().toLocaleDateString(),
+        type: 'launch'
+      };
+      const img = await puppeteer.screenshot('GamePush-Plugin/notice', data);
+      this.sendToGroups(img, game, config);
+    } catch (err) {
+      logger.error(`[GamePush-Plugin][开服通知] 截图失败`, err);
+      this.sendToGroups(msg.join('\n'), game, config);
+    }
+  }
+
 async getDownloadData(game, type = 'main') {
     const apiUrl = getGameAPI(game)
     const res = await fetch(apiUrl)
@@ -199,59 +326,74 @@ async getDownloadData(game, type = 'main') {
     }
 }
 
-  formatDownloadInfo(game, pkgData, type, patchData) {
-    if (!pkgData) return '🌫️ 暂无可用下载资源'
-    
-    const gameName = getGameName(game)
-    const isPre = type === 'pre'
-    
-    let msg = [
-      `🎮 ${gameName}${isPre ? '预下载' : '正式'}版本（${pkgData.version}）`,
-      '📦 客户端分卷包：'
-    ]
-
-    msg.push('\n▂▂▂▂▂▂▂▂▂▂▂▂\n📦 客户端分卷包')
-    pkgData.game_pkgs.forEach((pkg, i) => {
-      msg.push(
-        `${i+1}. 🗃️ 链接：${pkg.url}`,
-        `⚖️ 大小：${this.formatSize(pkg.size)}`,
-        `🔍 MD5：${pkg.md5}\n`
-      )
-    })
-
-    // 统一处理语音包
-    msg.push('\n▂▂▂▂▂▂▂▂▂▂▂▂\n🎧 语言资源包')
-    pkgData.audio_pkgs.forEach(audio => {
-      msg.push(
-        `🌍 语言类型：${audio.language.toUpperCase()}`,
-        `🗃️ 链接：${audio.url}`,
-        `⚖️ 大小：${this.formatSize(audio.size)}`,
-        `🔍 MD5：${audio.md5}\n`
-      )
-    })
-
-    msg.push('\n▂▂▂▂▂▂▂▂▂▂▂▂\n🔄 增量更新')
-    patchData.game_pkgs.forEach((pkg, i) => {
-      msg.push(
-        `${i+1}. 🧩 链接：${pkg.url}`,
-        `⚖️ 大小：${this.formatSize(pkg.size)}`,
-        `🧪 MD5: ${pkg.md5}\n`
-      )
-    })
+formatDownloadInfo(game, pkgData, type, patchData) {
+  if (!pkgData) return ['🌫️ 暂无可用下载资源']
   
-    // 差分语音模块
-    msg.push('\n▂▂▂▂▂▂▂▂▂▂▂▂\n🎶 增量语音')
-    patchData.audio_pkgs.forEach(audio => {
-      msg.push(
-        `🌍 语言类型：${audio.language.toUpperCase()}`, 
-        `🧩 链接：${audio.url}`,
-        `⚖️ 大小：${this.formatSize(audio.size)}`,
-        `🔍 MD5：${audio.md5}\n`
-      )
-    })
+  const gameName = getGameName(game)
+  const isPre = type === 'pre'
+  
+  // 创建消息数组 - 每个元素是一条独立消息
+  const msg = []
+  const clent = []
+  const audio = []
+  const patch_audio = []
+  const patch_clent = []
 
-    return msg.join('\n')
+  // 1. 游戏版本信息（第一条消息）
+  msg.push(`🎮 ${gameName}${isPre ? '预下载' : '正式'}版本（${pkgData.version}）`)
+
+  // 2. 分卷包标题和所有分卷包（第二条消息）
+  let clientMsg = '📦 客户端分卷包：\n▂▂▂▂▂▂▂▂▂▂▂▂\n'
+  pkgData.game_pkgs.forEach((pkg, i) => {
+    clientMsg += `${i+1}. 🗃️ 链接：${pkg.url}\n`
+    clientMsg += `⚖️ 大小：${this.formatSize(pkg.size)}\n`
+    clientMsg += `🔍 MD5：${pkg.md5}\n\n`
+  })
+  clent.push(clientMsg)
+
+  // 3. 语音包标题和所有语音包（第三条消息）
+  if (pkgData.audio_pkgs.length > 0) {
+    let audioMsg = '🎧 语言资源包：\n▂▂▂▂▂▂▂▂▂▂▂▂\n'
+    pkgData.audio_pkgs.forEach(audio => {
+      audioMsg += `🌍 语言类型：${audio.language.toUpperCase()}\n`
+      audioMsg += `🗃️ 链接：${audio.url}\n`
+      audioMsg += `⚖️ 大小：${this.formatSize(audio.size)}\n`
+      audioMsg += `🔍 MD5：${audio.md5}\n\n`
+    })
+    audio.push(audioMsg)
   }
+
+  // 4. 增量更新标题和所有增量包（第四条消息）
+  if (patchData.game_pkgs.length > 0) {
+    let patchMsg = '🔄 增量更新：\n▂▂▂▂▂▂▂▂▂▂▂▂\n'
+    patchData.game_pkgs.forEach((pkg, i) => {
+      patchMsg += `${i+1}. 🧩 链接：${pkg.url}\n`
+      patchMsg += `⚖️ 大小：${this.formatSize(pkg.size)}\n`
+      patchMsg += `🧪 MD5: ${pkg.md5}\n\n`
+    })
+    patch_clent.push(patchMsg)
+  }
+
+  // 5. 增量语音标题和所有增量语音（第五条消息）
+  if (patchData.audio_pkgs.length > 0) {
+    let audioPatchMsg = '🎶 增量语音资源：\n▂▂▂▂▂▂▂▂▂▂▂▂\n'
+    patchData.audio_pkgs.forEach(audio => {
+      audioPatchMsg += `🌍 语言类型：${audio.language.toUpperCase()}\n`
+      audioPatchMsg += `🧩 链接：${audio.url}\n`
+      audioPatchMsg += `⚖️ 大小：${this.formatSize(audio.size)}\n`
+      audioPatchMsg += `🔍 MD5：${audio.md5}\n\n`
+    })
+    patch_audio.push(audioPatchMsg)
+  }
+
+  return {
+    msg,
+    clent,
+    audio,
+    patch_clent,
+    patch_audio
+  }
+}
 
   formatSize(bytes) {
     const units = ['B', 'KB', 'MB', 'GB', 'TB']

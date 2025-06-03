@@ -96,8 +96,8 @@ export class srPush extends plugin {
       const { data, patch } = await api.getDownloadData('sr', 'main')
       if (!data) return this.reply('当前没有可用的正式版本下载', true)
       
-      const msg = api.formatDownloadInfo('sr', data, 'main', patch)
-      return this.reply(await Bot.makeForwardArray([msg]));
+      const { msg, clent, audio, patch_clent, patch_audio } = api.formatDownloadInfo('sr', data, 'main', patch)
+      return this.reply(await Bot.makeForwardArray([msg, clent, audio, patch_clent, patch_audio]));
     } catch (err) {
       return this.reply(`❌ 获取失败：${err.message}`, true)
     }
@@ -108,8 +108,8 @@ export class srPush extends plugin {
       const { data, patch } = await api.getDownloadData('sr', 'pre')
       if (!data) return this.reply('🚫 星铁当前未开放预下载', true)
       
-      const msg = api.formatDownloadInfo('sr', data, 'pre', patch)
-      return this.reply(await Bot.makeForwardArray([msg]))
+      const { msg, clent, audio, patch_clent, patch_audio } = api.formatDownloadInfo('sr', data, 'pre', patch)
+      return this.reply(await Bot.makeForwardArray([msg, clent, audio, patch_clent, patch_audio]))
     } catch (err) {
       return this.reply(`❌ 预下载获取失败：${err.message}`, true)
     }

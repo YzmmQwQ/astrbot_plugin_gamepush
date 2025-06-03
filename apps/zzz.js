@@ -97,8 +97,8 @@ export class zzzPush extends plugin {
       const { data, patch } = await api.getDownloadData('zzz', 'main')
       if (!data) return this.reply('当前没有可用的正式版本下载', true)
       
-      const msg = api.formatDownloadInfo('zzz', data, 'main', patch)
-      return this.reply(await Bot.makeForwardArray([msg]));
+      const { msg, clent, audio, patch_clent, patch_audio } = api.formatDownloadInfo('zzz', data, 'main', patch)
+      return this.reply(await Bot.makeForwardArray([msg, clent, audio, patch_clent, patch_audio]));
     } catch (err) {
       return this.reply(`❌ 获取失败：${err.message}`, true)
     }
@@ -109,8 +109,8 @@ export class zzzPush extends plugin {
       const { data, patch } = await api.getDownloadData('zzz', 'pre')
       if (!data) return this.reply('🚫 绝区零当前未开放预下载', true)
       
-      const msg = api.formatDownloadInfo('zzz', data, 'pre', patch)
-      return this.reply(await Bot.makeForwardArray([msg]))
+      const { msg, clent, audio, patch_clent, patch_audio } = api.formatDownloadInfo('zzz', data, 'pre', patch)
+      return this.reply(await Bot.makeForwardArray([msg, clent, audio, patch_clent, patch_audio]))
     } catch (err) {
       return this.reply(`❌ 预下载获取失败：${err.message}`, true)
     }
