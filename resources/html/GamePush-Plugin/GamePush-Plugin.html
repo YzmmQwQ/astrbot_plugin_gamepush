@@ -11,6 +11,11 @@
     }
 
     @font-face {
+      font-family: 'NotoColorEmoji';
+      src: url('{{pluResPath}}fonts/NotoColorEmoji.ttf')
+    }
+
+    @font-face {
       font-family: 'HYWenHei';
       src: url('{{pluResPath}}fonts/HYWenHei-85W.ttf');
     }
@@ -18,7 +23,7 @@
     body {
       background: var(--bg-color);
       padding: 20px;
-      font-family: 'HYWenHei', sans-serif;
+      font-family: 'NotoColorEmoji', 'HYWenHei', sans-serif;
       color: var(--text-color);
     }
 
@@ -29,6 +34,7 @@
       border-radius: 12px;
       padding: 24px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      font-family: inherit;
     }
 
     .header {
@@ -61,6 +67,8 @@
       margin: 10px 0;
       padding-left: 1em;
       text-indent: -1em;
+      font-family: 'NotoColorEmoji', inherit;
+      font-feature-settings: "emoji"; /* 启用emoji渲染特性 */
     }
 
     .version {
