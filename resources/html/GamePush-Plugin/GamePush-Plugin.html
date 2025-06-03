@@ -1,4 +1,3 @@
-<!-- plugins/GamePush-Plugin/resources/html/GamePush-Plugin/GamePush-Plugin.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -10,21 +9,28 @@
       --text-color: #333333;
     }
 
+    /* 定义专用字体类 */
     @font-face {
       font-family: 'NotoColorEmoji';
       src: url('{{pluResPath}}fonts/NotoColorEmoji.ttf')
     }
-
+    
     @font-face {
       font-family: 'HYWenHei';
       src: url('{{pluResPath}}fonts/HYWenHei-85W.ttf');
     }
 
+    .emoji-text {
+      font-family: 'NotoColorEmoji', sans-serif;
+      font-feature-settings: "emoji";
+    }
+
     body {
       background: var(--bg-color);
       padding: 20px;
-      font-family: 'NotoColorEmoji', 'HYWenHei', sans-serif;
+      font-family: 'HYWenHei', -apple-system, BlinkMacSystemFont, sans-serif;
       color: var(--text-color);
+      -webkit-font-smoothing: antialiased;
     }
 
     .container {
@@ -47,7 +53,7 @@
       height: 50px;
       margin-right: 15px;
       border-radius: 8px;
-      content: url("{{icon}}"); /* 使用URL格式路径 */
+      content: url("{{icon}}");
     }
 
     .title {
@@ -91,7 +97,7 @@
     
     <div class="message-list">
     {{ each messages }}
-      <div class="message-item">{{$value}}</div>
+      <div class="message-item emoji-text">{{$value}}</div>
       {{ /each }}
     </div>
 
