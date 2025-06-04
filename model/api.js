@@ -150,34 +150,45 @@ class apitools extends base {
     }
   }
   
+  const escapeHtml = (str) => {
+    if (!str) return '';
+    return str.replace(/[&<>"']/g, 
+      tag => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[tag]));
+  };
+  
   const templates = {
     main: () => {
       const messages = [
-        `✨ ${gameName}游戏版本更新通知`,
-        `🚀 版本变更：${oldVersion} → ${newVersion}`,
-        formattedTotalSize && `📦 完整大小（含中文语音）：${formattedTotalSize}`,
-        incrementalSize && `🔄 增量更新大小：约${incrementalSize}`,
+        `<span class="emoji-text">✨</span> ${escapeHtml(gameName)}游戏版本更新通知`,
+        `<span class="emoji-text">🚀</span> 版本变更：${escapeHtml(oldVersion)} → ${escapeHtml(newVersion)}`,
+        formattedTotalSize && `<span class="emoji-text">📦</span> 完整大小（含中文语音）：${escapeHtml(formattedTotalSize)}`,
+        incrementalSize && `<span class="emoji-text">🔄</span> 增量更新大小：约${escapeHtml(incrementalSize)}`,
+        `<span class="emoji-text">📢</span> 请及时更新客户端`,
+        ...(game !== 'ys' ? [`<span class="emoji-text">💾</span> 发送【#${escapeHtml(gameName)}获取下载】获取客户端`] : [])
       ]
-      
-      messages.push(
-        '📢 请及时更新客户端',
-        ...(game !== 'ys' ? [`💾 发送【#${gameName}获取下载】获取客户端`] : [])
-      )
       
       return messages.flat()
     },
     
     pre: () => [
-      `🎁 ${gameName}预下载资源已开放`,
-      oldVersion ? `🔄 版本更新：${oldVersion} → ${newVersion}` : `📦 新版本：${newVersion}`,
-      formattedTotalSize && `📦 完整大小（含中文语音）：${formattedTotalSize}`,
-      incrementalSize && `⏬ 增量包大小：约${incrementalSize}`,
-      '📥 请提前下载游戏资源',
-      ...(game !== 'ys' ? [`🚪 发送【#${gameName}获取预下载】获取链接`] : [])
+      `<span class="emoji-text">🎁</span> ${escapeHtml(gameName)}预下载资源已开放`,
+      oldVersion 
+        ? `<span class="emoji-text">🔄</span> 版本更新：${escapeHtml(oldVersion)} → ${escapeHtml(newVersion)}` 
+        : `<span class="emoji-text">📦</span> 新版本：${escapeHtml(newVersion)}`,
+      formattedTotalSize && `<span class="emoji-text">📦</span> 完整大小（含中文语音）：${escapeHtml(formattedTotalSize)}`,
+      incrementalSize && `<span class="emoji-text">⏬</span> 增量包大小：约${escapeHtml(incrementalSize)}`,
+      `<span class="emoji-text">📥</span> 请提前下载游戏资源`,
+      ...(game !== 'ys' ? [`<span class="emoji-text">🚪</span> 发送【#${escapeHtml(gameName)}获取预下载】获取链接`] : [])
     ],
     'pre-remove': () => [
-      `🌙 ${gameName}预下载资源已关闭`,
-      `🔒 正式版本${oldVersion}即将上线`
+      `<span class="emoji-text">🌙</span> ${escapeHtml(gameName)}预下载资源已关闭`,
+      `<span class="emoji-text">🔒</span> 正式版本${escapeHtml(oldVersion)}即将上线`
     ]
   }
 
@@ -185,11 +196,11 @@ class apitools extends base {
       const data = {
         ...this.getScreenData(game),
         messages: templates[type](),
-        gameName,
+        gameName: escapeHtml(gameName),
         date: new Date().toLocaleDateString(),
         type,
-        newVersion,
-        oldVersion
+        newVersion: escapeHtml(newVersion),
+        oldVersion: escapeHtml(oldVersion)
       }
 
       const img = await puppeteer.screenshot('GamePush-Plugin/notice', data)

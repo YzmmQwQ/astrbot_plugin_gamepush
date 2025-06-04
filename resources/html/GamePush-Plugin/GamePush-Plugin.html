@@ -8,8 +8,7 @@
       --card-bg: #ffffff;
       --text-color: #333333;
     }
-
-    /* 定义专用字体类 */
+    
     @font-face {
       font-family: 'NotoColorEmoji';
       src: url('{{pluResPath}}fonts/NotoColorEmoji.ttf')
@@ -22,7 +21,8 @@
 
     .emoji-text {
       font-family: 'NotoColorEmoji', sans-serif;
-      font-feature-settings: "emoji";
+      display: inline-block;
+      margin-right: 4px;
     }
 
     body {
@@ -97,7 +97,7 @@
     
     <div class="message-list">
     {{ each messages }}
-      <div class="message-item emoji-text">{{$value}}</div>
+       <div class="message-item"><%- $value %></div>
       {{ /each }}
     </div>
 
