@@ -1,11 +1,11 @@
 import fetch from 'node-fetch'
-import cfg from './config.js'
+import Config from './config.js'
 import base from './base.js'
 import noticerender from './notice-render.js'
 import { getGameCheckAPI, getGameName, getRedisKeys, GAME_CONFIG } from './index.js'
 
 const notice = new noticerender()
-
+const cfg = new Config()
 export default class ApiTools extends base {
   async autoCheck (game = '') {
     try {
