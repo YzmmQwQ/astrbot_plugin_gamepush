@@ -1,12 +1,12 @@
-import api from "../model/api.js"
-import cfg from "../model/config.js"
-import { getRedisKeys } from "../model/util.js"
-import plugin from "../../../lib/plugins/plugin.js"
+import { Config, ApiTools, getRedisKeys } from '#GamePush'
 
-let ysReg = `(ys|YS|原神)`
+let api = new ApiTools()
+let cfg = new Config()
+
+let ysReg = '(ys|YS|原神)'
 
 export class ysPush extends plugin {
-  constructor() {
+  constructor () {
     super({
       name: '[GamePush-Plugin]原神功能',
       dsc: '原神版本更新及预下载推送',
@@ -38,49 +38,49 @@ export class ysPush extends plugin {
     }
   }
 
-  async ysCheck() {
+  async ysCheck () {
     await api.checkVersion(true, 'ys')
     return this.reply('✅ 已执行手动检查', true)
   }
-  
-  async ysPushSet() {
+
+  async ysPushSet () {
     const e = this.e
     const groupId = String(e.group_id)
     if (!e.isGroup) {
-        return this.reply('❌ 该功能仅限群聊中使用', true)
+      return this.reply('❌ 该功能仅限群聊中使用', true)
     }
 
     const isEnable = e.msg.includes('开启')
-    
+
     cfg.updateGameConfig('ys', (config) => {
-        config.pushGroups = config.pushGroups || []
-        if (isEnable) {
-            if (!config.pushGroups.includes(groupId)) {
-                config.pushGroups.push(groupId)
-            }
-        } else {
-            config.pushGroups = config.pushGroups.filter(id => id !== groupId)
+      config.pushGroups = config.pushGroups || []
+      if (isEnable) {
+        if (!config.pushGroups.includes(groupId)) {
+          config.pushGroups.push(groupId)
         }
-        config.enable = isEnable
+      } else {
+        config.pushGroups = config.pushGroups.filter(id => id !== groupId)
+      }
+      config.enable = isEnable
     })
 
     const action = isEnable ? `已添加本群到推送列表（ID：${groupId}）` : '已移除本群推送'
     return this.reply(`✅ 已${isEnable ? '开启' : '关闭'}原神版本推送，${action}`, true)
-}
+  }
 
-  async ysVer() {
+  async ysVer () {
     const { main, pre } = getRedisKeys('ys')
     const [mainVer, preVer] = await Promise.all([
       redis.get(main),
       redis.get(pre)
     ])
-    
+
     const msg = [
       '📌 原神当前版本信息',
       `正式版本：${mainVer || '未知'}`,
       `预下载版本：${preVer || '未开启'}`
     ].join('\n')
-    
+
     return this.reply(msg, true)
   }
 }

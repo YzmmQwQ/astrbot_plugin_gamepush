@@ -3,7 +3,7 @@ import _ from 'lodash'
 import path from 'node:path'
 
 export default class base {
-  constructor(e = {}) {
+  constructor (e = {}) {
     this.e = e
     this.userId = Number(e?.user_id) || String(e?.user_id)
     this.model = 'GamePush-Plugin'
@@ -14,7 +14,7 @@ export default class base {
     return `Yz:GamePush-Plugin:${this.model}:`
   }
 
-  getGameName(game) {
+  getGameName (game) {
     const gameNames = {
       sr: '星穹铁道',
       ys: '原神',
@@ -24,20 +24,20 @@ export default class base {
     return gameNames[game] || '未知游戏'
   }
 
-  screenData(game) {
+  screenData (game) {
     return this.getScreenData(game)
   }
 
-  getScreenData(game) {
+  getScreenData (game) {
     const basic = {
       saveId: `push_${game}_${Date.now()}`,
       cwd: this._path,
-      tplFile: path.join(this._path, `plugins/GamePush-Plugin/resources/html/GamePush-Plugin/GamePush-Plugin.html`),
+      tplFile: path.join(this._path, 'plugins/GamePush-Plugin/resources/html/GamePush-Plugin/GamePush-Plugin.html'),
       fontsPath: path.join(this._path, 'plugins/GamePush-Plugin/resources/fonts/'),
       pluResPath: path.join(this._path, 'plugins/GamePush-Plugin/resources/'),
       htmlSavePath: path.join(this._path, 'tmp', 'html', 'GamePush-Plugin'),
       htmlFileName: `${game}_${Date.now()}.html`,
-      yunzaiName: cfg.package.name === 'miao-yunzai' ? 'Miao-Yunzai' : 'trss-yunzai'? 'TRSS-Yunzai' : _.capitalize(cfg.package.name)
+      yunzaiName: cfg.package.name === 'miao-yunzai' ? 'Miao-Yunzai' : cfg.package.name === 'trss-yunzai' ? 'TRSS-Yunzai' : _.capitalize(cfg.package.name)
     }
 
     const icons = {

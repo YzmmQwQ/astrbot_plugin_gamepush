@@ -1,12 +1,13 @@
-import api from "../model/api.js"
-import cfg from "../model/config.js"
-import { getRedisKeys } from "../model/util.js"
-import plugin from "../../../lib/plugins/plugin.js"
+import { Config, ApiTools, getRedisKeys, download } from '#GamePush'
 
-let zzzReg = `(绝区零|zzz|ZZZ)`
+let api = new ApiTools()
+let down = new download()
+let cfg = new Config()
+
+let zzzReg = '(绝区零|zzz|ZZZ)'
 
 export class zzzPush extends plugin {
-  constructor() {
+  constructor () {
     super({
       name: '[GamePush-Plugin]绝区零功能',
       dsc: '绝区零版本更新及预下载推送',
@@ -46,70 +47,70 @@ export class zzzPush extends plugin {
     }
   }
 
-  async zzzCheck() {
+  async zzzCheck () {
     await api.checkVersion(true, 'zzz')
     return this.reply('✅ 已执行手动检查', true)
   }
-  
-  async zzzPushSet() {
+
+  async zzzPushSet () {
     const e = this.e
     const groupId = String(e.group_id)
     if (!e.isGroup) {
-        return this.reply('❌ 该功能仅限群聊中使用', true)
+      return this.reply('❌ 该功能仅限群聊中使用', true)
     }
 
     const isEnable = e.msg.includes('开启')
-    
+
     cfg.updateGameConfig('zzz', (config) => {
-        config.pushGroups = config.pushGroups || []
-        if (isEnable) {
-            if (!config.pushGroups.includes(groupId)) {
-                config.pushGroups.push(groupId)
-            }
-        } else {
-            config.pushGroups = config.pushGroups.filter(id => id !== groupId)
+      config.pushGroups = config.pushGroups || []
+      if (isEnable) {
+        if (!config.pushGroups.includes(groupId)) {
+          config.pushGroups.push(groupId)
         }
-        config.enable = isEnable
+      } else {
+        config.pushGroups = config.pushGroups.filter(id => id !== groupId)
+      }
+      config.enable = isEnable
     })
 
     const action = isEnable ? `已添加本群到推送列表（ID：${groupId}）` : '已移除本群推送'
     return this.reply(`✅ 已${isEnable ? '开启' : '关闭'}绝区零版本推送，${action}`, true)
-}
+  }
 
-  async zzzVer() {
+  async zzzVer () {
     const { main, pre } = getRedisKeys('zzz')
     const [mainVer, preVer] = await Promise.all([
       redis.get(main),
       redis.get(pre)
     ])
-    
+
     const msg = [
       '📌 绝区零当前版本信息',
       `正式版本：${mainVer || '未知'}`,
       `预下载版本：${preVer || '未开启'}`
     ].join('\n')
-    
+
     return this.reply(msg, true)
   }
 
-  async zzzDownloadLinks() {
+  async zzzDownloadLinks () {
     try {
-      const { data, patch } = await api.getDownloadData('zzz', 'main')
+      const { data, patch } = await down.getDownloadData('zzz', 'main')
       if (!data) return this.reply('当前没有可用的正式版本下载', true)
-      
-      const { msg, clent, audio, patch_clent, patch_audio } = api.formatDownloadInfo('zzz', data, 'main', patch)
-      return this.reply(await Bot.makeForwardArray([msg, clent, audio, patch_clent, patch_audio]));
+
+      const { msg, clent, audio, patch_clent, patch_audio } = down.formatDownloadInfo('zzz', data, 'main', patch)
+      return this.reply(await Bot.makeForwardArray([msg, clent, audio, patch_clent, patch_audio]))
     } catch (err) {
       return this.reply(`❌ 获取失败：${err.message}`, true)
     }
   }
 
-  async zzzPreDownloadLinks() {
+  async zzzPreDownloadLinks () {
     try {
-      const { data, patch } = await api.getDownloadData('zzz', 'pre')
+      const { data, patch } = await down.getDownloadData('zzz', 'pre')
       if (!data) return this.reply('🚫 绝区零当前未开放预下载', true)
-      
-      const { msg, clent, audio, patch_clent, patch_audio } = api.formatDownloadInfo('zzz', data, 'pre', patch)
+
+      const { msg, clent, audio, patch_clent, patch_audio } = down.formatDownloadInfo('zzz', data, 'pre', patch)
       return this.reply(await Bot.makeForwardArray([msg, clent, audio, patch_clent, patch_audio]))
     } catch (err) {
       return this.reply(`❌ 预下载获取失败：${err.message}`, true)

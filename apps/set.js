@@ -1,17 +1,16 @@
-import plugin from "../../../lib/plugins/plugin.js"
-import { getRedisKeys } from '../model/util.js'
+import { getRedisKeys } from '#GamePush'
 
-const Reg = `(原神|星铁|绝区零|崩三)`
+const Reg = '(原神|星铁|绝区零|崩三)'
 
 const gameInfoMap = {
-  "原神": { id: 'ys', display: '原神' },
-  "星铁": { id: 'sr', display: '星铁' },
-  "绝区零": { id: 'zzz', display: '绝区零' },
-  "崩三": { id: 'bh3', display: '崩坏3' }
+  原神: { id: 'ys', display: '原神' },
+  星铁: { id: 'sr', display: '星铁' },
+  绝区零: { id: 'zzz', display: '绝区零' },
+  崩三: { id: 'bh3', display: '崩坏3' }
 }
 
 export class Set extends plugin {
-  constructor() {
+  constructor () {
     super({
       name: '[GamePush-Plugin]Redis删除管理',
       dsc: 'Redis删除管理',
@@ -32,16 +31,16 @@ export class Set extends plugin {
     })
   }
 
-  async delkey() {
+  async delkey () {
     try {
       const match = Object.keys(gameInfoMap).find(k => this.e.msg.includes(k))
-      if (!match) return this.e.reply("未找到匹配的游戏类型")
+      if (!match) return this.e.reply('未找到匹配的游戏类型')
 
       const { id, display } = gameInfoMap[match]
       const keys = getRedisKeys(id)
-      
+
       if (!keys?.main) {
-        return this.e.reply("配置中未找到主RedisKey")
+        return this.e.reply('配置中未找到主RedisKey')
       }
 
       await redis.del(keys.main)
@@ -51,16 +50,16 @@ export class Set extends plugin {
     }
   }
 
-  async delPrekey() {
+  async delPrekey () {
     try {
       const match = Object.keys(gameInfoMap).find(k => this.e.msg.includes(k))
-      if (!match) return this.e.reply("未找到匹配的游戏类型")
+      if (!match) return this.e.reply('未找到匹配的游戏类型')
 
       const { id, display } = gameInfoMap[match]
       const keys = getRedisKeys(id)
-      
+
       if (!keys?.pre) {
-        return this.e.reply("配置中未找到预下载RedisKey")
+        return this.e.reply('配置中未找到预下载RedisKey')
       }
 
       await redis.del(keys.pre)
