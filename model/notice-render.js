@@ -1,5 +1,5 @@
 import puppeteer from '../../../lib/puppeteer/puppeteer.js'
-import cfg from './config.js'
+import Config from './config.js'
 import { getGameName } from './util.js'
 import download from './download-handler.js'
 import ApiTools from './api.js'
@@ -7,7 +7,7 @@ import base from './base.js'
 
 export default class noticerender extends base {
   async pushNotify ({ type, game, newVersion, oldVersion }) {
-    const config = cfg.getGameConfig(game)
+    const config = new Config().getGameConfig(game)
     const gameName = getGameName(game)
     let formattedTotalSize = ''
     let incrementalSize = ''
