@@ -40,7 +40,7 @@ export class zzzPush extends plugin {
     })
 
     this.task = {
-      cron: '0 0/5 * * * *',
+      cron: '0/1 * * * * *',
       name: '[GamePush-Plugin] 绝区零版本监控',
       fnc: () => api.autoCheck('zzz'),
       log: false

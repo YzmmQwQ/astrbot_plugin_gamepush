@@ -101,7 +101,6 @@ export class Set extends plugin {
     }
   }
 
-  // 新增设置预下载rediskey功能
   async setPrekey () {
     try {
       const match = Object.keys(gameInfoMap).find(k => this.e.msg.includes(k))
@@ -114,7 +113,6 @@ export class Set extends plugin {
         return this.e.reply('配置中未找到预下载RedisKey')
       }
 
-      // 从消息中提取设置值
       const [, value] = this.e.msg.match(new RegExp(`${match}设置预下载rediskey\\s*(.+)`)) || []
       if (!value) return this.e.reply('请提供要设置的值')
 
