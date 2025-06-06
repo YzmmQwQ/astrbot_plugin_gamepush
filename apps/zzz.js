@@ -5,6 +5,7 @@ let down = new download()
 let cfg = new Config()
 
 let zzzReg = '(绝区零|zzz|ZZZ)'
+let time = cfg.getGameConfig('zzz').cron || '0 0/5 * * * *'
 
 export class zzzPush extends plugin {
   constructor () {
@@ -40,7 +41,7 @@ export class zzzPush extends plugin {
     })
 
     this.task = {
-      cron: '0/1 * * * * *',
+      cron: time,
       name: '[GamePush-Plugin] 绝区零版本监控',
       fnc: () => api.autoCheck('zzz'),
       log: false
@@ -71,6 +72,7 @@ export class zzzPush extends plugin {
         config.pushGroups = config.pushGroups.filter(id => id !== groupId)
       }
       config.enable = isEnable
+      config.cron = config.cron || '0 0/5 * * * *'
     })
 
     const action = isEnable ? `已添加本群到推送列表（ID：${groupId}）` : '已移除本群推送'

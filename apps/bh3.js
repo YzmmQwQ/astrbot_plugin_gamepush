@@ -5,6 +5,7 @@ let down = new download()
 let cfg = new Config()
 
 let bh3Reg = '(崩坏三|崩坏3|崩三|崩3|bbb|三崩子)'
+let time = cfg.getGameConfig('bh3').cron || '0 0/5 * * * *'
 
 export class bh3Push extends plugin {
   constructor () {
@@ -40,7 +41,7 @@ export class bh3Push extends plugin {
     })
 
     this.task = {
-      cron: '0 0/5 * * * *',
+      cron: time,
       name: '[GamePush-Plugin] 崩坏3版本监控',
       fnc: () => api.autoCheck('bh3'),
       log: false
@@ -71,6 +72,7 @@ export class bh3Push extends plugin {
         config.pushGroups = config.pushGroups.filter(id => id !== groupId)
       }
       config.enable = isEnable
+      config.cron = config.cron || '0 0/5 * * * *'
     })
 
     const action = isEnable ? `已添加本群到推送列表（ID：${groupId}）` : '已移除本群推送'

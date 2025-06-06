@@ -21,6 +21,7 @@ export default class Config {
       Object.keys(GAME_CONFIG).forEach(game => {
         defaultConfig[game] = {
           enable: true,
+          cron: '0 0/5 * * * *',
           pushGroups: []
         }
       })
@@ -40,12 +41,12 @@ export default class Config {
 
   getGameConfig (game) {
     const config = this.loadConfig()
-    return config[game] || { enable: true, pushGroups: [] }
+    return config[game] || { enable: true, cron: '0 0/5 * * * *', pushGroups: [] }
   }
 
   updateGameConfig (game, updater) {
     const config = this.loadConfig()
-    updater(config[game] || { enable: true, pushGroups: [] })
+    updater(config[game] || { enable: true, cron: '0 0/5 * * * *', pushGroups: [] })
     this.saveConfig(config)
   }
 

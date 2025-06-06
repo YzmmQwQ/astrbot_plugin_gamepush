@@ -21,6 +21,7 @@ module.exports = {
     'prefer-const': ['off'],
     'arrow-body-style': 'off',
     camelcase: 'off',
-    'new-cap': 'off'
+    'new-cap': 'off',
+    'no-unused-vars': 'off'
   }
 }

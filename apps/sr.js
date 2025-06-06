@@ -3,8 +3,8 @@ import { Config, ApiTools, getRedisKeys, download } from '#GamePush'
 let api = new ApiTools()
 let down = new download()
 let cfg = new Config()
-
 let srReg = '(sr|SR|星铁|星穹铁道|铁道|崩坏星穹铁道)'
+let time = cfg.getGameConfig('sr').cron || '0 0/5 * * * *'
 
 export class srPush extends plugin {
   constructor () {
@@ -40,7 +40,7 @@ export class srPush extends plugin {
     })
 
     this.task = {
-      cron: '0 0/5 * * * *',
+      cron: time,
       name: '[GamePush-Plugin] 星铁版本监控',
       fnc: () => api.autoCheck('sr'),
       log: false
@@ -70,6 +70,7 @@ export class srPush extends plugin {
         config.pushGroups = config.pushGroups.filter(id => id !== groupId)
       }
       config.enable = isEnable
+      config.cron = config.cron || '0 0/5 * * * *'
     })
 
     const action = isEnable ? `已添加本群到推送列表（ID：${groupId}）` : '已移除本群推送'
