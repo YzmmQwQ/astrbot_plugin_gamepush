@@ -2,7 +2,7 @@ import fetch from 'node-fetch'
 import Config from './config.js'
 import base from './base.js'
 import noticerender from './notice-render.js'
-import { getGameCheckAPI, getGameName, getRedisKeys, GAME_CONFIG } from './index.js'
+import { getGameCheckAPI, getGameName, getRedisKeys, GAME_CONFIG } from './util.js'
 
 const notice = new noticerender()
 const cfg = new Config()
