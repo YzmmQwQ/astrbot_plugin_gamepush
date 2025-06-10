@@ -34,12 +34,16 @@ export default class ApiTools extends base {
       }
 
       const data = await res.json()
-      const gameData = data?.data?.game_packages?.[0]
-      const gameCheckData = data?.data?.game_branches?.[0]
-      if (!gameData && !gameCheckData) throw new Error(`[GamePush-Plugin] ${getGameName(game)}游戏数据解析失败`)
+      let gameCheckData = game === 'ww' ? data : data?.data?.game_branches?.[0]
+      if (!gameCheckData) throw new Error(`[GamePush-Plugin] ${getGameName(game)}游戏数据解析失败`)
 
-      await this.processMainVersion(game, gameCheckData.main?.tag)
-      await this.processPreDownload(game, gameCheckData.pre_download)
+      if (game === 'ww') {
+        await this.processMainVersion(game, gameCheckData.default?.config?.version)
+        await this.processPreDownload(game, gameCheckData.predownload?.config)
+      } else {
+        await this.processMainVersion(game, gameCheckData.main?.tag)
+        await this.processPreDownload(game, gameCheckData.pre_download)
+      }
     } catch (err) {
       logger.error(`[GamePush-Plugin][${getGameName(game)}版本监控] 错误`, err)
       if (!auto) this.reply(`[GamePush-Plugin] ❌ 检查失败：${err.message}`)
@@ -65,7 +69,7 @@ export default class ApiTools extends base {
 
   async processPreDownload (game, preData) {
     const { pre: preKey } = getRedisKeys(game)
-    const currentPre = preData?.tag
+    const currentPre = game === 'ww' ? preData.version : preData?.tag
     const storedPre = await redis.get(preKey)
 
     if (currentPre) {

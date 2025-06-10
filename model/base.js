@@ -19,7 +19,8 @@ export default class base {
       sr: '星穹铁道',
       ys: '原神',
       zzz: '绝区零',
-      bh3: '崩坏3'
+      bh3: '崩坏3',
+      ww: '鸣潮'
     }
     return gameNames[game] || '未知游戏'
   }
@@ -44,7 +45,8 @@ export default class base {
       zzz: 'https://www.miyoushe.com/_static/img/game-zzz.3ca2bac.png',
       sr: 'https://c-ssl.duitang.com/uploads/blog/202110/11/20211011094243_6ff48.jpeg',
       ys: 'https://bbs-static.miyoushe.com/avatar/avatar10011.png',
-      bh3: 'https://www.miyoushe.com/_static/img/game-bh3.abe5ead.jpg'
+      bh3: 'https://www.miyoushe.com/_static/img/game-bh3.abe5ead.jpg',
+      ww: 'https://cn.bing.com/th?id=OSK.d2e8b2efa5867fba330b354d0472f5e5&w=120&h=120&qlt=120&c=6&rs=1&cdv=1&pid=RS'
     }
 
     return {

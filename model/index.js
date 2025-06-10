@@ -1,4 +1,5 @@
 export * from './util.js'
+export * from './path.js'
 export { default as base } from './base.js'
 export { default as ApiTools } from './api.js'
 export { default as Config } from './config.js'

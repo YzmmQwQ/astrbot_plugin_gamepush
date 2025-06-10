@@ -4,56 +4,56 @@ let api = new ApiTools()
 let down = new download()
 let cfg = new Config()
 
-let zzzReg = '(绝区零|zzz|ZZZ)'
-let time = cfg.getGameConfig('zzz').cron || '0 0/5 * * * *'
+let wwReg = '(~|鸣潮|ww|WW|mc)'
+let time = cfg.getGameConfig('ww').cron || '0 0/5 * * * *'
 
-export class zzzPush extends plugin {
+export class wwPush extends plugin {
   constructor () {
     super({
-      name: '[GamePush-Plugin]绝区零功能',
-      dsc: '绝区零版本更新及预下载推送',
+      name: '[GamePush-Plugin]鸣潮功能',
+      dsc: '鸣潮版本更新及预下载推送',
       event: 'message',
       priority: 7000,
       rule: [
         {
-          reg: `^#*${zzzReg}版本监控$`,
-          fnc: 'zzzCheck',
+          reg: `^#*${wwReg}版本监控$`,
+          fnc: 'wwCheck',
           permission: 'master'
         },
         {
-          reg: `^#*${zzzReg}(开启|关闭)版本推送$`,
-          fnc: 'zzzPushSet',
+          reg: `^#*${wwReg}(开启|关闭)版本推送$`,
+          fnc: 'wwPushSet',
           permission: 'master'
         },
         {
-          reg: `^#*${zzzReg}当前版本$`,
-          fnc: 'zzzVer'
+          reg: `^#*${wwReg}当前版本$`,
+          fnc: 'wwVer'
         },
         {
-          reg: `^#*${zzzReg}获取下载链接$`,
-          fnc: 'zzzDownloadLinks'
+          reg: `^#*${wwReg}获取下载链接$`,
+          fnc: 'wwDownloadLinks'
         },
         {
-          reg: `^#*${zzzReg}获取预下载链接$`,
-          fnc: 'zzzPreDownloadLinks'
+          reg: `^#*${wwReg}获取预下载链接$`,
+          fnc: 'wwPreDownloadLinks'
         }
       ]
     })
 
     this.task = {
       cron: time,
-      name: '[GamePush-Plugin] 绝区零版本监控',
-      fnc: () => api.autoCheck('zzz'),
+      name: '[GamePush-Plugin] 鸣潮版本监控',
+      fnc: () => api.autoCheck('ww'),
       log: false
     }
   }
 
-  async zzzCheck () {
-    await api.checkVersion(true, 'zzz')
+  async wwCheck () {
+    await api.checkVersion(true, 'ww')
     return this.reply('✅ 已执行手动检查', true)
   }
 
-  async zzzPushSet () {
+  async wwPushSet () {
     const e = this.e
     const groupId = String(e.group_id)
     if (!e.isGroup) {
@@ -62,7 +62,7 @@ export class zzzPush extends plugin {
 
     const isEnable = e.msg.includes('开启')
 
-    cfg.updateGameConfig('zzz', (config) => {
+    cfg.updateGameConfig('ww', (config) => {
       config.pushGroups = config.pushGroups || []
       if (isEnable) {
         if (!config.pushGroups.includes(groupId)) {
@@ -76,18 +76,18 @@ export class zzzPush extends plugin {
     })
 
     const action = isEnable ? `已添加本群到推送列表（ID：${groupId}）` : '已移除本群推送'
-    return this.reply(`✅ 已${isEnable ? '开启' : '关闭'}绝区零版本推送，${action}`, true)
+    return this.reply(`✅ 已${isEnable ? '开启' : '关闭'}鸣潮版本推送，${action}`, true)
   }
 
-  async zzzVer () {
-    const { main, pre } = getRedisKeys('zzz')
+  async wwVer () {
+    const { main, pre } = getRedisKeys('ww')
     const [mainVer, preVer] = await Promise.all([
       redis.get(main),
       redis.get(pre)
     ])
 
     const msg = [
-      '📌 绝区零当前版本信息',
+      '📌 鸣潮当前版本信息',
       `正式版本：${mainVer || '未知'}`,
       `预下载版本：${preVer || '未开启'}`
     ].join('\n')
@@ -95,26 +95,26 @@ export class zzzPush extends plugin {
     return this.reply(msg, true)
   }
 
-  async zzzDownloadLinks () {
+  async wwDownloadLinks () {
     try {
-      const { data, patch } = await down.getDownloadData('zzz', 'main')
+      const { data, patch } = await down.getDownloadData('ww', 'main')
       console.log(data)
       if (!data) return this.reply('当前没有可用的正式版本下载', true)
 
-      const { msg, clent, audio, patch_clent, patch_audio } = down.formatDownloadInfo('zzz', data, 'main', patch)
-      return this.reply(await Bot.makeForwardArray([msg, clent, audio, patch_clent, patch_audio]))
+      const { msg, client, patchesMessages } = down.formatDownloadInfo('ww', data, 'main', patch)
+      return this.reply(await Bot.makeForwardArray([msg, client, patchesMessages]))
     } catch (err) {
       return this.reply(`❌ 获取失败：${err.message}`, true)
     }
   }
 
-  async zzzPreDownloadLinks () {
+  async wwPreDownloadLinks () {
     try {
-      const { data, patch } = await down.getDownloadData('zzz', 'pre')
-      if (!data) return this.reply('🚫 绝区零当前未开放预下载', true)
+      const { data, patch } = await down.getDownloadData('ww', 'pre')
+      if (!data) return this.reply('🚫 鸣潮当前未开放预下载', true)
 
-      const { msg, clent, audio, patch_clent, patch_audio } = down.formatDownloadInfo('zzz', data, 'pre', patch)
-      return this.reply(await Bot.makeForwardArray([msg, clent, audio, patch_clent, patch_audio]))
+      const { msg, client, patchesMessages } = down.formatDownloadInfo('ww', data, 'pre', patch)
+      return this.reply(await Bot.makeForwardArray([msg, client, patchesMessages]))
     } catch (err) {
       return this.reply(`❌ 预下载获取失败：${err.message}`, true)
     }

@@ -12,9 +12,23 @@ export default class noticerender extends base {
     let formattedTotalSize = ''
     let incrementalSize = ''
 
-    if (type === 'main' || type === 'pre') {
-      try {
+    if (game == 'ww') {
+      if (type === 'main' || type === 'pre') {
         const downloadData = await new download().getDownloadData(game, type)
+        console.log(downloadData)
+        let totalSize = downloadData.data.game_pkgs[0].size
+
+        formattedTotalSize = this.formatSize(totalSize)
+
+        let patchTotalSize = downloadData.patch.game_pkgs[0].size
+
+        incrementalSize = this.formatSize(patchTotalSize)
+        console.log(incrementalSize)
+      }
+    } else {
+      if (type === 'main' || type === 'pre') {
+        const downloadData = await new download().getDownloadData(game, type)
+        console.log(downloadData)
         let totalSize = 0
 
         if (downloadData.data?.game_pkgs) {
@@ -44,14 +58,10 @@ export default class noticerender extends base {
           const chineseAudio = downloadData.patch.audio_pkgs.find(a =>
             a.language.toLowerCase() === 'zh-cn'
           )
-          if (chineseAudio) totalSize += parseInt(chineseAudio.size || '0', 10)
+          if (chineseAudio) patchTotalSize += parseInt(chineseAudio.size || '0', 10)
         }
 
         incrementalSize = this.formatSize(patchTotalSize)
-      } catch (err) {
-        logger.error(`[GamePush-Plugin][${gameName}大小计算失败]`, err)
-        formattedTotalSize = '（大小计算失败）'
-        incrementalSize = '（计算失败）'
       }
     }
 

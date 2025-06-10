@@ -1,4 +1,16 @@
+import { pluginRoot } from '#GamePush'
 import fs from 'node:fs'
+import path from 'node:path'
+
+const packageJsonPath = path.resolve(pluginRoot, 'package.json')
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'))
+logger.info(`GamePush-Plugin ${packageJson.version} 加载中`)
+if ( packageJson.version < '1.0.1') {
+  logger.warn(`新版本现已适配锅巴建议各位使用者更新`)
+  logger.info(`Created By ${packageJson.author}`)
+} else {
+  logger.info(`Created By ${packageJson.author}`)
+}
 
 const files = fs.readdirSync('./plugins/GamePush-Plugin/apps').filter(file => file.endsWith('.js'))
 
