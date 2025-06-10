@@ -41,7 +41,7 @@ export default class Config {
 
     this.watcher.on('change', path => {
       this.loadConfig()
-      
+
       this.gameIds.forEach(gameId => {
         if (this[`change_${gameId}`]) {
           this[`change_${gameId}`]()
