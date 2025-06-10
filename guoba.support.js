@@ -55,137 +55,23 @@ export function supportGuoba () {
               field: `${gameId}.pushGroups`,
               label: '推送群组',
               bottomHelpMessage: '选择需要推送通知的群组',
-              component: 'GSubForm',
-              value: [],
+              component: 'GSelectGroup',
               componentProps: {
-                multiple: true,
-                schemas: [
-                  {
-                    field: 'groupId',
-                    label: '群组ID',
-                    component: 'Input',
-                    required: true,
-                    componentProps: {
-                      placeholder: '请输入群号',
-                      style: { width: '100%' }
-                    }
-                  }
-                ],
-                itemProps: {
-                  style: {
-                    width: '100%',
-                    marginBottom: '16px'
-                  }
-                }
+                placeholder: '点击选择群'
               }
             }
           ]
         }).flat()
       ],
-      actions: {},
       getConfigData () {
-        try {
-          const config = cfg.loadConfig()
-          logger.debug('[GamePush-Plugin] 从文件加载配置')
-          
-          const transformedConfig = {}
-          gameIds.forEach(gameId => {
-            const gameConfig = config[gameId] || {}
-            transformedConfig[gameId] = {
-              enable: gameConfig.enable ?? true,
-              cron: gameConfig.cron || '0 0/5 * * * *',
-              pushGroups: Array.isArray(gameConfig.pushGroups)
-                ? gameConfig.pushGroups.map(groupId => ({
-                    groupId: String(groupId)
-                  }))
-                : []
-            }
-          })
-          
-          return transformedConfig
-        } catch (error) {
-          logger.error('[GamePush-Plugin] 获取配置失败', error)
-          
-          const defaultConfig = {}
-          gameIds.forEach(gameId => {
-            defaultConfig[gameId] = {
-              enable: true,
-              cron: '0 0/5 * * * *',
-              pushGroups: []
-            }
-          })
-          return defaultConfig
-        }
+        return cfg.getFrontendConfig()
       },
       setConfigData (data, { Result }) {
-        try {
-          logger.debug('[GamePush-Plugin] 收到前端配置数据:', data)
-          
-          if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
-            return Result.error('无效的配置数据')
-          }
-          
-          const formattedData = {}
-          gameIds.forEach(gameId => {
-            const gameData = data[gameId]
-            if (gameData && typeof gameData === 'object') {
-              formattedData[gameId] = {
-                enable: !!gameData.enable,
-                cron: gameData.cron || '0 0/5 * * * *',
-                pushGroups: Array.isArray(gameData.pushGroups)
-                  ? gameData.pushGroups
-                      .map(item => {
-                        if (item && typeof item === 'object' && 'groupId' in item) {
-                          return String(item.groupId)
-                        } else {
-                          return String(item)
-                        }
-                      })
-                      .filter(groupId => groupId)
-                  : []
-              }
-            } else {
-              formattedData[gameId] = {
-                enable: false,
-                cron: '0 0/5 * * * *',
-                pushGroups: []
-              }
-
-              const prefix = `${gameId}.`
-              Object.keys(data).forEach(key => {
-                if (key.startsWith(prefix)) {
-                  const prop = key.substring(prefix.length)
-                  if (prop === 'enable') {
-                    formattedData[gameId].enable = !!data[key]
-                  } else if (prop === 'cron') {
-                    formattedData[gameId].cron = data[key] || '0 0/5 * * * *'
-                  } else if (prop === 'pushGroups') {
-                    if (Array.isArray(data[key])) {
-                      formattedData[gameId].pushGroups = data[key]
-                        .map(item => {
-                          if (item && typeof item === 'object' && 'groupId' in item) {
-                            return String(item.groupId)
-                          } else {
-                            return String(item)
-                          }
-                        })
-                        .filter(groupId => groupId)
-                    }
-                  }
-                }
-              })
-            }
-          })
-
-          logger.debug('[GamePush-Plugin] 格式化后的配置:', formattedData)
-          if (cfg.saveConfig(formattedData)) {
-            return Result.ok({}, '游戏推送配置已保存！')
-          } else {
-            return Result.error('保存失败，请查看日志')
-          }
-        } catch (error) {
-          logger.error('保存配置失败:', error)
-          return Result.error('保存失败: ' + error.message)
+        const saveResult = cfg.saveFromFrontend(data, { Result })
+        if (saveResult.success) {
+          return Result.ok({}, saveResult.message)
+        } else {
+          return Result.error(saveResult.message)
         }
       }
     }

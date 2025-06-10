@@ -1,3 +1,4 @@
+// model/config.js
 import fs from 'node:fs'
 import YAML from 'yaml'
 import path from 'node:path'
@@ -7,140 +8,122 @@ import { dirname } from 'path'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-
 const CONFIG_DIR = path.join(process.cwd(), 'data')
 const CONFIG_PATH = path.join(CONFIG_DIR, 'GamePush-Plugin.yaml')
 
-export default class Config {
-  constructor () {
-    this.gameIds = ['ys', 'sr', 'zzz', 'bh3', 'ww']
-    this.configCache = {}
-    this.changeCallbacks = {}
-    this.watcher = null
+const DEFAULT_CRON = '0 0/5 * * * *'
+const GAME_IDS = ['ys', 'sr', 'zzz', 'bh3', 'ww']
 
+function normalizeGroups(groups) {
+  if (!Array.isArray(groups)) return []
+  return groups.map(item =>
+    item && typeof item === 'object' && 'groupId' in item ? String(item.groupId) : String(item)
+  ).filter(Boolean)
+}
+
+function defaultGameConfig(enable = true) {
+  return { enable, cron: DEFAULT_CRON, pushGroups: [] }
+}
+
+function defaultAllConfig() {
+  return Object.fromEntries(GAME_IDS.map(id => [id, defaultGameConfig()]))
+}
+
+export default class Config {
+  constructor() {
+    this.configCache = {}
     this.init()
     this.watchConfig()
   }
 
-  init () {
-    if (!fs.existsSync(CONFIG_DIR)) {
-      fs.mkdirSync(CONFIG_DIR, { recursive: true })
-    }
-
-    if (!fs.existsSync(CONFIG_PATH)) {
-      this.saveConfigSync(this.generateDefaultConfig())
-    }
-
+  init() {
+    if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true })
+    if (!fs.existsSync(CONFIG_PATH)) this.saveConfig(defaultAllConfig())
     this.loadConfig()
   }
 
-  watchConfig () {
-    if (this.watcher) return
-
-    this.watcher = chokidar.watch(CONFIG_PATH)
-
-    this.watcher.on('change', path => {
-      this.loadConfig()
-
-      this.gameIds.forEach(gameId => {
-        if (this[`change_${gameId}`]) {
-          this[`change_${gameId}`]()
-        }
-      })
-      logger.info('[GamePush-Plugin] 配置已重新加载')
-    })
-    logger.info('[GamePush-Plugin] 配置监听已启动')
+  validateConfig(config) {
+    return Object.fromEntries(GAME_IDS.map(gameId => {
+      const c = { ...defaultGameConfig(), ...(config[gameId] || {}) }
+      c.pushGroups = normalizeGroups(c.pushGroups)
+      return [gameId, c]
+    }))
   }
 
-  generateDefaultConfig () {
-    const config = {}
-    this.gameIds.forEach(gameId => {
-      config[gameId] = {
-        enable: true,
-        cron: '0 0/5 * * * *',
-        pushGroups: []
-      }
-    })
-    return config
-  }
-
-  loadConfig () {
+  loadConfig() {
     try {
-      if (!fs.existsSync(CONFIG_PATH)) {
-        this.saveConfigSync(this.generateDefaultConfig())
-      }
-
-      const content = fs.readFileSync(CONFIG_PATH, 'utf8')
-      const rawConfig = YAML.parse(content) || {}
-      this.configCache = this.validateConfig(rawConfig)
-
+      if (!fs.existsSync(CONFIG_PATH)) this.saveConfig(defaultAllConfig())
+      const raw = YAML.parse(fs.readFileSync(CONFIG_PATH, 'utf8')) || {}
+      this.configCache = this.validateConfig(raw)
+      logger?.debug?.('[GamePush-Plugin] 配置已加载')
       return this.configCache
     } catch (err) {
-      logger.error('[GamePush-Plugin] 配置加载失败，使用默认值', err)
-      this.configCache = this.generateDefaultConfig()
+      logger?.error?.('[GamePush-Plugin] 配置加载失败', err)
+      this.configCache = defaultAllConfig()
       return this.configCache
     }
   }
 
-  validateConfig (config) {
-    const validatedConfig = {}
-    this.gameIds.forEach(gameId => {
-      const gameConfig = config[gameId] || {}
-      validatedConfig[gameId] = {
-        enable: typeof gameConfig.enable === 'boolean' ? gameConfig.enable : true,
-        cron: typeof gameConfig.cron === 'string' && gameConfig.cron
-          ? gameConfig.cron
-          : '0 0/5 * * * *',
-        pushGroups: Array.isArray(gameConfig.pushGroups)
-          ? gameConfig.pushGroups.map(g => String(g))
-          : []
-      }
+  saveConfig(newConfig) {
+    try {
+      const validated = this.validateConfig(newConfig)
+      fs.writeFileSync(CONFIG_PATH, YAML.stringify(validated, { indent: 2 }), 'utf8')
+      this.configCache = validated
+      logger?.debug?.('[GamePush-Plugin] 配置已保存')
+      return true
+    } catch (e) {
+      logger?.error?.('[GamePush-Plugin] 配置保存失败', e)
+      return false
+    }
+  }
+
+  watchConfig() {
+    if (this.watcher) return
+    this.watcher = chokidar.watch(CONFIG_PATH)
+    this.watcher.on('change', () => {
+      logger?.info?.('[GamePush-Plugin] 配置变更，重新加载')
+      this.loadConfig()
     })
-
-    return validatedConfig
   }
 
-  getConfig () {
-    return this.configCache
+  getGameConfig(game) {
+    return this.configCache[game] || defaultGameConfig()
   }
 
-  getGameConfig (game) {
-    return this.configCache[game] || this.generateDefaultConfig()[game]
-  }
-
-  saveConfig (newConfig) {
+  getFrontendConfig() {
     try {
-      const validatedConfig = this.validateConfig(newConfig)
-      this.configCache = validatedConfig
-      const yamlContent = YAML.stringify(validatedConfig, {
-        indent: 2,
-        aliasDuplicateObjects: false
-      })
-
-      fs.writeFileSync(CONFIG_PATH, yamlContent, 'utf8')
-
-      logger.debug('[GamePush-Plugin] 配置已保存')
-      return true
-    } catch (error) {
-      logger.error('[GamePush-Plugin] 配置保存失败:', error)
-      return false
+      const config = this.loadConfig()
+      return Object.fromEntries(GAME_IDS.map(id => [id, { ...config[id] }]))
+    } catch (e) {
+      logger?.error?.('[GamePush-Plugin] 获取前端配置失败', e)
+      return defaultAllConfig()
     }
   }
 
-  saveConfigSync (config) {
+  saveFromFrontend(data) {
     try {
-      const validatedConfig = this.validateConfig(config)
-      const yamlContent = YAML.stringify(validatedConfig)
-      fs.writeFileSync(CONFIG_PATH, yamlContent, 'utf8')
-      return true
-    } catch (error) {
-      logger.error('[GamePush-Plugin] 配置保存失败:', error)
-      return false
+      logger?.debug?.('[GamePush-Plugin] 收到前端配置数据:', data)
+      if (!data || typeof data !== 'object') return { success: false, message: '无效的配置数据' }
+      const saveData = Object.fromEntries(GAME_IDS.map(gameId => {
+        let gameData = {}
+        Object.keys(data).forEach(key => {
+          if (key.startsWith(`${gameId}.`)) gameData[key.slice(gameId.length + 1)] = data[key]
+          else if (key === gameId) Object.assign(gameData, data[key])
+        })
+        if (!Object.keys(gameData).length) return [gameId, defaultGameConfig(false)]
+        return [gameId, {
+          enable: !!gameData.enable,
+          cron: gameData.cron || DEFAULT_CRON,
+          pushGroups: normalizeGroups(gameData.pushGroups)
+        }]
+      }))
+      logger?.debug?.('[GamePush-Plugin] 格式化后的配置:', saveData)
+      return this.saveConfig(saveData)
+        ? { success: true, message: '游戏推送配置已保存！' }
+        : { success: false, message: '保存失败，请查看日志' }
+    } catch (e) {
+      logger?.error?.('保存配置失败:', e)
+      return { success: false, message: '保存失败: ' + e.message }
     }
-  }
-
-  registerChangeCallback (gameId, callback) {
-    this[`change_${gameId}`] = callback
-    logger.info(`[GamePush-Plugin] ${gameId}配置变更回调已注册`)
   }
 }
