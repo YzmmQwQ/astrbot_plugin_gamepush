@@ -41,16 +41,14 @@ export default class Config {
 
     this.watcher.on('change', path => {
       this.loadConfig()
-
+      
       this.gameIds.forEach(gameId => {
         if (this[`change_${gameId}`]) {
           this[`change_${gameId}`]()
         }
       })
-
       logger.info('[GamePush-Plugin] 配置已重新加载')
     })
-
     logger.info('[GamePush-Plugin] 配置监听已启动')
   }
 
@@ -74,7 +72,6 @@ export default class Config {
 
       const content = fs.readFileSync(CONFIG_PATH, 'utf8')
       const rawConfig = YAML.parse(content) || {}
-
       this.configCache = this.validateConfig(rawConfig)
 
       return this.configCache
@@ -87,10 +84,8 @@ export default class Config {
 
   validateConfig (config) {
     const validatedConfig = {}
-
     this.gameIds.forEach(gameId => {
       const gameConfig = config[gameId] || {}
-
       validatedConfig[gameId] = {
         enable: typeof gameConfig.enable === 'boolean' ? gameConfig.enable : true,
         cron: typeof gameConfig.cron === 'string' && gameConfig.cron
@@ -116,9 +111,7 @@ export default class Config {
   saveConfig (newConfig) {
     try {
       const validatedConfig = this.validateConfig(newConfig)
-
       this.configCache = validatedConfig
-
       const yamlContent = YAML.stringify(validatedConfig, {
         indent: 2,
         aliasDuplicateObjects: false
@@ -126,7 +119,7 @@ export default class Config {
 
       fs.writeFileSync(CONFIG_PATH, yamlContent, 'utf8')
 
-      logger.info('[GamePush-Plugin] 配置已保存')
+      logger.debug('[GamePush-Plugin] 配置已保存')
       return true
     } catch (error) {
       logger.error('[GamePush-Plugin] 配置保存失败:', error)

@@ -34,7 +34,7 @@ export function supportGuoba () {
             },
             {
               field: `${gameId}.enable`,
-              label: `启用${gameName}推送`,
+              label: `启用推送`,
               component: 'Switch',
               value: true,
               componentProps: {
@@ -86,7 +86,7 @@ export function supportGuoba () {
       getConfigData () {
         try {
           const config = cfg.loadConfig()
-          logger.info('[GamePush-Plugin] 从文件加载配置')
+          logger.debug('[GamePush-Plugin] 从文件加载配置')
           return config
         } catch (error) {
           logger.error('[GamePush-Plugin] 获取配置失败', error)
@@ -95,7 +95,7 @@ export function supportGuoba () {
       },
       setConfigData (data, { Result }) {
         try {
-          logger.info('[GamePush-Plugin] 收到前端配置数据:', data)
+          logger.debug('[GamePush-Plugin] 收到前端配置数据:', data)
 
           if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
             return Result.error('无效的配置数据')
@@ -138,7 +138,7 @@ export function supportGuoba () {
             }
           })
 
-          logger.info('[GamePush-Plugin] 格式化后的配置:', formattedData)
+          logger.debug('[GamePush-Plugin] 格式化后的配置:', formattedData)
           if (cfg.saveConfig(formattedData)) {
             return Result.ok({}, '游戏推送配置已保存！')
           } else {
