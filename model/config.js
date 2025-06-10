@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import YAML from 'yaml'
 import path from 'node:path'
+import chokidar from 'chokidar'
 import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
@@ -13,7 +14,12 @@ const CONFIG_PATH = path.join(CONFIG_DIR, 'GamePush-Plugin.yaml')
 export default class Config {
   constructor () {
     this.gameIds = ['ys', 'sr', 'zzz', 'bh3', 'ww']
+    this.configCache = {}
+    this.changeCallbacks = {}
+    this.watcher = null
+
     this.init()
+    this.watchConfig()
   }
 
   init () {
@@ -22,100 +28,126 @@ export default class Config {
     }
 
     if (!fs.existsSync(CONFIG_PATH)) {
-      const defaultConfig = this.generateDefaultConfig()
-      this.saveConfig(defaultConfig)
+      this.saveConfigSync(this.generateDefaultConfig())
     }
+
+    this.loadConfig()
+  }
+
+  watchConfig () {
+    if (this.watcher) return
+
+    this.watcher = chokidar.watch(CONFIG_PATH)
+
+    this.watcher.on('change', path => {
+      this.loadConfig()
+
+      this.gameIds.forEach(gameId => {
+        if (this[`change_${gameId}`]) {
+          this[`change_${gameId}`]()
+        }
+      })
+
+      logger.info('[GamePush-Plugin] 配置已重新加载')
+    })
+
+    logger.info('[GamePush-Plugin] 配置监听已启动')
   }
 
   generateDefaultConfig () {
-    const defaultConfig = {}
+    const config = {}
     this.gameIds.forEach(gameId => {
-      defaultConfig[gameId] = {
+      config[gameId] = {
         enable: true,
         cron: '0 0/5 * * * *',
         pushGroups: []
       }
     })
-    return defaultConfig
+    return config
   }
 
   loadConfig () {
     try {
       if (!fs.existsSync(CONFIG_PATH)) {
-        logger.warn('[GamePush-Plugin] 配置文件不存在，创建默认配置')
-        const defaultConfig = this.generateDefaultConfig()
-        this.saveConfig(defaultConfig)
-        return defaultConfig
+        this.saveConfigSync(this.generateDefaultConfig())
       }
 
       const content = fs.readFileSync(CONFIG_PATH, 'utf8')
-      let config = YAML.parse(content)
+      const rawConfig = YAML.parse(content) || {}
 
-      const fullConfig = this.fillMissingGameConfigs(config)
+      this.configCache = this.validateConfig(rawConfig)
 
-      this.gameIds.forEach(gameId => {
-        fullConfig[gameId] = this.validateGameConfig(fullConfig[gameId])
-      })
-
-      this.saveConfig(fullConfig)
-
-      return fullConfig
+      return this.configCache
     } catch (err) {
       logger.error('[GamePush-Plugin] 配置加载失败，使用默认值', err)
-      return this.generateDefaultConfig()
+      this.configCache = this.generateDefaultConfig()
+      return this.configCache
     }
   }
 
-  fillMissingGameConfigs (config) {
-    const fullConfig = { ...this.generateDefaultConfig(), ...config }
+  validateConfig (config) {
+    const validatedConfig = {}
 
     this.gameIds.forEach(gameId => {
-      if (!fullConfig[gameId]) {
-        fullConfig[gameId] = this.generateDefaultConfig()[gameId]
+      const gameConfig = config[gameId] || {}
+
+      validatedConfig[gameId] = {
+        enable: typeof gameConfig.enable === 'boolean' ? gameConfig.enable : true,
+        cron: typeof gameConfig.cron === 'string' && gameConfig.cron
+          ? gameConfig.cron
+          : '0 0/5 * * * *',
+        pushGroups: Array.isArray(gameConfig.pushGroups)
+          ? gameConfig.pushGroups.map(g => String(g))
+          : []
       }
     })
 
-    return fullConfig
+    return validatedConfig
   }
 
-  validateGameConfig (config) {
-    return {
-      enable: typeof config.enable === 'boolean' ? config.enable : true,
-      cron: typeof config.cron === 'string' && config.cron ? config.cron : '0 0/5 * * * *',
-      pushGroups: Array.isArray(config.pushGroups)
-        ? config.pushGroups.map(g => String(g))
-        : []
-    }
+  getConfig () {
+    return this.configCache
   }
 
-  saveConfig (config) {
+  getGameConfig (game) {
+    return this.configCache[game] || this.generateDefaultConfig()[game]
+  }
+
+  saveConfig (newConfig) {
     try {
-      const validConfig = this.fillMissingGameConfigs(config)
+      const validatedConfig = this.validateConfig(newConfig)
 
-      const yamlContent = YAML.stringify(validConfig, {
+      this.configCache = validatedConfig
+
+      const yamlContent = YAML.stringify(validatedConfig, {
         indent: 2,
-        aliasDuplicateObjects: false,
-        simpleKeys: true,
-        lineWidth: 0
+        aliasDuplicateObjects: false
       })
 
       fs.writeFileSync(CONFIG_PATH, yamlContent, 'utf8')
+
+      logger.info('[GamePush-Plugin] 配置已保存')
       return true
-    } catch (err) {
+    } catch (error) {
+      logger.error('[GamePush-Plugin] 配置保存失败:', error)
       return false
     }
   }
 
-  getGameConfig (game) {
-    const config = this.loadConfig()
-    return config[game] || this.generateDefaultConfig()[game]
+  saveConfigSync (config) {
+    try {
+      const validatedConfig = this.validateConfig(config)
+      const yamlContent = YAML.stringify(validatedConfig)
+      fs.writeFileSync(CONFIG_PATH, yamlContent, 'utf8')
+      return true
+    } catch (error) {
+      logger.error('[GamePush-Plugin] 配置保存失败:', error)
+      return false
+    }
   }
 
-  updateGameConfig (game, updater) {
-    const config = this.loadConfig()
-    const gameConfig = config[game] || this.generateDefaultConfig()[game]
-    updater(gameConfig)
-    config[game] = gameConfig
-    this.saveConfig(config)
+  registerChangeCallback (gameId, callback) {
+    this[`change_${gameId}`] = callback
+    logger.info(`[GamePush-Plugin] ${gameId}配置变更回调已注册`)
   }
 }
