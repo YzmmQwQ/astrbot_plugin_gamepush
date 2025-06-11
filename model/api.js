@@ -62,7 +62,8 @@ export default class ApiTools extends base {
         type: 'main',
         game,
         newVersion: currentVersion,
-        oldVersion: stored
+        oldVersion: stored,
+        pushChangeType: cfg.getGameConfig(game).pushChangeType
       })
     }
   }
@@ -79,7 +80,8 @@ export default class ApiTools extends base {
           type: 'pre',
           game,
           newVersion: currentPre,
-          oldVersion: storedPre
+          oldVersion: storedPre,
+          pushChangeType: cfg.getGameConfig(game).pushChangeType
         })
       }
     } else if (storedPre) {
@@ -87,7 +89,8 @@ export default class ApiTools extends base {
       notice.pushNotify({
         type: 'pre-remove',
         game,
-        oldVersion: storedPre
+        oldVersion: storedPre,
+        pushChangeType: cfg.getGameConfig(game).pushChangeType
       })
     }
   }

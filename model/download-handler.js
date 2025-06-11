@@ -1,4 +1,4 @@
-﻿import fetch from 'node-fetch'
+import fetch from 'node-fetch'
 import { getGameAPI, getGameName } from './util.js'
 
 export default class Download {
@@ -165,7 +165,7 @@ export default class Download {
     const patchesMessages = []
 
     msg.push(
-      `🌊 ${gameName}${isPre ? '预下载' : '正式'}版本 - ${pkgData.version || '未知'}`
+      `🎮 ${gameName}${isPre ? '预下载' : '正式'}版本 - ${pkgData.version || '未知'}`
     )
 
     let clientText = '📦 完整客户端包：\n▂▂▂▂▂▂▂▂▂▂▂▂\n'

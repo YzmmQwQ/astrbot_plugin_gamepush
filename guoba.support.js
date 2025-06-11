@@ -34,7 +34,7 @@ export function supportGuoba () {
             },
             {
               field: `${gameId}.enable`,
-              label: `启用推送`,
+              label: '启用推送',
               component: 'Switch',
               value: true,
               componentProps: {
@@ -58,6 +58,19 @@ export function supportGuoba () {
               component: 'GSelectGroup',
               componentProps: {
                 placeholder: '点击选择群'
+              }
+            },
+            {
+              field: `${gameId}.pushChangeType`,
+              label: '消息类型',
+              bottomHelpMessage: '1. 图片类型消息推送 2. 文字类型消息推送',
+              component: 'RadioGroup',
+              componentProps: {
+                options: [
+                  { label: '图片消息', value: '1' },
+                  { label: '文字消息', value: '2' }
+                ],
+                placeholder: '请选择消息推送类型'
               }
             }
           ]

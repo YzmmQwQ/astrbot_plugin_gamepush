@@ -73,6 +73,7 @@ export class bh3Push extends plugin {
       }
       config.enable = isEnable
       config.cron = config.cron || '0 0/5 * * * *'
+      config.pushChangeType = config.pushChangeType || '1'
     })
 
     const action = isEnable ? `已添加本群到推送列表（ID：${groupId}）` : '已移除本群推送'
