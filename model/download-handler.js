@@ -1,4 +1,4 @@
-import fetch from 'node-fetch'
+﻿import fetch from 'node-fetch'
 import { getGameAPI, getGameName } from './util.js'
 
 export default class Download {
@@ -9,7 +9,7 @@ export default class Download {
       const res = await fetch(apiUrl)
 
       if (!res.ok) {
-        console.error(`API请求失败: ${res.status} ${res.statusText}`)
+        logger.error(`[GamePush-Plugin] API请求失败: ${res.status} ${res.statusText}`)
         return {
           data: null,
           patch: { game_pkgs: [], audio_pkgs: [], patches: [] },
@@ -18,7 +18,6 @@ export default class Download {
       }
 
       const data = await res.json()
-      console.log('API响应:', JSON.stringify(data, null, 2))
 
       if (game === 'ww') {
         return this.handleWutheringWaves(data, type)
@@ -45,7 +44,7 @@ export default class Download {
         type: 'main'
       }
     } catch (e) {
-      console.error('获取下载数据时发生错误:', e)
+      logger.error('[GamePush-Plugin] 获取下载数据时发生错误:', e)
       return {
         data: null,
         patch: { game_pkgs: [], audio_pkgs: [] },
@@ -56,12 +55,11 @@ export default class Download {
 
   handleWutheringWaves (data, type) {
     const versionType = type === 'pre' ? 'predownload' : 'default'
-    console.log(`处理鸣潮${type === 'pre' ? '预下载' : '正式'}数据，使用${versionType}部分`)
 
     const versionData = data[versionType]
 
     if (!versionData || !versionData.config) {
-      console.warn(`${versionType}数据缺失，versionData: ${!!versionData}, config: ${!!versionData?.config}`)
+      logger.warn(`[GamePush-Plugin] ${versionType}数据缺失，versionData: ${!!versionData}, config: ${!!versionData?.config}`)
       return {
         data: null,
         patch: { game_pkgs: [], audio_pkgs: [] },
@@ -79,9 +77,6 @@ export default class Download {
     const config = versionData.config
 
     const mainUrl = this.constructWWUrl(cdn, config)
-    console.log(`主包URL构造结果: ${mainUrl || '无链接'}, 
-      参数: cdn=${cdn}, 
-      indexFile=${config.indexFile || '无indexFile'}`)
 
     const mainMajor = {
       version: config.version,
@@ -102,9 +97,6 @@ export default class Download {
       sortedPatchConfig.forEach((patch, index) => {
         if (patch.indexFile) {
           const patchUrl = this.constructWWUrl(cdn, patch)
-          console.log(`差分包 ${index + 1} (版本: ${patch.version}): 
-            URL=${patchUrl || '无链接'}, 
-            indexFile=${patch.indexFile}`)
 
           patchPkgs.push({
             url: patchUrl,

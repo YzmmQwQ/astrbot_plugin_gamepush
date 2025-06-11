@@ -1,4 +1,4 @@
-import puppeteer from '../../../lib/puppeteer/puppeteer.js'
+﻿import puppeteer from '../../../lib/puppeteer/puppeteer.js'
 import Config from './config.js'
 import { getGameName } from './util.js'
 import download from './download-handler.js'
@@ -15,7 +15,6 @@ export default class noticerender extends base {
     if (game == 'ww') {
       if (type === 'main' || type === 'pre') {
         const downloadData = await new download().getDownloadData(game, type)
-        console.log(downloadData)
         let totalSize = downloadData.data.game_pkgs[0].size
 
         formattedTotalSize = this.formatSize(totalSize)
@@ -23,12 +22,10 @@ export default class noticerender extends base {
         let patchTotalSize = downloadData.patch.game_pkgs[0].size
 
         incrementalSize = this.formatSize(patchTotalSize)
-        console.log(incrementalSize)
       }
     } else {
       if (type === 'main' || type === 'pre') {
         const downloadData = await new download().getDownloadData(game, type)
-        console.log(downloadData)
         let totalSize = 0
 
         if (downloadData.data?.game_pkgs) {

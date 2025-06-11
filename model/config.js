@@ -1,5 +1,4 @@
-// model/config.js
-import fs from 'node:fs'
+﻿import fs from 'node:fs'
 import YAML from 'yaml'
 import path from 'node:path'
 import chokidar from 'chokidar'
