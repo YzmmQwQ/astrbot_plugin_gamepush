@@ -70,7 +70,7 @@ export default class ApiTools extends base {
 
   async processPreDownload (game, preData) {
     const { pre: preKey } = getRedisKeys(game)
-    const currentPre = game === 'ww' ? preData.version : preData?.tag
+    const currentPre = game === 'ww' ? preData?.version : preData?.tag
     const storedPre = await redis.get(preKey)
 
     if (currentPre) {

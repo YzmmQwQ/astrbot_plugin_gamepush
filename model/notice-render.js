@@ -81,7 +81,7 @@ export default class noticerender extends base {
             formattedTotalSize && `<span class="emoji-text">📦</span> 完整大小（含中文语音）：${escapeHtml(formattedTotalSize)}`,
             incrementalSize && `<span class="emoji-text">🔄</span> 增量更新大小：约${escapeHtml(incrementalSize)}`,
             '<span class="emoji-text">📢</span> 请及时更新客户端',
-            ...(game !== 'ys' ? [`<span class="emoji-text">💾</span> 发送【#${escapeHtml(gameName)}获取下载】获取客户端`] : [])
+            ...(game !== 'ys' ? [`<span class="emoji-text">💾</span> 发送【#${escapeHtml(gameName)}获取下载链接】获取客户端`] : [])
           ]
 
           return messages.flat()
@@ -94,7 +94,7 @@ export default class noticerender extends base {
           formattedTotalSize && `<span class="emoji-text">📦</span> 完整大小（含中文语音）：${escapeHtml(formattedTotalSize)}`,
           incrementalSize && `<span class="emoji-text">⏬</span> 增量包大小：约${escapeHtml(incrementalSize)}`,
           '<span class="emoji-text">📥</span> 请提前下载游戏资源',
-          ...(game !== 'ys' ? [`<span class="emoji-text">🚪</span> 发送【#${escapeHtml(gameName)}获取预下载】获取链接`] : [])
+          ...(game !== 'ys' ? [`<span class="emoji-text">🚪</span> 发送【#${escapeHtml(gameName)}获取预下载链接】获取链接`] : [])
         ],
         'pre-remove': () => [
         `<span class="emoji-text">🌙</span> ${escapeHtml(gameName)}预下载资源已关闭`,
