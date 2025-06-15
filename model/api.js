@@ -5,12 +5,12 @@ import notice from './notice.js'
 import { getGameCheckAPI, getGameName, getRedisKeys, GAME_CONFIG, versionComparator } from './util.js'
 
 class ApiTools extends base {
-  gameApis = new Map();
+  gameApis = new Map()
   constructor() {
-    super();
+    super()
     Object.keys(GAME_CONFIG).forEach(game => {
-      this.gameApis.set(game, getGameCheckAPI(game));
-    });
+      this.gameApis.set(game, getGameCheckAPI(game))
+    })
   }
   async autoCheck (game = '') {
     try {
@@ -28,7 +28,7 @@ class ApiTools extends base {
       throw new Error(`[GamePush-Plugin] 无效的游戏标识: ${game}`)
     }
     try {
-      const apiUrl = this.gameApis.get(game);
+      const apiUrl = this.gameApis.get(game)
       logger.debug(`[GamePush-Plugin][${getGameName(game)}] 请求API: ${apiUrl}`)
 
       const res = await fetch(apiUrl)
@@ -40,9 +40,9 @@ class ApiTools extends base {
       const data = await res.json()
 
       if (game === 'ww') {
-        await this.processWWData(data, game, auto);
+        await this.processWWData(data, game, auto)
       } else {
-        await this.processMHYData(data, game, auto);
+        await this.processMHYData(data, game, auto)
       }
     } catch (err) {
       logger.error(`[GamePush-Plugin][${getGameName(game)}版本监控] 错误`, err)
@@ -51,36 +51,36 @@ class ApiTools extends base {
   }
 
   async processWWData(data, game, auto) {
-    const gameCheckData = data;
+    const gameCheckData = data
     
     await this.processMainVersion(
       game, 
       gameCheckData.default?.config?.version, 
       auto
-    );
+    )
     
     await this.processPreDownload(
       game, 
       gameCheckData.predownload?.config,
       auto
-    );
+    )
   }
 
   async processMHYData(data, game, auto) {
-    const gameCheckData = data?.data?.game_branches?.[0];
-    if (!gameCheckData) throw new Error(`${getGameName(game)}游戏数据解析失败`);
+    const gameCheckData = data?.data?.game_branches?.[0]
+    if (!gameCheckData) throw new Error(`${getGameName(game)}游戏数据解析失败`)
 
     await this.processMainVersion(
       game, 
       gameCheckData.main?.tag,
       auto
-    );
+    )
     
     await this.processPreDownload(
       game, 
       gameCheckData.pre_download,
       auto
-    );
+    )
   }
 
   async processMainVersion (game, currentVersion) {

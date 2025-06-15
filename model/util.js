@@ -1,9 +1,7 @@
-// API基础URL
-const API_BASE = 'https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGamePackages';
-const CHECK_API = 'https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGameBranches';
-const WW_API_BASE = 'https://prod-cn-alicdn-gamestarter.kurogame.com/launcher/game/G152/10003_Y8xXrXk65DqFHEDgApn3cpK5lfczpFx5/index.json';
+const API_BASE = 'https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGamePackages'
+const CHECK_API = 'https://hyp-api.mihoyo.com/hyp/hyp-connect/api/getGameBranches'
+const WW_API_BASE = 'https://prod-cn-alicdn-gamestarter.kurogame.com/launcher/game/G152/10003_Y8xXrXk65DqFHEDgApn3cpK5lfczpFx5/index.json'
 
-// 游戏配置映射
 export const GAME_CONFIG = {
   ys: {
     id: '1Z8W5NHUQb',
@@ -29,30 +27,30 @@ export const GAME_CONFIG = {
     name: '鸣潮',
     redisPrefix: 'WW'
   }
-};
+}
 
 export const getGameAPI = (game) => {
-  if (game === 'ww') return WW_API_BASE;
-  return `${API_BASE}?launcher_id=jGHBHlcOq1&game_ids[]=${GAME_CONFIG[game].id}`;
-};
+  if (game === 'ww') return WW_API_BASE
+  return `${API_BASE}?launcher_id=jGHBHlcOq1&game_ids[]=${GAME_CONFIG[game].id}`
+}
 
 export const getGameCheckAPI = (game) => {
-  if (game === 'ww') return WW_API_BASE;
-  return `${CHECK_API}?launcher_id=jGHBHlcOq1&game_ids[]=${GAME_CONFIG[game].id}`;
-};
+  if (game === 'ww') return WW_API_BASE
+  return `${CHECK_API}?launcher_id=jGHBHlcOq1&game_ids[]=${GAME_CONFIG[game].id}`
+}
 
 export const getGameName = (game) => 
-  GAME_CONFIG[game]?.name || '未知游戏';
+  GAME_CONFIG[game]?.name || '未知游戏'
 
 export const getRedisKeys = (game) => {
-  const prefix = GAME_CONFIG[game]?.redisPrefix || 'GAME';
+  const prefix = GAME_CONFIG[game]?.redisPrefix || 'GAME'
   return {
     main: `Yz:GamePush:${prefix}:Main`,
     pre: `Yz:GamePush:${prefix}:Pre`
-  };
-};
+  }
+}
 
 export const versionComparator = new Intl.Collator(undefined, {
   numeric: true,
   sensitivity: 'base'
-});
+})

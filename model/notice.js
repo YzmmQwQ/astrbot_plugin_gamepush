@@ -1,8 +1,8 @@
 import puppeteer from '../../../lib/puppeteer/puppeteer.js'
 import cfg from './config.js'
 import base from './base.js'
-import api from './api.js';
-import download from './download.js';
+import api from './api.js'
+import download from './download.js'
 
 class Notifier extends base {
   templateMap = {
@@ -30,7 +30,7 @@ class Notifier extends base {
       `<span class="emoji-text">🌙</span> ${gameName}预下载资源已关闭`,
       `<span class="emoji-text">🔒</span> 正式版本${oldVersion}即将上线`
     ]
-  };
+  }
   
   textTemplateMap = {
     main: ({ gameName, oldVersion, newVersion, formattedTotalSize, formattedIncrementalSize }) => {
@@ -42,7 +42,7 @@ class Notifier extends base {
         '📢 请及时更新客户端',
         ...(gameName !== '原神' ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
       ]
-      return parts.filter(Boolean).join('\n');
+      return parts.filter(Boolean).join('\n')
     },
     
     pre: ({ gameName, oldVersion, newVersion, formattedTotalSize, formattedIncrementalSize }) => {
@@ -55,34 +55,34 @@ class Notifier extends base {
         ...((gameName !== '原神' && gameName !== '崩坏3') ? [formattedIncrementalSize && `🔄 增量更新大小：约${formattedIncrementalSize}`]: []),
         '📥请提前下载游戏资源',
         ...(gameName !== '原神' ? [`💾 发送【#${gameName}获取预下载链接】获取客户端`] : [])
-      ];
-      return parts.filter(Boolean).join('\n');
+      ]
+      return parts.filter(Boolean).join('\n')
     },
     
     'pre-remove': ({ gameName, oldVersion }) => [
       `🌙${gameName}预下载资源已关闭`,
       `🔒正式版本${oldVersion}即将上线`
     ].join('\n')
-  };
+  }
   
   async pushNotify({ type, game, newVersion, oldVersion, pushChangeType }) {
     try {
-      const gameConfig = cfg.getGameConfig(game);
-      const gameName = this.getGameName(game);
+      const gameConfig = cfg.getGameConfig(game)
+      const gameName = this.getGameName(game)
       
-      let formattedTotalSize = '';
-      let formattedIncrementalSize = '';
+      let formattedTotalSize = ''
+      let formattedIncrementalSize = ''
       
       if (['main', 'pre'].includes(type)) {
-        const downloadData = await download.getDownloadData(game, type);
+        const downloadData = await download.getDownloadData(game, type)
         
         if (downloadData.data) {
-          const totalSize = this.calculateTotalSize(downloadData.data, game);
-          formattedTotalSize = api.formatSize(totalSize);
+          const totalSize = this.calculateTotalSize(downloadData.data, game)
+          formattedTotalSize = api.formatSize(totalSize)
           
           if (downloadData.patch) {
-            const incrementalSize = this.calculateTotalSize(downloadData.patch, game);
-            formattedIncrementalSize = api.formatSize(incrementalSize);
+            const incrementalSize = this.calculateTotalSize(downloadData.patch, game)
+            formattedIncrementalSize = api.formatSize(incrementalSize)
           }
         }
       }
@@ -93,31 +93,31 @@ class Notifier extends base {
         newVersion: newVersion || '未知',
         formattedTotalSize,
         formattedIncrementalSize
-      };
+      }
       
       if (pushChangeType === '2') {
-        this.sendTextNotification(templateParams, type, game, gameConfig);
+        this.sendTextNotification(templateParams, type, game, gameConfig)
       } else {
-        await this.sendImageNotification(templateParams, type, game, gameConfig);
+        await this.sendImageNotification(templateParams, type, game, gameConfig)
       }
     } catch (err) {
-      logger.error(`[GamePush][${this.getGameName(game)}通知] 失败`, err);
+      logger.error(`[GamePush][${this.getGameName(game)}通知] 失败`, err)
     }
   }
   
   calculateTotalSize(data, game) {
-    let totalSize = 0;
+    let totalSize = 0
     
     if (data.game_pkgs) {
       for (const pkg of data.game_pkgs) {
         if (game === 'ww') {
           if (data.game_pkgs.length > 0) {
-            totalSize += parseInt(data.game_pkgs[0].size || '0', 10);
+            totalSize += parseInt(data.game_pkgs[0].size || '0', 10)
           }
           break
         }
         else {
-          totalSize += parseInt(pkg.size || '0', 10);
+          totalSize += parseInt(pkg.size || '0', 10)
         }
       }
     }
@@ -125,31 +125,31 @@ class Notifier extends base {
     if (data.audio_pkgs) {
       for (const audio of data.audio_pkgs) {
         if (audio.language?.toLowerCase() === 'zh-cn') {
-          totalSize += parseInt(audio.size || '0', 10);
+          totalSize += parseInt(audio.size || '0', 10)
         }
       }
     }
     
-    return totalSize;
+    return totalSize
   }
   
   sendTextNotification(params, type, game, gameConfig) {
-    const text = this.textTemplateMap[type](params);
-    api.sendToGroups(text, game, gameConfig);
+    const text = this.textTemplateMap[type](params)
+    api.sendToGroups(text, game, gameConfig)
   }
   
   async sendImageNotification(params, type, game, gameConfig) {
     const escapeHtml = (str) => {
-      if (!str) return '';
+      if (!str) return ''
       return str.replace(/[&<>"']/g,
         tag => ({
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#39;'
+          '&': '&amp',
+          '<': '&lt',
+          '>': '&gt',
+          '"': '&quot',
+          "'": '&#39'
         }[tag]))
-    };
+    }
     
     const data = {
       ...this.getScreenData(game),
@@ -157,12 +157,12 @@ class Notifier extends base {
       gameName: escapeHtml(params.gameName),
       date: new Date().toLocaleDateString(),
       type
-    };
+    }
     
-    const img = await puppeteer.screenshot('GamePush-Plugin/notice', data);
-    api.sendToGroups(img, game, gameConfig);
+    const img = await puppeteer.screenshot('GamePush-Plugin/notice', data)
+    api.sendToGroups(img, game, gameConfig)
   }
 }
 
-const notice = new Notifier();
-export default notice;
+const notice = new Notifier()
+export default notice
