@@ -1,11 +1,6 @@
-import { Config, ApiTools, getRedisKeys, download } from '#GamePush'
-
-let api = new ApiTools()
-let down = new download()
-let cfg = new Config()
+import { cfg, api, download, getRedisKeys} from '#GamePush'
 
 let wwReg = '(~|鸣潮|ww|WW|mc)'
-let time = cfg.getGameConfig('ww').cron || '0 0/5 * * * *'
 
 export class wwPush extends plugin {
   constructor () {
@@ -41,7 +36,7 @@ export class wwPush extends plugin {
     })
 
     this.task = {
-      cron: time,
+      cron: cfg.getGameConfig('ww').cron || '0 0/5 * * * *',
       name: '[GamePush-Plugin] 鸣潮版本监控',
       fnc: () => api.autoCheck('ww'),
       log: false
@@ -98,11 +93,11 @@ export class wwPush extends plugin {
 
   async wwDownloadLinks () {
     try {
-      const { data, patch } = await down.getDownloadData('ww', 'main')
+      const { data, patch } = await download.getDownloadData('ww', 'main')
       console.log(data)
       if (!data) return this.reply('当前没有可用的正式版本下载', true)
 
-      const { msg, client, patchesMessages } = down.formatDownloadInfo('ww', data, 'main', patch)
+      const { msg, client, patchesMessages } = download.formatDownloadInfo('ww', data, 'main', patch)
       return this.reply(await Bot.makeForwardArray([msg, client, patchesMessages]))
     } catch (err) {
       return this.reply(`❌ 获取失败：${err.message}`, true)
@@ -111,10 +106,10 @@ export class wwPush extends plugin {
 
   async wwPreDownloadLinks () {
     try {
-      const { data, patch } = await down.getDownloadData('ww', 'pre')
+      const { data, patch } = await download.getDownloadData('ww', 'pre')
       if (!data) return this.reply('🚫 鸣潮当前未开放预下载', true)
 
-      const { msg, client, patchesMessages } = down.formatDownloadInfo('ww', data, 'pre', patch)
+      const { msg, client, patchesMessages } = download.formatDownloadInfo('ww', data, 'pre', patch)
       return this.reply(await Bot.makeForwardArray([msg, client, patchesMessages]))
     } catch (err) {
       return this.reply(`❌ 预下载获取失败：${err.message}`, true)

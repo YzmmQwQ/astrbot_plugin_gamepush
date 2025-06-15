@@ -1,12 +1,17 @@
 import fetch from 'node-fetch'
-import Config from './config.js'
+import cfg from './config.js'
 import base from './base.js'
-import noticerender from './notice-render.js'
-import { getGameCheckAPI, getGameName, getRedisKeys, GAME_CONFIG } from './util.js'
+import notice from './notice.js'
+import { getGameCheckAPI, getGameName, getRedisKeys, GAME_CONFIG, versionComparator } from './util.js'
 
-const notice = new noticerender()
-const cfg = new Config()
-export default class ApiTools extends base {
+class ApiTools extends base {
+  gameApis = new Map();
+  constructor() {
+    super();
+    Object.keys(GAME_CONFIG).forEach(game => {
+      this.gameApis.set(game, getGameCheckAPI(game));
+    });
+  }
   async autoCheck (game = '') {
     try {
       const gameConfig = cfg.getGameConfig(game)
@@ -19,12 +24,11 @@ export default class ApiTools extends base {
   }
 
   async checkVersion (auto = false, game = '') {
+    if (!game || !GAME_CONFIG[game]) {
+      throw new Error(`[GamePush-Plugin] 无效的游戏标识: ${game}`)
+    }
     try {
-      if (!game || !GAME_CONFIG[game]) {
-        throw new Error(`[GamePush-Plugin] 无效的游戏标识: ${game}`)
-      }
-
-      const apiUrl = getGameCheckAPI(game)
+      const apiUrl = this.gameApis.get(game);
       logger.debug(`[GamePush-Plugin][${getGameName(game)}] 请求API: ${apiUrl}`)
 
       const res = await fetch(apiUrl)
@@ -34,20 +38,49 @@ export default class ApiTools extends base {
       }
 
       const data = await res.json()
-      let gameCheckData = game === 'ww' ? data : data?.data?.game_branches?.[0]
-      if (!gameCheckData) throw new Error(`[GamePush-Plugin] ${getGameName(game)}游戏数据解析失败`)
 
       if (game === 'ww') {
-        await this.processMainVersion(game, gameCheckData.default?.config?.version)
-        await this.processPreDownload(game, gameCheckData.predownload?.config)
+        await this.processWWData(data, game, auto);
       } else {
-        await this.processMainVersion(game, gameCheckData.main?.tag)
-        await this.processPreDownload(game, gameCheckData.pre_download)
+        await this.processMHYData(data, game, auto);
       }
     } catch (err) {
       logger.error(`[GamePush-Plugin][${getGameName(game)}版本监控] 错误`, err)
       if (!auto) this.reply(`[GamePush-Plugin] ❌ 检查失败：${err.message}`)
     }
+  }
+
+  async processWWData(data, game, auto) {
+    const gameCheckData = data;
+    
+    await this.processMainVersion(
+      game, 
+      gameCheckData.default?.config?.version, 
+      auto
+    );
+    
+    await this.processPreDownload(
+      game, 
+      gameCheckData.predownload?.config,
+      auto
+    );
+  }
+
+  async processMHYData(data, game, auto) {
+    const gameCheckData = data?.data?.game_branches?.[0];
+    if (!gameCheckData) throw new Error(`${getGameName(game)}游戏数据解析失败`);
+
+    await this.processMainVersion(
+      game, 
+      gameCheckData.main?.tag,
+      auto
+    );
+    
+    await this.processPreDownload(
+      game, 
+      gameCheckData.pre_download,
+      auto
+    );
   }
 
   async processMainVersion (game, currentVersion) {
@@ -56,7 +89,7 @@ export default class ApiTools extends base {
     const { main: redisKey } = getRedisKeys(game)
     const stored = await redis.get(redisKey) || '0.0.0'
 
-    if (this.compareVersions(currentVersion, stored)) {
+    if (versionComparator.compare(currentVersion, stored) > 0) {
       await redis.set(redisKey, currentVersion)
       notice.pushNotify({
         type: 'main',
@@ -95,19 +128,6 @@ export default class ApiTools extends base {
     }
   }
 
-  compareVersions (newVer, oldVer) {
-    const newParts = newVer.split('.').map(Number)
-    const oldParts = oldVer.split('.').map(Number)
-
-    for (let i = 0; i < Math.max(newParts.length, oldParts.length); i++) {
-      const n = newParts[i] || 0
-      const o = oldParts[i] || 0
-      if (n > o) return true
-      if (n < o) return false
-    }
-    return false
-  }
-
   sendToGroups (msg, game, gameConfig) {
     if (!gameConfig?.pushGroups?.length) {
       logger.debug(`[GamePush-Plugin][${getGameName(game)}] 未配置推送群组`)
@@ -118,4 +138,19 @@ export default class ApiTools extends base {
       Bot.pickGroup(groupId).sendMsg(msg)
     }
   }
+
+    formatSize (bytes) {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB']
+    let size = Number(bytes)
+    let unitIndex = 0
+
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024
+      unitIndex++
+    }
+    return `${size.toFixed(2)} ${units[unitIndex]}`
+  }
 }
+
+const api = new ApiTools()
+export default api

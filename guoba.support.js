@@ -1,6 +1,5 @@
-import Config from './model/config.js'
+import cfg from './model/config.js'
 
-const cfg = new Config()
 const gameIds = ['ys', 'sr', 'zzz', 'bh3', 'ww']
 const gameMap = {
   ys: '原神',
