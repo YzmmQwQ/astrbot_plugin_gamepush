@@ -35,8 +35,8 @@ export default class base {
       cwd: this._path,
       tplFile: path.join(this._path, 'plugins/GamePush-Plugin/resources/html/GamePush-Plugin/GamePush-Plugin.html'),
       fontsPath: path.join(this._path, 'plugins/GamePush-Plugin/resources/fonts/'),
-      pluResPath: path.join( '{this._path}plugins/GamePush-Plugin/resources/'),
-      htmlSavePath: path.join(this._path, 'tmp', 'html', 'GamePush-Plugin'),
+      pluResPath: path.join(this._path, 'plugins/GamePush-Plugin/resources/'),
+      htmlSavePath: path.join(this._path, 'tmp/html/GamePush-Plugin'),
       htmlFileName: `${game}_${Date.now()}.html`,
       yunzaiName: cfg.package.name === 'miao-yunzai' ? 'Miao-Yunzai' : cfg.package.name === 'trss-yunzai' ? 'TRSS-Yunzai' : _.capitalize(cfg.package.name)
     }
