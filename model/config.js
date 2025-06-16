@@ -33,7 +33,7 @@ class ConfigManager {
       this.loadConfig()
       this.setupWatcher()
     } catch (err) {
-      logger.error('[GamePush] 配置初始化失败', err)
+      logger.error('[GamePush-Plugin] 配置初始化失败', err)
       this.configCache = this.getDefaultConfig()
     }
   }
@@ -68,7 +68,7 @@ class ConfigManager {
         return validated
       }, this.getDefaultConfig())
     } catch (err) {
-      logger.error('[GamePush] 配置加载失败', err)
+      logger.error('[GamePush-Plugin] 配置加载失败', err)
       this.configCache = this.getDefaultConfig()
     }
   }
@@ -78,7 +78,7 @@ class ConfigManager {
       fs.writeFileSync(CONFIG_PATH, YAML.stringify(newConfig, { indent: 2 }), 'utf8')
       this.configCache = newConfig
     } catch (err) {
-      logger.error('[GamePush] 配置保存失败', err)
+      logger.error('[GamePush-Plugin] 配置保存失败', err)
     }
   }
 
@@ -87,7 +87,7 @@ class ConfigManager {
       const chokidar = import('chokidar')
       chokidar.then(mod => {
         this.watcher = mod.watch(CONFIG_PATH).on('change', () => {
-          logger.info('[GamePush] 配置变更，重新加载')
+          logger.info('[GamePush-Plugin] 配置变更，重新加载')
           this.loadConfig()
         })
       })
@@ -125,7 +125,7 @@ class ConfigManager {
       this.saveConfig(saveData)
       return { success: true, message: '游戏推送配置已保存！' }
     } catch (err) {
-      logger.error('[GamePush] 保存配置失败:', err)
+      logger.error('[GamePush-Plugin] 保存配置失败:', err)
       return { success: false, message: '保存失败: ' + err.message }
     }
   }
