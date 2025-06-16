@@ -41,7 +41,7 @@ export const getGameCheckAPI = (game) => {
 }
 
 export const getDownloadAPI = (type, package_id, password) => {
-  if( type === 'pre') return `${Download_API}getPatchBuild?branch=predownload&plat_app=ddxf5qt290cg&package_id=${package_id}&password=${password}`
+  if (type === 'pre') return `${Download_API}getPatchBuild?branch=predownload&plat_app=ddxf5qt290cg&package_id=${package_id}&password=${password}`
   return `${Download_API}getBuild?branch=main&plat_app=ddxf5qt290cg&package_id=${package_id}&password=${password}`
 }
 

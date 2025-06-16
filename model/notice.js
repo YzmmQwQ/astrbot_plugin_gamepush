@@ -3,15 +3,15 @@ import cfg from './config.js'
 import base from './base.js'
 import api from './api.js'
 import download from './download.js'
-import { getGameCheckAPI, getDownloadAPI, getRedisKeys } from './util.js'
+import { getGameCheckAPI, getDownloadAPI } from './util.js'
 
 class Notifier extends base {
   templateMap = {
-    main: ({ gameName, oldVersion, newVersion, formattedTotalSize, incrementalSize}) => [
+    main: ({ gameName, oldVersion, newVersion, formattedTotalSize, incrementalSize }) => [
       `<span class="emoji-text">✨</span> ${gameName}游戏版本更新通知`,
       `<span class="emoji-text">🚀</span> 版本变更：${oldVersion} → ${newVersion}`,
       formattedTotalSize && `<span class="emoji-text">📦</span> 完整大小（含中文语音）：${formattedTotalSize}`,
-      ...((gameName !== '原神' && gameName !== '崩坏3') ? [incrementalSize&& `<span class="emoji-text">🔄</span> 增量更新大小：约${incrementalSize}`] : []),
+      ...((gameName !== '原神' && gameName !== '崩坏3') ? [incrementalSize && `<span class="emoji-text">🔄</span> 增量更新大小：约${incrementalSize}`] : []),
       '<span class="emoji-text">📢</span> 请及时更新客户端',
       ...(gameName !== '原神' ? [`<span class="emoji-text">💾</span> 发送【#${gameName}获取下载链接】获取客户端`] : [])
     ],
@@ -32,12 +32,12 @@ class Notifier extends base {
   }
 
   textTemplateMap = {
-    main: ({ gameName, oldVersion, newVersion, formattedTotalSize, incrementalSize}) => {
+    main: ({ gameName, oldVersion, newVersion, formattedTotalSize, incrementalSize }) => {
       const parts = [
         `✨${gameName}游戏版本更新通知`,
         `🚀版本变更：${oldVersion} → ${newVersion}`,
         formattedTotalSize && `📦完整大小（含中文语音）：${formattedTotalSize}`,
-        ...((gameName !== '原神' && gameName !== '崩坏3') ? [incrementalSize&& `🔄 增量更新大小：约${incrementalSize}`] : []),
+        ...((gameName !== '原神' && gameName !== '崩坏3') ? [incrementalSize && `🔄 增量更新大小：约${incrementalSize}`] : []),
         '📢 请及时更新客户端',
         ...(gameName !== '原神' ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
       ]
@@ -80,28 +80,30 @@ class Notifier extends base {
       } else if (game === 'ys') {
         let BranchesUrl = getGameCheckAPI(game)
         let Branches = await fetch(BranchesUrl, { method: 'GET' })
-        let BranchesData = await Branches.json()
+        let Branchesres = await Branches.json()
+        let BranchesData = Branchesres?.data?.game_branches?.[0]
         let chucksizeApi = ''
         let chucksizeData = ''
+        let chucksizeDatares = ''
         let data = ''
         let mainSize = 0
         let PreSize = 0
-        const { main: redisKey } = getRedisKeys(game)
-        const Version = await redis.get(redisKey) || '0.0.0'
+        const Version = BranchesData?.pre_download?.diff_tags[0]
         if (type === 'pre') {
-          chucksizeApi = getDownloadAPI(type, BranchesData?.data?.game_branches?.[0]?.pre_download?.package_id, BranchesData?.data?.game_branches?.[0]?.pre_download?.password)
+          chucksizeApi = getDownloadAPI(type, BranchesData?.pre_download?.package_id, BranchesData?.pre_download?.password)
           chucksizeData = await fetch(chucksizeApi, { method: 'POST' })
-          data = await chucksizeData.json()
-          console.log(data?.data?.manifests?.[0]?.stats[Version]?.uncompressed_size)
-          PreSize += parseInt(data?.data?.manifests?.[0]?.stats[Version]?.uncompressed_size, 10)
-          PreSize += parseInt(data?.data?.manifests?.[1]?.stats[Version]?.uncompressed_size, 10)
+          chucksizeDatares = await chucksizeData.json()
+          data = chucksizeDatares?.data?.manifests
+          PreSize += parseInt(data?.[0]?.stats[Version]?.uncompressed_size, 10)
+          PreSize += parseInt(data?.[1]?.stats[Version]?.uncompressed_size, 10)
           incrementalSize = api.formatSize(PreSize)
         } else {
-          chucksizeApi = getDownloadAPI(type, BranchesData?.data?.game_branches?.[0]?.main?.package_id, BranchesData?.data?.game_branches?.[0]?.main?.password)
+          chucksizeApi = getDownloadAPI(type, BranchesData?.main?.package_id, BranchesData?.[0]?.main?.password)
           chucksizeData = await fetch(chucksizeApi, { method: 'GET' })
           data = await chucksizeData.json()
-          mainSize += parseInt(data?.data?.manifests[0]?.deduplicated_stats?.uncompressed_size, 10)
-          mainSize += parseInt(data?.data?.manifests[1]?.deduplicated_stats?.uncompressed_size, 10)
+          data = chucksizeDatares?.data?.manifests
+          mainSize += parseInt(data[0]?.deduplicated_stats?.uncompressed_size, 10)
+          mainSize += parseInt(data[1]?.deduplicated_stats?.uncompressed_size, 10)
           formattedTotalSize = api.formatSize(mainSize)
         }
       } else {
@@ -145,8 +147,8 @@ class Notifier extends base {
 
       const templateParams = {
         gameName,
-        oldVersion: oldVersion || '未知',
-        newVersion: newVersion || '未知',
+        oldVersion: oldVersion,
+        newVersion: newVersion,
         formattedTotalSize,
         incrementalSize
       }
