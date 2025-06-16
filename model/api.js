@@ -6,12 +6,13 @@ import { getGameCheckAPI, getGameName, getRedisKeys, GAME_CONFIG, versionCompara
 
 class ApiTools extends base {
   gameApis = new Map()
-  constructor() {
+  constructor () {
     super()
     Object.keys(GAME_CONFIG).forEach(game => {
       this.gameApis.set(game, getGameCheckAPI(game))
     })
   }
+
   async autoCheck (game = '') {
     try {
       const gameConfig = cfg.getGameConfig(game)
@@ -50,34 +51,34 @@ class ApiTools extends base {
     }
   }
 
-  async processWWData(data, game, auto) {
+  async processWWData (data, game, auto) {
     const gameCheckData = data
-    
+
     await this.processMainVersion(
-      game, 
-      gameCheckData.default?.config?.version, 
+      game,
+      gameCheckData.default?.config?.version,
       auto
     )
-    
+
     await this.processPreDownload(
-      game, 
+      game,
       gameCheckData.predownload?.config,
       auto
     )
   }
 
-  async processMHYData(data, game, auto) {
+  async processMHYData (data, game, auto) {
     const gameCheckData = data?.data?.game_branches?.[0]
     if (!gameCheckData) throw new Error(`${getGameName(game)}游戏数据解析失败`)
 
     await this.processMainVersion(
-      game, 
+      game,
       gameCheckData.main?.tag,
       auto
     )
-    
+
     await this.processPreDownload(
-      game, 
+      game,
       gameCheckData.pre_download,
       auto
     )
@@ -139,7 +140,7 @@ class ApiTools extends base {
     }
   }
 
-    formatSize (bytes) {
+  formatSize (bytes) {
     const units = ['B', 'KB', 'MB', 'GB', 'TB']
     let size = Number(bytes)
     let unitIndex = 0

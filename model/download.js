@@ -5,35 +5,35 @@ import { getGameAPI, getGameName, versionComparator } from './util.js'
 class Download {
   cache = new Map()
   cacheTTL = 30000
-  
-  async getDownloadData(game, type = 'main') {
+
+  async getDownloadData (game, type = 'main') {
     const cacheKey = `${game}-${type}`
     const cached = this.cache.get(cacheKey)
-    
+
     if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
       return cached.data
     }
-    
+
     const data = await this.fetchDownloadData(game, type)
     this.cache.set(cacheKey, {
       timestamp: Date.now(),
       data
     })
-    
+
     return data
   }
-  
-  async fetchDownloadData(game, type) {
+
+  async fetchDownloadData (game, type) {
     const apiUrl = getGameAPI(game)
-    
+
     try {
       const res = await fetch(apiUrl)
       if (!res.ok) {
         throw new Error(`API请求失败: ${res.status} ${res.statusText}`)
       }
-      
+
       const data = await res.json()
-      
+
       if (game === 'ww') {
         return this.handleWWData(data, type)
       }
@@ -47,22 +47,24 @@ class Download {
       }
     }
   }
-  
-  handleWWData(data, type) {
+
+  handleWWData (data, type) {
     const versionType = type === 'pre' ? 'predownload' : 'default'
     const versionData = data[versionType]?.config
-    
-    if (!versionData) return {
-      data: null,
-      patch: { game_pkgs: [] },
-      type
+
+    if (!versionData) {
+      return {
+        data: null,
+        patch: { game_pkgs: [] },
+        type
+      }
     }
-    
-    const cdn = data.cdnList?.[0]?.url?.replace(/\/+$/, '') 
-        || 'https://pcdownload-huoshan.aki-game.com'
-    
+
+    const cdn = data.cdnList?.[0]?.url?.replace(/\/+$/, '') ||
+        'https://pcdownload-huoshan.aki-game.com'
+
     const mainUrl = `${cdn}/${versionData.indexFile.replace(/^\//, '')}`
-    
+
     const mainMajor = {
       version: versionData.version,
       game_pkgs: [{
@@ -71,7 +73,7 @@ class Download {
         size: versionData.size || 0
       }]
     }
-    
+
     const patchPkgs = (versionData.patchConfig || [])
       .sort((a, b) => versionComparator.compare(b.version, a.version))
       .filter(patch => patch.indexFile)
@@ -81,21 +83,21 @@ class Download {
         size: patch.size || 0,
         version: patch.version
       }))
-    
+
     return {
       data: mainMajor,
       patch: { game_pkgs: patchPkgs },
       type
     }
   }
-  
-  handleMHYData(data, type) {
+
+  handleMHYData (data, type) {
     const packageData = data?.data?.game_packages?.[0] || {}
-    
+
     const safeGetPatch = (patchArray) => {
       return (patchArray?.[0] || { game_pkgs: [], audio_pkgs: [] })
     }
-    
+
     if (type === 'pre') {
       return {
         data: packageData?.pre_download?.major,
@@ -103,7 +105,7 @@ class Download {
         type: 'pre'
       }
     }
-    
+
     return {
       data: packageData?.main?.major,
       patch: safeGetPatch(packageData?.main?.patches),

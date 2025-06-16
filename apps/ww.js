@@ -1,4 +1,4 @@
-import { cfg, api, download, getRedisKeys} from '#GamePush'
+import { cfg, api, download, getRedisKeys } from '#GamePush'
 
 let wwReg = '(~|鸣潮|ww|WW|mc)'
 

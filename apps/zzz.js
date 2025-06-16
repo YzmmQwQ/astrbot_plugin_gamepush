@@ -1,4 +1,4 @@
-import { cfg, api, download, getRedisKeys} from '#GamePush'
+import { cfg, api, download, getRedisKeys } from '#GamePush'
 
 let zzzReg = '(绝区零|zzz|ZZZ)'
 

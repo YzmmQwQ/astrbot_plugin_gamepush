@@ -1,4 +1,4 @@
-import { cfg, api, getRedisKeys} from '#GamePush'
+import { cfg, api, getRedisKeys } from '#GamePush'
 
 let ysReg = '(ys|YS|原神)'
 

@@ -1,4 +1,4 @@
-import { cfg, api, download, getRedisKeys} from '#GamePush'
+import { cfg, api, download, getRedisKeys } from '#GamePush'
 
 let bh3Reg = '(崩坏三|崩坏3|崩三|崩3|bbb|三崩子)'
 

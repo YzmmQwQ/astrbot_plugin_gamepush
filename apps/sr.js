@@ -1,4 +1,4 @@
-import { cfg, api, download, getRedisKeys} from '#GamePush'
+import { cfg, api, download, getRedisKeys } from '#GamePush'
 
 let srReg = '(sr|SR|星铁|星穹铁道|铁道|崩坏星穹铁道)'
 

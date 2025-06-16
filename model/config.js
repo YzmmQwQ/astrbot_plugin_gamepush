@@ -12,8 +12,8 @@ const CONFIG_PATH = path.join(CONFIG_DIR, 'GamePush-Plugin.yaml')
 const DEFAULT_CRON = '0 0/5 * * * *'
 const GAME_IDS = ['ys', 'sr', 'zzz', 'bh3', 'ww']
 
-function normalizeGroups(groups) {
-  return Array.isArray(groups) 
+function normalizeGroups (groups) {
+  return Array.isArray(groups)
     ? groups.map(String).filter(Boolean)
     : []
 }
@@ -21,12 +21,12 @@ function normalizeGroups(groups) {
 class ConfigManager {
   configCache = {}
   watcher = null
-  
-  constructor() {
+
+  constructor () {
     this.init()
   }
-  
-  init() {
+
+  init () {
     try {
       if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true })
       if (!fs.existsSync(CONFIG_PATH)) this.saveConfig(this.getDefaultConfig())
@@ -37,25 +37,25 @@ class ConfigManager {
       this.configCache = this.getDefaultConfig()
     }
   }
-  
-  getDefaultConfig() {
+
+  getDefaultConfig () {
     return GAME_IDS.reduce((config, id) => {
-      config[id] = { 
-        enable: true, 
-        cron: DEFAULT_CRON, 
-        pushGroups: [], 
+      config[id] = {
+        enable: true,
+        cron: DEFAULT_CRON,
+        pushGroups: [],
         pushChangeType: '1'
       }
       return config
     }, {})
   }
-  
-  loadConfig() {
+
+  loadConfig () {
     try {
       const raw = fs.existsSync(CONFIG_PATH)
         ? YAML.parse(fs.readFileSync(CONFIG_PATH, 'utf8'))
         : {}
-        
+
       this.configCache = Object.keys(raw).reduce((validated, gameId) => {
         if (GAME_IDS.includes(gameId)) {
           validated[gameId] = {
@@ -72,8 +72,8 @@ class ConfigManager {
       this.configCache = this.getDefaultConfig()
     }
   }
-  
-  saveConfig(newConfig) {
+
+  saveConfig (newConfig) {
     try {
       fs.writeFileSync(CONFIG_PATH, YAML.stringify(newConfig, { indent: 2 }), 'utf8')
       this.configCache = newConfig
@@ -81,8 +81,8 @@ class ConfigManager {
       logger.error('[GamePush] 配置保存失败', err)
     }
   }
-  
-  setupWatcher() {
+
+  setupWatcher () {
     if (!this.watcher) {
       const chokidar = import('chokidar')
       chokidar.then(mod => {
@@ -93,23 +93,23 @@ class ConfigManager {
       })
     }
   }
-  
-  getGameConfig(game) {
+
+  getGameConfig (game) {
     return this.configCache[game] || this.getDefaultConfig()[game]
   }
-  
-  updateGameConfig(gameId, updater) {
+
+  updateGameConfig (gameId, updater) {
     if (!this.configCache[gameId]) return
-    
+
     updater(this.configCache[gameId])
-    this.saveConfig({...this.configCache})
+    this.saveConfig({ ...this.configCache })
   }
-  
-  getFrontendConfig() {
-    return {...this.configCache}
+
+  getFrontendConfig () {
+    return { ...this.configCache }
   }
-  
-  saveFromFrontend(data) {
+
+  saveFromFrontend (data) {
     try {
       const saveData = GAME_IDS.reduce((result, gameId) => {
         const enable = data[`${gameId}.enable`] ?? this.configCache[gameId].enable
@@ -121,7 +121,7 @@ class ConfigManager {
         }
         return result
       }, {})
-      
+
       this.saveConfig(saveData)
       return { success: true, message: '游戏推送配置已保存！' }
     } catch (err) {
