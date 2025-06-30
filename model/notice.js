@@ -44,7 +44,7 @@ class Notifier extends base {
       return parts.filter(Boolean).join('\n')
     },
 
-    pre: ({ gameName, newVersion, incrementalSize }) => {
+    pre: ({ gameName, newVersion, incrementalSize, formattedTotalSize }) => {
       const parts = [
         `🎁${gameName}预下载资源已开放`,
         `📦新版本：${newVersion}`,
