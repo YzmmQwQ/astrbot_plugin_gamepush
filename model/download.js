@@ -1,12 +1,17 @@
-import fetch from 'node-fetch'
-import api from './api.js'
-import { getGameAPI, getGameName, versionComparator } from './util.js'
+import { request, pluginName } from "#GamePush.components"
+import { api, getGameAPI, getGameName, versionComparator } from "#GamePush.model"
 
 class Download {
   cache = new Map()
   cacheTTL = 30000
 
-  async getDownloadData (game, type = 'main') {
+  /**
+   * 获取下载数据
+   * @param {string} game - 游戏ID
+   * @param {string} type - 下载类型
+   * @returns {Promise<Object>} 下载数据
+   */
+  async getDownloadData(game, type = "main") {
     const cacheKey = `${game}-${type}`
     const cached = this.cache.get(cacheKey)
 
@@ -23,23 +28,28 @@ class Download {
     return data
   }
 
-  async fetchDownloadData (game, type) {
+  /**
+   * 从API获取下载数据
+   * @param {string} game - 游戏ID
+   * @param {string} type - 下载类型
+   * @returns {Promise<Object>} 下载数据
+   */
+  async fetchDownloadData(game, type) {
     const apiUrl = getGameAPI(game)
 
     try {
-      const res = await fetch(apiUrl)
-      if (!res.ok) {
-        throw new Error(`API请求失败: ${res.status} ${res.statusText}`)
-      }
+      const data = await request.get(apiUrl, {
+        responseType: "json",
+        log: true,
+        gameName: getGameName(game)
+      })
 
-      const data = await res.json()
-
-      if (game === 'ww') {
+      if (game === "ww") {
         return this.handleWWData(data, type)
       }
       return this.handleMHYData(data, type)
     } catch (err) {
-      logger.error(`[GamePush] 获取下载数据失败: ${err.message}`)
+      logger.error(`[${pluginName}] 获取下载数据失败: ${err.message}`)
       return {
         data: null,
         patch: { game_pkgs: [], audio_pkgs: [] },
@@ -48,8 +58,14 @@ class Download {
     }
   }
 
-  handleWWData (data, type) {
-    const versionType = type === 'pre' ? 'predownload' : 'default'
+  /**
+   * 处理鸣潮游戏数据
+   * @param {Object} data - API返回数据
+   * @param {string} type - 下载类型
+   * @returns {Object} 处理后的下载数据
+   */
+  handleWWData(data, type) {
+    const versionType = type === "pre" ? "predownload" : "default"
     const versionData = data[versionType]?.config
 
     if (!versionData) {
@@ -60,26 +76,28 @@ class Download {
       }
     }
 
-    const cdn = data.cdnList?.[0]?.url?.replace(/\/+$/, '') ||
-        'https://pcdownload-huoshan.aki-game.com'
+    const cdn =
+      data.cdnList?.[0]?.url?.replace(/\/+$/, "") || "https://pcdownload-huoshan.aki-game.com"
 
-    const mainUrl = `${cdn}/${versionData.indexFile.replace(/^\//, '')}`
+    const mainUrl = `${cdn}/${versionData.indexFile.replace(/^\//, "")}`
 
     const mainMajor = {
       version: versionData.version,
-      game_pkgs: [{
-        url: mainUrl,
-        md5: versionData.indexFileMd5 || '',
-        size: versionData.size || 0
-      }]
+      game_pkgs: [
+        {
+          url: mainUrl,
+          md5: versionData.indexFileMd5 || "",
+          size: versionData.size || 0
+        }
+      ]
     }
 
     const patchPkgs = (versionData.patchConfig || [])
       .sort((a, b) => versionComparator.compare(b.version, a.version))
-      .filter(patch => patch.indexFile)
-      .map(patch => ({
-        url: `${cdn}/${patch.indexFile.replace(/^\//, '')}`,
-        md5: patch.indexFileMd5 || '',
+      .filter((patch) => patch.indexFile)
+      .map((patch) => ({
+        url: `${cdn}/${patch.indexFile.replace(/^\//, "")}`,
+        md5: patch.indexFileMd5 || "",
         size: patch.size || 0,
         version: patch.version
       }))
@@ -91,146 +109,107 @@ class Download {
     }
   }
 
-  handleMHYData (data, type) {
+  /**
+   * 处理米哈游游戏数据
+   * @param {Object} data - API返回数据
+   * @param {string} type - 下载类型
+   * @returns {Object} 处理后的下载数据
+   */
+  handleMHYData(data, type) {
     const packageData = data?.data?.game_packages?.[0] || {}
 
     const safeGetPatch = (patchArray) => {
-      return (patchArray?.[0] || { game_pkgs: [], audio_pkgs: [] })
+      return patchArray?.[0] || { game_pkgs: [], audio_pkgs: [] }
     }
 
-    if (type === 'pre') {
+    if (type === "pre") {
+      const preData = packageData?.pre_download?.major || {}
+      const prePatch = safeGetPatch(packageData?.pre_download?.patches)
+
       return {
-        data: packageData?.pre_download?.major,
-        patch: safeGetPatch(packageData?.pre_download?.patches),
-        type: 'pre'
+        data: preData,
+        patch: prePatch,
+        type
       }
-    }
+    } else {
+      const mainData = packageData?.main?.major || {}
+      const mainPatch = safeGetPatch(packageData?.main?.patches)
 
-    return {
-      data: packageData?.main?.major,
-      patch: safeGetPatch(packageData?.main?.patches),
-      type: 'main'
+      return {
+        data: mainData,
+        patch: mainPatch,
+        type
+      }
     }
   }
 
-  formatDownloadInfo (game, pkgData, type, patchData) {
-    if (!pkgData) {
-      return {
-        msg: ['🌫️ 暂无可用下载资源'],
-        client: [],
-        patchesMessages: []
-      }
-    }
-
+  /**
+   * 格式化下载信息
+   * @param {string} game - 游戏ID
+   * @param {Object} data - 下载数据
+   * @param {string} type - 下载类型
+   * @param {Object} patch - 补丁数据
+   * @returns {Object} 格式化后的下载信息
+   */
+  formatDownloadInfo(game, data, type, patch) {
     const gameName = getGameName(game)
-    const isPre = type === 'pre'
+    const { version } = data
+    const typeText = type === "pre" ? "预下载" : "正式版"
 
-    if (game === 'ww') {
-      return this.formatWWDownloadInfo(pkgData, patchData, gameName, isPre)
-    }
+    const msg = [
+      `${gameName} ${typeText}下载信息`,
+      `版本: ${version}`,
+      "请选择需要的下载内容"
+    ].join("\n")
 
-    return this.formatOtherGamesInfo(pkgData, patchData, gameName, isPre)
-  }
-
-  formatWWDownloadInfo (pkgData, patchData, gameName, isPre) {
-    const msg = []
-    const client = []
-    const patchesMessages = []
-
-    msg.push(
-      `🎮 ${gameName}${isPre ? '预下载' : '正式'}版本 - ${pkgData.version || '未知'}`
+    const client = this.formatPackageInfo(
+      data.game_pkgs,
+      `${gameName} ${typeText}${game === "bh3" ? "游戏下载" : "游戏分卷包下载"}`,
+      `${game === "bh3" ? "游戏下载" : "游戏分卷包下载"}`
     )
 
-    let clientText = '📦 完整客户端包：\n▂▂▂▂▂▂▂▂▂▂▂▂\n'
+    const audio = this.formatPackageInfo(
+      data.audio_pkgs,
+      `${gameName} ${typeText}音频下载`,
+      "音频包"
+    )
 
-    pkgData.game_pkgs?.forEach((pkg, i) => {
-      clientText += `${i + 1}. 🗃️ URL: ${pkg.url || `无链接${pkg.url}`}\n`
-      clientText += `⚖️ 文件大小: ${api.formatSize(pkg.size)}\n`
-      clientText += `🔍 MD5: ${pkg.md5 || '未知'}\n`
-    })
+    const patch_client = this.formatPackageInfo(
+      patch?.game_pkgs,
+      `${gameName} ${typeText}游戏增量包下载`,
+      "游戏增量包"
+    )
 
-    client.push(clientText)
+    const patch_audio = this.formatPackageInfo(
+      patch?.audio_pkgs,
+      `${gameName} ${typeText}音频增量包下载`,
+      "音频增量包"
+    )
 
-    if (patchData?.game_pkgs?.length > 0) {
-      let patchText = '🔄 各版本差分包：\n▂▂▂▂▂▂▂▂▂▂▂▂\n'
-      patchData.game_pkgs.forEach((pkg, i) => {
-        patchText += `${i + 1}. 🧩 版本: ${pkg.version || '未知'}\n`
-        patchText += `🗃️ URL: ${pkg.url || '无链接'}\n`
-        patchText += `⚖️ 文件大小: ${api.formatSize(pkg.size)}\n`
-        patchText += `🔍 MD5: ${pkg.md5 || '未知'}\n\n`
-      })
-      patchesMessages.push(patchText)
-    }
-
-    return {
-      msg,
-      client,
-      patchesMessages
-    }
+    return { msg, client, audio, patch_client, patch_audio }
   }
 
-  formatOtherGamesInfo (pkgData, patchData, gameName, isPre) {
-    const msg = []
-    const clent = []
-    const audio = []
-    const patch_audio = []
-    const patch_clent = []
-
-    msg.push(`🎮 ${gameName}${isPre ? '预下载' : '正式'}版本（${pkgData.version || '未知'}）`)
-
-    let clientMsg = '📦 客户端分卷包：\n▂▂▂▂▂▂▂▂▂▂▂▂\n'
-
-    if (pkgData.game_pkgs) {
-      pkgData.game_pkgs.forEach((pkg, i) => {
-        clientMsg += `${i + 1}. 🗃️ 链接：${pkg.url || '无链接'}\n`
-        clientMsg += `⚖️ 大小：${api.formatSize(pkg.size)}\n`
-        clientMsg += `🔍 MD5：${pkg.md5 || '未知'}\n\n`
-      })
+  /**
+   * 格式化包信息
+   * @param {Array} pkgs - 包数组
+   * @param {string} title - 标题
+   * @param {string} type - 类型
+   * @returns {string} 格式化后的包信息
+   */
+  formatPackageInfo(pkgs, title, type) {
+    if (!pkgs || pkgs.length === 0) {
+      return `${title}\n暂无${type}下载`
     }
 
-    clent.push(clientMsg)
+    const items = pkgs.map((pkg, index) => {
+      const size = api.formatSize(pkg.size || 0)
+      const name = pkg.language ? `${pkg.language}${type}` : `${type}${index + 1}`
+      const version = pkg.version ? ` (${pkg.version})` : ""
+      return `${name}${version}: ${pkg.url}\n大小: ${size}`
+    })
 
-    if (pkgData.audio_pkgs?.length > 0) {
-      let audioMsg = '🎧 语言资源包：\n▂▂▂▂▂▂▂▂▂▂▂▂\n'
-      pkgData.audio_pkgs.forEach(audioPkg => {
-        audioMsg += `🌍 语言类型：${audioPkg.language?.toUpperCase() || '未知'}\n`
-        audioMsg += `🗃️ 链接：${audioPkg.url || '无链接'}\n`
-        audioMsg += `⚖️ 大小：${api.formatSize(audioPkg.size)}\n`
-        audioMsg += `🔍 MD5：${audioPkg.md5 || '未知'}\n\n`
-      })
-      audio.push(audioMsg)
-    }
-
-    if (patchData?.game_pkgs?.length > 0) {
-      let patchMsg = '🔄 增量更新：\n▂▂▂▂▂▂▂▂▂▂▂▂\n'
-      patchData.game_pkgs.forEach((pkg, i) => {
-        patchMsg += `${i + 1}. 🧩 链接：${pkg.url || '无链接'}\n`
-        patchMsg += `⚖️ 大小：${api.formatSize(pkg.size)}\n`
-        patchMsg += `🔍 MD5: ${pkg.md5 || '未知'}\n\n`
-      })
-      patch_clent.push(patchMsg)
-    }
-
-    if (patchData?.audio_pkgs?.length > 0) {
-      let audioPatchMsg = '🎶 增量语音资源：\n▂▂▂▂▂▂▂▂▂▂▂▂\n'
-      patchData.audio_pkgs.forEach(audioPkg => {
-        audioPatchMsg += `🌍 语言类型：${audioPkg.language?.toUpperCase() || '未知'}\n`
-        audioPatchMsg += `🧩 链接：${audioPkg.url || '无链接'}\n`
-        audioPatchMsg += `⚖️ 大小：${api.formatSize(audioPkg.size)}\n`
-        audioPatchMsg += `🔍 MD5：${audioPkg.md5 || '未知'}\n\n`
-      })
-      patch_audio.push(audioPatchMsg)
-    }
-
-    return {
-      msg,
-      clent,
-      audio,
-      patch_clent,
-      patch_audio
-    }
+    return `${title}\n${items.join("\n\n")}`
   }
 }
 
-const download = new Download()
-export default download
+export default new Download()

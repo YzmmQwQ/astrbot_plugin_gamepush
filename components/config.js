@@ -1,0 +1,290 @@
+import fs from "node:fs"
+import YAML from "yaml"
+import path from "node:path"
+import { gameIds } from "#GamePush.model"
+import { BotName, pluginName } from "#GamePush.components"
+
+const CONFIG_DIR = path.join(
+  process.cwd(),
+  BotName === "Karin" ? "@karinjs/karin-plugin-gamepush/config" : "data"
+)
+const CONFIG_PATH = path.join(CONFIG_DIR, "GamePush-Plugin.yaml")
+const DEFAULT_CRON = "0 0/5 * * * *"
+
+class Config {
+  configCache = {}
+  watcher = null
+
+  constructor() {
+    this.init()
+  }
+
+  /**
+   * 初始化配置管理器
+   */
+  init() {
+    try {
+      if (!fs.existsSync(CONFIG_DIR)) fs.mkdirSync(CONFIG_DIR, { recursive: true })
+      if (!fs.existsSync(CONFIG_PATH)) this.saveConfig(this.getDefaultConfig())
+      this.loadConfig()
+      this.setupWatcher()
+    } catch (err) {
+      logger.error(`[${pluginName}] 配置初始化失败`, err)
+      this.configCache = this.getDefaultConfig()
+    }
+  }
+
+  /**
+   * 获取默认配置
+   * @returns {Object} 默认配置对象
+   */
+  getDefaultConfig() {
+    return gameIds.reduce((config, id) => {
+      config[id] = {
+        enable: true,
+        log: false,
+        cron: DEFAULT_CRON,
+        pushGroups: [],
+        pushChangeType: "1"
+      }
+      return config
+    }, {})
+  }
+
+  /**
+   * 加载配置
+   */
+  loadConfig() {
+    try {
+      const raw = fs.existsSync(CONFIG_PATH) ? YAML.parse(fs.readFileSync(CONFIG_PATH, "utf8")) : {}
+      this.configCache = this.getDefaultConfig()
+      for (const gameId of gameIds) {
+        if (raw[gameId]) {
+          const pushGroups = []
+          if (Array.isArray(raw[gameId].pushGroups)) {
+            for (const item of raw[gameId].pushGroups) {
+              if (typeof item === "string") {
+                const [botId, groupId] = item.split(":")
+                if (botId && groupId) {
+                  pushGroups.push({ botId, groupId })
+                }
+              } else {
+                pushGroups.push(item)
+              }
+            }
+          }
+
+          this.configCache[gameId] = {
+            enable: !!raw[gameId].enable,
+            log: !!raw[gameId].log,
+            cron: raw[gameId].cron || DEFAULT_CRON,
+            pushGroups,
+            pushChangeType: raw[gameId].pushChangeType || "1"
+          }
+        }
+      }
+    } catch (err) {
+      logger.error(`[${pluginName}] 配置加载失败`, err)
+      this.configCache = this.getDefaultConfig()
+    }
+  }
+
+  /**
+   * 保存配置
+   * @param {Object} newConfig - 新配置对象
+   */
+  saveConfig(newConfig) {
+    try {
+      const saveData = {}
+      for (const gameId of Object.keys(newConfig)) {
+        saveData[gameId] = {
+          enable: newConfig[gameId].enable,
+          log: newConfig[gameId].log,
+          cron: newConfig[gameId].cron,
+          pushGroups: newConfig[gameId].pushGroups.map((item) => {
+            if (typeof item === "string") {
+              return item
+            }
+            return `${item.botId}:${item.groupId}`
+          }),
+          pushChangeType: newConfig[gameId].pushChangeType
+        }
+      }
+
+      fs.writeFileSync(CONFIG_PATH, YAML.stringify(saveData, { indent: 2 }), "utf8")
+      this.configCache = newConfig
+      return true
+    } catch (err) {
+      logger.error(`[${pluginName}] 配置保存失败`, err)
+      return false
+    }
+  }
+
+  /**
+   * 设置配置文件监视器
+   */
+  async setupWatcher() {
+    if (!this.watcher) {
+      try {
+        const chokidar = await import("chokidar")
+        this.watcher = chokidar.watch(CONFIG_PATH).on("change", () => {
+          logger.info(`[${pluginName}] 配置变更，重新加载`)
+          this.loadConfig()
+        })
+      } catch (err) {
+        logger.error(`[${pluginName}] 设置配置监视器失败`, err)
+      }
+    }
+  }
+
+  /**
+   * 获取指定游戏的配置
+   * @param {string} game - 游戏ID
+   * @returns {Object} 游戏配置
+   */
+  getGameConfig(game) {
+    return this.configCache[game] || this.getDefaultConfig()[game]
+  }
+
+  /**
+   * 更新游戏配置
+   * @param {string} game - 游戏ID
+   * @param {Function} updater - 更新函数
+   */
+  updateGameConfig(game, updater) {
+    const config = JSON.parse(JSON.stringify(this.configCache))
+    config[game] = config[game] || this.getDefaultConfig()[game]
+    updater(config[game])
+    this.saveConfig(config)
+  }
+
+  /**
+   * 获取前端配置
+   * @returns {Object} 前端配置
+   */
+  getFrontendConfig() {
+    if (BotName !== "Karin") {
+      return this.configCache
+    } else {
+      const frontendConfig = {}
+      logger.debug("[GamePush] 当前配置缓存:", JSON.stringify(this.configCache, null, 2))
+      for (const gameId of gameIds) {
+        const gameConfig = this.configCache[gameId] || this.getDefaultConfig()[gameId]
+        const pushGroups = []
+        if (Array.isArray(gameConfig.pushGroups)) {
+          for (const item of gameConfig.pushGroups) {
+            if (typeof item === "string") {
+              const [botId, groupId] = item.split(":")
+              if (botId && groupId) {
+                pushGroups.push({ botId, groupId })
+              }
+            } else if (item && typeof item === "object") {
+              pushGroups.push(item)
+            }
+          }
+        }
+        frontendConfig[gameId] = [
+          {
+            enable: gameConfig.enable,
+            log: false,
+            cron: gameConfig.cron || DEFAULT_CRON,
+            pushGroups,
+            pushChangeType: gameConfig.pushChangeType || "1"
+          }
+        ]
+      }
+      logger.debug(`[${pluginName}] 生成的前端配置:", JSON.stringify(frontendConfig, null, 2)`)
+
+      return frontendConfig
+    }
+  }
+
+  /**
+   * 从前端保存配置
+   * @param {Object} data - 前端配置数据
+   * @returns {Object} 保存结果
+   */
+  saveFromFrontend(data) {
+    try {
+      const saveData = {}
+      logger.debug(`[${pluginName}] 接收到的原始数据:", JSON.stringify(data, null, 2)`)
+
+      let isYunzaiFormat = false
+      for (const gameId of gameIds) {
+        if (data[`${gameId}.enable`] !== undefined) {
+          isYunzaiFormat = true
+          break
+        }
+      }
+      if (isYunzaiFormat) {
+        logger.debug(`[${pluginName}] 正在处理 Yunzai 格式的配置数据`)
+        for (const gameId of gameIds) {
+          saveData[gameId] = {
+            enable:
+              data[`${gameId}.enable`] !== undefined ? Boolean(data[`${gameId}.enable`]) : true,
+            log: data[`${gameId}.log`] !== undefined ? Boolean(data[`${gameId}.log`]) : false,
+            cron: data[`${gameId}.cron`] || DEFAULT_CRON,
+            pushGroups: data[`${gameId}.pushGroups`] || [],
+            pushChangeType: data[`${gameId}.pushChangeType`] || "1"
+          }
+        }
+      } else {
+        logger.debug(`[${pluginName}] 正在处理 Karin 格式的配置数据`)
+        for (const gameId of gameIds) {
+          const gameConfigArray = data[gameId] || []
+          const gameConfig = gameConfigArray.length > 0 ? gameConfigArray[0] : {}
+          saveData[gameId] = {
+            enable: gameConfig.enable !== undefined ? Boolean(gameConfig.enable) : true,
+            log: gameConfig.log !== undefined ? Boolean(gameConfig.log) : true,
+            cron: gameConfig.cron || DEFAULT_CRON,
+            pushGroups: gameConfig.pushGroups || [],
+            pushChangeType: gameConfig.pushChangeType || "1"
+          }
+        }
+      }
+
+      for (const gameId of gameIds) {
+        if (!saveData[gameId]) {
+          saveData[gameId] = this.getDefaultConfig()[gameId]
+        }
+      }
+
+      logger.debug(`[${pluginName}] 处理后的配置数据:`, JSON.stringify(saveData, null, 2))
+
+      for (const gameId of gameIds) {
+        if (Array.isArray(saveData[gameId].pushGroups)) {
+          const formattedGroups = []
+
+          for (const item of saveData[gameId].pushGroups) {
+            if (typeof item === "string") {
+              const [botId, groupId] = item.split(":")
+              if (botId && groupId) {
+                formattedGroups.push({ botId, groupId })
+              }
+            } else {
+              formattedGroups.push(item)
+            }
+          }
+
+          saveData[gameId].pushGroups = formattedGroups
+        } else {
+          saveData[gameId].pushGroups = []
+        }
+      }
+
+      const saveResult = this.saveConfig(saveData)
+      if (saveResult === true) {
+        logger.info(`[${pluginName}] 配置保存成功`)
+        return { success: true, message: "游戏推送配置已保存！" }
+      } else {
+        logger.error(`[${pluginName}] 配置保存失败`)
+        return { success: false, message: "保存配置文件时出错" }
+      }
+    } catch (err) {
+      logger.error(`[${pluginName}] 前端配置保存失败`, err)
+      return { success: false, message: `配置保存失败: ${err.message}` }
+    }
+  }
+}
+
+export default new Config()
