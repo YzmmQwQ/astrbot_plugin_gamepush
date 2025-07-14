@@ -1,5 +1,5 @@
 import { cfg } from "#GamePush.components"
-import { plugin, redis } from "#GamePush.lib"
+import { plugin, redis, makeForwardMsg } from "#GamePush.lib"
 import { db, api, getRedisKeys } from "#GamePush.model"
 const ysReg = "(ys|YS|原神)"
 
@@ -96,7 +96,7 @@ export class ysPush extends plugin {
   }
 
   async ysVersionData() {
-    const input = this.e.msg.replace(new RegExp(`#*${ysReg}版本数据`, "i"), "").trim()
+    const input = this.e.msg.replace(new RegExp(`#*${ysReg}?版本数据`, "i"), "").trim()
     if (!input) return this.showAllVersionData()
     return this.showSpecificVersionData(input)
   }
