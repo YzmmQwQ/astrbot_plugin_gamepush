@@ -1,6 +1,6 @@
 import { cfg } from "#GamePush.components"
 import { plugin, redis, makeForwardMsg } from "#GamePush.lib"
-import { api, download, getRedisKeys } from "#GamePush.model"
+import { db, api, download, getRedisKeys } from "#GamePush.model"
 
 const wwReg = "(~|鸣潮|ww|WW|mc)"
 
@@ -33,6 +33,10 @@ export class wwPush extends plugin {
         {
           reg: `^#*${wwReg}获取预下载链接$`,
           fnc: "wwPreDownloadLinks"
+        },
+        {
+          reg: `^#*${wwReg}版本数据(.*)$`,
+          fnc: "wwVersionData"
         }
       ]
     })
@@ -127,5 +131,73 @@ export class wwPush extends plugin {
     } catch (err) {
       return this.reply(`❌ 预下载获取失败：${err.message}`, true)
     }
+  }
+
+  async wwVersionData() {
+    const input = this.e.msg.replace(new RegExp(`#*${wwReg}版本数据`, "i"), "").trim()
+    if (!input) return this.showAllVersionData()
+    return this.showSpecificVersionData(input)
+  }
+
+  async showAllVersionData(e) {
+    const mainVersions = await db.getMainData("ww")
+    const preVersions = await db.getPreData("ww")
+
+    if ((!mainVersions || mainVersions.length === 0) && (!preVersions || preVersions.length === 0))
+      return this.reply("暂无鸣潮版本数据", true)
+
+    let message = "📊 鸣潮历史版本数据：\n"
+
+    if (mainVersions && mainVersions.length > 0) {
+      message += "\n📦 正式版本：\n"
+      message += mainVersions
+        .map((record, index) => `${index + 1}. 版本号：${record.version}，占用大小：${record.size}`)
+        .join("\n")
+    }
+
+    if (preVersions && preVersions.length > 0) {
+      message += "\n\n🎁 预下载版本：\n"
+      message += preVersions
+        .map(
+          (record, index) =>
+            `${index + 1}. 版本号：${record.ver}，旧版本：${record.oldver}，更新大小：${record.size}`
+        )
+        .join("\n")
+    }
+
+    message += "\n\n📝 提示：发送 #鸣潮版本数据 [版本号] 查看详细数据"
+
+    return this.reply(await makeForwardMsg(e, [message]))
+  }
+
+  /**
+   * 显示指定版本数据
+   * @param {string} version - 版本号
+   */
+  async showSpecificVersionData(version) {
+    const mainVersion = await db.getMainData("ww", version)
+    const preVersion = await db.getPreData("ww", version)
+
+    if ((!mainVersion || mainVersion.length === 0) && (!preVersion || preVersion.length === 0)) {
+      return this.reply(`未找到鸣潮版本 ${version} 的数据`, true)
+    }
+    let message = `📊 鸣潮版本 ${version} 数据：\n`
+
+    if (mainVersion && mainVersion.length > 0) {
+      const record = mainVersion[0]
+      message += `\n📦 正式版本：\n`
+      message += `版本号：${record.version}\n`
+      message += `占用大小：${record.size}\n`
+    }
+
+    if (preVersion && preVersion.length > 0) {
+      const record = preVersion[0]
+      message += `\n\n🎁 预下载版本：\n`
+      message += `版本号：${record.ver}\n`
+      message += `旧版本：${record.oldver}\n`
+      message += `更新大小：${record.size}\n`
+    }
+
+    return this.reply(message, true)
   }
 }

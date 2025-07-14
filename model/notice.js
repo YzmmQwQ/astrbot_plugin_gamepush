@@ -1,9 +1,11 @@
 import { puppeteer } from "#GamePush.lib"
 import { cfg, request, pluginName } from "#GamePush.components"
 import {
+  db,
   api,
   base,
   download,
+  getRedisKeys,
   getGameChuckAPI,
   getPatchBuildAPI,
   getBuildAPI
@@ -53,7 +55,7 @@ class Notifier extends base {
     try {
       const gameConfig = cfg.getGameConfig(game)
       const gameName = this.getGameName(game)
-      let formattedTotalSize, incrementalSize
+      let formattedTotalSize, incrementalSize, Ver
 
       if (game === "ww") {
         const downloadData = await download.getDownloadData(game, type)
@@ -61,6 +63,7 @@ class Notifier extends base {
         formattedTotalSize = api.formatSize(totalSize)
         let patchTotalSize = downloadData.patch.game_pkgs[0].size
         incrementalSize = api.formatSize(patchTotalSize)
+        Ver = downloadData.patch.game_pkgs[0].version
       } else if (game === "ys" || game === "sr" || game === "zzz") {
         let BranchesUrl = getGameChuckAPI(game)
         let BranchesData = await request.get(BranchesUrl, {
@@ -73,10 +76,9 @@ class Notifier extends base {
         let mainPatchBuildSize = 0
         let PreBuildSize = 0
         let PrePatchBuildSize = 0
-        let Version
         const excludedLanguages = ["en-us", "ja-jp", "ko-kr"]
         if (type === "pre") {
-          Version = BranchesData?.data?.game_branches?.[0]?.pre_download?.diff_tags[0]
+          Ver = BranchesData?.data?.game_branches?.[0]?.pre_download?.diff_tags[0]
           BuildAPI = getBuildAPI(
             type,
             BranchesData?.data?.game_branches?.[0]?.pre_download?.package_id,
@@ -105,7 +107,7 @@ class Notifier extends base {
             if (excludedLanguages.includes(matchingField)) continue
             PreBuildSize += parseInt(
               manifest?.deduplicated_stats?.uncompressed_size ||
-                manifest?.stats?.[Version]?.uncompressed_size ||
+                manifest?.stats?.[Ver]?.uncompressed_size ||
                 "0",
               10
             )
@@ -117,7 +119,7 @@ class Notifier extends base {
             if (excludedLanguages.includes(matchingField)) continue
             PrePatchBuildSize += parseInt(
               manifest?.deduplicated_stats?.uncompressed_size ||
-                manifest?.stats?.[Version]?.uncompressed_size ||
+                manifest?.stats?.[Ver]?.uncompressed_size ||
                 "0",
               10
             )
@@ -126,7 +128,7 @@ class Notifier extends base {
           incrementalSize = api.formatSize(PrePatchBuildSize)
           formattedTotalSize = api.formatSize(PreBuildSize)
         } else {
-          Version = BranchesData?.data?.game_branches?.[0]?.main?.diff_tags[0]
+          Ver = BranchesData?.data?.game_branches?.[0]?.main?.diff_tags[0]
           BuildAPI = getBuildAPI(
             type,
             BranchesData?.data?.game_branches?.[0]?.main?.package_id,
@@ -155,7 +157,7 @@ class Notifier extends base {
             if (excludedLanguages.includes(matchingField)) continue
             mainBuildSize += parseInt(
               manifest?.deduplicated_stats?.uncompressed_size ||
-                manifest?.stats?.[Version]?.uncompressed_size ||
+                manifest?.stats?.[Ver]?.uncompressed_size ||
                 "0",
               10
             )
@@ -167,7 +169,7 @@ class Notifier extends base {
             if (excludedLanguages.includes(matchingField)) continue
             mainPatchBuildSize += parseInt(
               manifest?.deduplicated_stats?.uncompressed_size ||
-                manifest?.stats?.[Version]?.uncompressed_size ||
+                manifest?.stats?.[Ver]?.uncompressed_size ||
                 "0",
               10
             )
@@ -178,6 +180,7 @@ class Notifier extends base {
         }
       } else {
         const downloadData = await download.getDownloadData(game, type)
+        Ver = downloadData.patch.version
         let totalSize = 0
         if (downloadData.data?.game_pkgs) {
           downloadData.data.game_pkgs.forEach((pkg) => {
@@ -206,10 +209,25 @@ class Notifier extends base {
         incrementalSize = api.formatSize(patchTotalSize)
       }
 
+      switch (type) {
+        case "main":
+          await db.storeMainSizeData(game, newVersion, formattedTotalSize)
+          break
+        case "pre":
+          await db.storePreSizeData(game, newVersion, Ver, incrementalSize)
+          break
+        case "pre-remove":
+          logger.info(`⛔ 预下载关闭通知，不存储大小数据`)
+          break
+        default:
+          logger.warn(`⚠️ 未知通知类型: ${type}`)
+      }
+
       const templateData = {
         gameName,
         oldVersion,
         newVersion,
+        Ver,
         formattedTotalSize,
         incrementalSize
       }
@@ -242,6 +260,7 @@ class Notifier extends base {
       date: new Date().toLocaleDateString(),
       type
     }
+    console.log(data)
     const img = await puppeteer.screenshot("GamePush-Plugin", data)
     if (img) {
       api.sendToGroups(img, game, gameConfig, pushChangeType)

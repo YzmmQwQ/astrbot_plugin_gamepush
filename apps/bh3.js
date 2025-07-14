@@ -1,6 +1,6 @@
 import { cfg } from "#GamePush.components"
 import { plugin, redis, makeForwardMsg } from "#GamePush.lib"
-import { api, download, getRedisKeys } from "#GamePush.model"
+import { db, api, download, getRedisKeys } from "#GamePush.model"
 
 const bh3Reg = "(!|！|崩坏三|崩坏3|崩三|崩3|bbb|三崩子)"
 export class bh3Push extends plugin {
@@ -33,6 +33,10 @@ export class bh3Push extends plugin {
         {
           reg: `^#*${bh3Reg}获取预下载链接$`,
           fnc: "bh3PreDownloadLinks"
+        },
+        {
+          reg: `^#*${bh3Reg}版本数据(.*)$`,
+          fnc: "bh3VersionData"
         }
       ]
     })
@@ -128,5 +132,73 @@ export class bh3Push extends plugin {
     } catch (err) {
       return this.reply(`❌ 预下载获取失败：${err.message}`, true)
     }
+  }
+
+  async bh3VersionData() {
+    const input = this.e.msg.replace(new RegExp(`#*${bh3Reg}版本数据`, "i"), "").trim()
+    if (!input) return this.showAllVersionData()
+    return this.showSpecificVersionData(input)
+  }
+
+  async showAllVersionData(e) {
+    const mainVersions = await db.getMainData("bh3")
+    const preVersions = await db.getPreData("bh3")
+
+    if ((!mainVersions || mainVersions.length === 0) && (!preVersions || preVersions.length === 0))
+      return this.reply("暂无崩坏3版本数据", true)
+
+    let message = "📊 崩坏3历史版本数据：\n"
+
+    if (mainVersions && mainVersions.length > 0) {
+      message += "\n📦 正式版本：\n"
+      message += mainVersions
+        .map((record, index) => `${index + 1}. 版本号：${record.version}，占用大小：${record.size}`)
+        .join("\n")
+    }
+
+    if (preVersions && preVersions.length > 0) {
+      message += "\n\n🎁 预下载版本：\n"
+      message += preVersions
+        .map(
+          (record, index) =>
+            `${index + 1}. 版本号：${record.ver}，旧版本：${record.oldver}，更新大小：${record.size}`
+        )
+        .join("\n")
+    }
+
+    message += "\n\n📝 提示：发送 #崩三版本数据 [版本号] 查看详细数据"
+
+    return this.reply(await makeForwardMsg(e, [message]))
+  }
+
+  /**
+   * 显示指定版本数据
+   * @param {string} version - 版本号
+   */
+  async showSpecificVersionData(version) {
+    const mainVersion = await db.getMainData("bh3", version)
+    const preVersion = await db.getPreData("bh3", version)
+
+    if ((!mainVersion || mainVersion.length === 0) && (!preVersion || preVersion.length === 0)) {
+      return this.reply(`未找到崩坏3版本 ${version} 的数据`, true)
+    }
+    let message = `📊 崩坏3版本 ${version} 数据：\n`
+
+    if (mainVersion && mainVersion.length > 0) {
+      const record = mainVersion[0]
+      message += `\n📦 正式版本：\n`
+      message += `版本号：${record.version}\n`
+      message += `占用大小：${record.size}\n`
+    }
+
+    if (preVersion && preVersion.length > 0) {
+      const record = preVersion[0]
+      message += `\n\n🎁 预下载版本：\n`
+      message += `版本号：${record.ver}\n`
+      message += `旧版本：${record.oldver}\n`
+      message += `更新大小：${record.size}\n`
+    }
+
+    return this.reply(message, true)
   }
 }
