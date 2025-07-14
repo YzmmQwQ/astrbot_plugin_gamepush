@@ -61,7 +61,7 @@ class Notifier extends base {
         formattedTotalSize = api.formatSize(totalSize)
         let patchTotalSize = downloadData.patch.game_pkgs[0].size
         incrementalSize = api.formatSize(patchTotalSize)
-      } else if (game === "ys" || game === "sr") {
+      } else if (game === "ys" || game === "sr" || game === "zzz") {
         let BranchesUrl = getGameChuckAPI(game)
         let BranchesData = await request.get(BranchesUrl, {
           responseType: "json",

@@ -54,12 +54,20 @@ _实时监控游戏版本更新 | 自动推送预下载通知 | 支持多游戏�
 # 使用 Miao-Yunzai 和 TRSS-Yunzai
 ## 使用GitCode
 git clone https://gitcode.com/rainbowwarmth/GamePush-Plugin.git ./plugins/GamePush-Plugin
+## 使用Gitee
+git clone https://gitee.com/rainbowwarmth/GamePush-Plugin.git ./plugins/GamePush-Plugin
+## 使用CNB
+git clone https://cnb.cool/rainbowwarmth/GamePush-Plugin.git ./plugins/GamePush-Plugin
 ## 使用GitHub
 git clone https://github.com/rainbowwarmth/GamePush-Plugin.git ./plugins/GamePush-Plugin
 
 # 使用 Karin
 ## 使用GitCode
 git clone https://gitcode.com/rainbowwarmth/GamePush-Plugin.git ./plugins/karin-plugin-gamepush
+## 使用Gitee
+git clone https://gitee.com/rainbowwarmth/GamePush-Plugin.git ./plugins/karin-plugin-gamepush
+## 使用CNB
+git clone https://cnb.cool/rainbowwarmth/GamePush-Plugin.git ./plugins/karin-plugin-gamepush
 ## 使用GitHub
 git clone https://github.com/rainbowwarmth/GamePush-Plugin.git ./plugins/karin-plugin-gamepush
 
