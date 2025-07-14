@@ -1,4 +1,4 @@
-import { puppeteer, redis } from "#GamePush.lib"
+import { puppeteer } from "#GamePush.lib"
 import { cfg, request, pluginName } from "#GamePush.components"
 import {
   db,
