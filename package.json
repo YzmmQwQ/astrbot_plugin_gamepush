@@ -21,7 +21,8 @@
     "chokidar": "^4.0.3",
     "node-fetch": "^3.3.2",
     "yaml": "^2.8.0",
-    "sqlite3": "5.1.6"
+    "sqlite3": "5.1.6",
+    "sequelize": "^6.37.7"
   },
   "devDependencies": {
     "eslint": "^8.57.1",

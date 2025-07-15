@@ -1,4 +1,4 @@
-import sqlite3 from "sqlite3"
+import { Sequelize, DataTypes } from "sequelize"
 import path from "path"
 import fs from "fs"
 import https from "https"
@@ -9,8 +9,6 @@ const DB_DIR = path.join(
   BotName === "Karin" ? "@karinjs/karin-plugin-gamepush/data" : "data"
 )
 const DB_PATH = path.join(DB_DIR, "GamePush-Plugin.db")
-
-let db
 
 const ensureDirExists = () => {
   if (!fs.existsSync(DB_DIR)) {
@@ -23,6 +21,7 @@ const downloadDatabase = () => {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(DB_PATH)
     logger.debug("⬇️ 开始下载数据库文件...")
+
     https
       .get(
         "https://cnb.cool/rainbowwarmth/resources/-/git/raw/main/GamePush-Plugin.db",
@@ -65,126 +64,140 @@ const checkDatabase = async () => {
   }
 }
 
+let sequelize
+let MainModel
+let PreModel
+
+const initializeModels = () => {
+  MainModel = sequelize.define(
+    "main",
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+      },
+      game: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      version: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      size: {
+        type: DataTypes.STRING,
+        allowNull: false
+      }
+    },
+    {
+      tableName: "main",
+      timestamps: false
+    }
+  )
+
+  PreModel = sequelize.define(
+    "pre",
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+      },
+      game: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      ver: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        field: "ver"
+      },
+      oldver: {
+        type: DataTypes.STRING,
+        allowNull: false
+      },
+      size: {
+        type: DataTypes.STRING,
+        allowNull: false
+      }
+    },
+    {
+      tableName: "pre",
+      timestamps: false,
+      underscored: false
+    }
+  )
+}
+
 const initializeDatabase = async () => {
   try {
     await checkDatabase()
-    return new Promise((resolve, reject) => {
-      db = new sqlite3.Database(DB_PATH, (err) => {
-        if (err) {
-          logger.error(`❌ 无法打开数据库连接: ${err.message}`, err)
-          return reject(err)
-        }
 
-        logger.debug(`📊 数据库已打开: ${DB_PATH}`)
-
-        db.run("PRAGMA foreign_keys = ON;")
-
-        db.serialize(() => {
-          db.run(`
-            CREATE TABLE IF NOT EXISTS main (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              game TEXT NOT NULL,
-              version TEXT NOT NULL,
-              size TEXT NOT NULL
-            );
-          `)
-
-          db.run(
-            `
-            CREATE TABLE IF NOT EXISTS pre (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              game TEXT NOT NULL,
-              ver TEXT NOT NULL,
-              oldver TEXT NOT NULL,
-              size TEXT NOT NULL
-            );
-          `,
-            (err) => {
-              if (err) return reject(err)
-              logger.debug("✅ 数据库表结构已准备就绪")
-              logger.debug(`📊 数据库包含表: main, pre`)
-              resolve(true)
-            }
-          )
-        })
-      })
+    sequelize = new Sequelize({
+      dialect: "sqlite",
+      storage: DB_PATH,
+      logging: false,
+      define: {
+        freezeTableName: true,
+        timestamps: false
+      },
+      dialectOptions: {
+        foreign_keys: "ON"
+      }
     })
+
+    await sequelize.authenticate()
+    logger.debug(`📊 数据库连接成功: ${DB_PATH}`)
+
+    initializeModels()
+    await sequelize.sync()
+    logger.debug("✅ 数据库模型同步完成")
+
+    return true
   } catch (err) {
     logger.error("❌ 数据库初始化失败:", err)
     throw err
   }
 }
 
-const storeMainSizeData = (game, version, size) => {
-  return new Promise((resolve, reject) => {
-    db.get(
-      "SELECT id FROM main WHERE game = ? AND version = ? LIMIT 1",
-      [game, version],
-      (err, row) => {
-        if (err) {
-          logger.error(`❌ 查询版本存在性失败: ${err.message}`, err)
-          reject(err)
-          return
-        }
+const storeMainSizeData = async (game, version, size) => {
+  try {
+    const existing = await MainModel.findOne({
+      where: { game, version }
+    })
 
-        if (row) {
-          logger.debug(`⏩ 跳过重复记录: ${game}-${version}`)
-          resolve(false)
-          return
-        }
-
-        db.run(
-          "INSERT INTO main (game, version, size) VALUES (?, ?, ?)",
-          [game, version, size],
-          function (err) {
-            if (err) {
-              logger.error(`❌ 存储main表数据失败: ${err.message}`, err)
-              reject(err)
-              return
-            }
-            logger.debug(`💾 存储到main表: ${game}-${version} | ${size}`)
-            resolve(true)
-          }
-        )
-      }
-    )
-  })
+    if (existing) {
+      logger.debug(`⏩ 跳过重复记录: ${game}-${version}`)
+      return false
+    }
+    await MainModel.create({ game, version, size })
+    logger.debug(`💾 存储到 main 表: ${game}-${version} | ${size}`)
+    return true
+  } catch (err) {
+    logger.error(`❌ 存储 main 表数据失败: ${err.message}`, err)
+    throw err
+  }
 }
 
-const storePreSizeData = (game, version, oldver, size) => {
-  return new Promise((resolve, reject) => {
-    db.get(
-      "SELECT id FROM pre WHERE game = ? AND ver = ? AND oldver = ? LIMIT 1",
-      [game, version, oldver],
-      (err, row) => {
-        if (err) {
-          logger.error(`❌ 查询预下载版本存在性失败: ${err.message}`, err)
-          reject(err)
-          return
-        }
+const storePreSizeData = async (game, ver, oldver, size) => {
+  try {
+    const existing = await PreModel.findOne({
+      where: { game, ver, oldver }
+    })
 
-        if (row) {
-          logger.debug(`⏩ 跳过重复预下载记录: ${game}-${version} | ${oldver}`)
-          resolve(false)
-          return
-        }
+    if (existing) {
+      logger.debug(`⏩ 跳过重复预下载记录: ${game}-${ver} | ${oldver}`)
+      return false
+    }
 
-        db.run(
-          "INSERT INTO pre (game, ver, oldver, size) VALUES (?, ?, ?, ?)",
-          [game, version, oldver, size],
-          function (err) {
-            if (err) {
-              logger.error(`❌ 存储pre表数据失败: ${err.message}`, err)
-              reject(err)
-              return
-            }
-            logger.debug(`💾 存储到pre表: ${game}-${version} | old: ${oldver} | size: ${size}`)
-            resolve(true)
-          }
-        )
-      }
-    )
-  })
+    await PreModel.create({ game, ver, oldver, size })
+    logger.debug(`💾 存储到 pre 表: ${game}-${ver} | old: ${oldver} | size: ${size}`)
+    return true
+  } catch (err) {
+    logger.error(`❌ 存储 pre 表数据失败: ${err.message}`, err)
+    throw err
+  }
 }
 
 /**
@@ -193,25 +206,17 @@ const storePreSizeData = (game, version, oldver, size) => {
  * @param {string} [version] - 可选，指定版本号
  * @returns {Promise<Array>} 返回匹配的数据记录
  */
-const getMainData = (game, version = null) => {
-  return new Promise((resolve, reject) => {
-    let sql = `SELECT * FROM main WHERE game = ?`
-    const params = [game]
+const getMainData = async (game, version = null) => {
+  try {
+    const where = { game }
+    if (version) where.version = version
 
-    if (version) {
-      sql += ` AND version = ?`
-      params.push(version)
-    }
-
-    db.all(sql, params, (err, rows) => {
-      if (err) {
-        logger.error(`❌ 查询main表失败: ${err.message}`, err)
-        reject(err)
-        return
-      }
-      resolve(rows)
-    })
-  })
+    const data = await MainModel.findAll({ where })
+    return data
+  } catch (err) {
+    logger.error(`❌ 查询 main 表失败: ${err.message}`, err)
+    throw err
+  }
 }
 
 /**
@@ -220,40 +225,29 @@ const getMainData = (game, version = null) => {
  * @param {string} [ver] - 可选，指定预下载版本号
  * @returns {Promise<Array>} 返回匹配的数据记录
  */
-const getPreData = (game, ver = null) => {
-  return new Promise((resolve, reject) => {
-    let sql = `SELECT * FROM pre WHERE game = ?`
-    const params = [game]
+const getPreData = async (game, ver = null) => {
+  try {
+    const where = { game }
+    if (ver) where.ver = ver
 
-    if (ver) {
-      sql += ` AND ver = ?`
-      params.push(ver)
-    }
-
-    db.all(sql, params, (err, rows) => {
-      if (err) {
-        logger.error(`❌ 查询pre表失败: ${err.message}`, err)
-        reject(err)
-        return
-      }
-      resolve(rows)
-    })
-  })
+    const data = await PreModel.findAll({ where })
+    return data
+  } catch (err) {
+    logger.error(`❌ 查询 pre 表失败: ${err.message}`, err)
+    throw err
+  }
 }
-const closeDatabase = () => {
-  return new Promise((resolve, reject) => {
-    if (!db) return resolve()
 
-    db.close((err) => {
-      if (err) {
-        logger.error(`❌ 关闭数据库连接失败: ${err.message}`, err)
-        reject(err)
-        return
-      }
+const closeDatabase = async () => {
+  try {
+    if (sequelize) {
+      await sequelize.close()
       logger.info("🔌 数据库连接已关闭")
-      resolve()
-    })
-  })
+    }
+  } catch (err) {
+    logger.error(`❌ 关闭数据库连接失败: ${err.message}`, err)
+    throw err
+  }
 }
 
 initializeDatabase()
