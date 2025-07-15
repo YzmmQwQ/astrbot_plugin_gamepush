@@ -20,7 +20,8 @@
     "lodash": "^4.17.21",
     "chokidar": "^4.0.3",
     "node-fetch": "^3.3.2",
-    "yaml": "^2.8.0"
+    "yaml": "^2.8.0",
+    "sqlite3": "5.1.6"
   },
   "devDependencies": {
     "eslint": "^8.57.1",

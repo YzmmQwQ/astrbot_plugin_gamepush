@@ -117,19 +117,35 @@ const initializeDatabase = async () => {
 
 const storeMainSizeData = (game, version, size) => {
   return new Promise((resolve, reject) => {
-    db.run(
-      `
-      INSERT INTO main (game, version, size) VALUES (?, ?, ?)
-    `,
-      [game, version, size],
-      function (err) {
+    db.get(
+      "SELECT id FROM main WHERE game = ? AND version = ? LIMIT 1",
+      [game, version],
+      (err, row) => {
         if (err) {
-          logger.error(`❌ 存储main表数据失败: ${err.message}`, err)
+          logger.error(`❌ 查询版本存在性失败: ${err.message}`, err)
           reject(err)
           return
         }
-        logger.debug(`💾 存储到main表: ${game}-${version} | ${size}`)
-        resolve(true)
+
+        if (row) {
+          logger.debug(`⏩ 跳过重复记录: ${game}-${version}`)
+          resolve(false)
+          return
+        }
+
+        db.run(
+          "INSERT INTO main (game, version, size) VALUES (?, ?, ?)",
+          [game, version, size],
+          function (err) {
+            if (err) {
+              logger.error(`❌ 存储main表数据失败: ${err.message}`, err)
+              reject(err)
+              return
+            }
+            logger.debug(`💾 存储到main表: ${game}-${version} | ${size}`)
+            resolve(true)
+          }
+        )
       }
     )
   })
@@ -137,19 +153,35 @@ const storeMainSizeData = (game, version, size) => {
 
 const storePreSizeData = (game, version, oldver, size) => {
   return new Promise((resolve, reject) => {
-    db.run(
-      `
-      INSERT INTO pre (game, ver, oldver, size) VALUES (?, ?, ?, ?)
-    `,
-      [game, version, oldver, size],
-      function (err) {
+    db.get(
+      "SELECT id FROM pre WHERE game = ? AND ver = ? AND oldver = ? LIMIT 1",
+      [game, version, oldver],
+      (err, row) => {
         if (err) {
-          logger.error(`❌ 存储pre表数据失败: ${err.message}`, err)
+          logger.error(`❌ 查询预下载版本存在性失败: ${err.message}`, err)
           reject(err)
           return
         }
-        logger.debug(`💾 存储到pre表: ${game}-${version} | old: ${oldver} | size: ${size}`)
-        resolve(true)
+
+        if (row) {
+          logger.debug(`⏩ 跳过重复预下载记录: ${game}-${version} | ${oldver}`)
+          resolve(false)
+          return
+        }
+
+        db.run(
+          "INSERT INTO pre (game, ver, oldver, size) VALUES (?, ?, ?, ?)",
+          [game, version, oldver, size],
+          function (err) {
+            if (err) {
+              logger.error(`❌ 存储pre表数据失败: ${err.message}`, err)
+              reject(err)
+              return
+            }
+            logger.debug(`💾 存储到pre表: ${game}-${version} | old: ${oldver} | size: ${size}`)
+            resolve(true)
+          }
+        )
       }
     )
   })
