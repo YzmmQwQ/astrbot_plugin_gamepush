@@ -5,7 +5,6 @@ import {
   api,
   base,
   download,
-  getRedisKeys,
   getGameChuckAPI,
   getPatchBuildAPI,
   getBuildAPI
@@ -180,7 +179,13 @@ class Notifier extends base {
         }
       } else {
         const downloadData = await download.getDownloadData(game, type)
-        Ver = downloadData.patch.version
+        let BranchesUrl = getGameChuckAPI(game)
+        let BranchesData = await request.get(BranchesUrl, {
+          responseType: "json",
+          log: true,
+          gameName
+        })
+        Ver = BranchesData?.data?.game_branches?.[0]?.main?.tag
         let totalSize = 0
         if (downloadData.data?.game_pkgs) {
           downloadData.data.game_pkgs.forEach((pkg) => {
@@ -260,7 +265,6 @@ class Notifier extends base {
       date: new Date().toLocaleDateString(),
       type
     }
-    console.log(data)
     const img = await puppeteer.screenshot("GamePush-Plugin", data)
     if (img) {
       api.sendToGroups(img, game, gameConfig, pushChangeType)
