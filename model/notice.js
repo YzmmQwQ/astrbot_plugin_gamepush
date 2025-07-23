@@ -17,9 +17,7 @@ class Notifier extends base {
         `✨${gameName}游戏版本更新通知`,
         `🚀版本变更：${oldVersion} → ${newVersion}`,
         formattedTotalSize && `📦完整大小（含中文语音）：${formattedTotalSize}`,
-        ...(gameName !== "原神" && gameName !== "崩坏3"
-          ? [incrementalSize && `🔄 增量更新大小：约${incrementalSize}`]
-          : []),
+        ...(incrementalSize ? [incrementalSize && `🔄 增量更新大小：约${incrementalSize}`] : []),
         "📢 请及时更新客户端",
         ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
       ]
@@ -55,7 +53,18 @@ class Notifier extends base {
       const gameConfig = cfg.getGameConfig(game)
       const gameName = this.getGameName(game)
       let formattedTotalSize, incrementalSize, Ver
-
+      let BuildAPI, PatchBuildAPI, BuidldData, PatchBuildData
+      let mainBuildSize = 0
+      let mainPatchBuildSize = 0
+      let PreBuildSize = 0
+      let PrePatchBuildSize = 0
+      const excludedLanguages = ["en-us", "ja-jp", "ko-kr"]
+      let BranchesUrl = getGameChuckAPI(game)
+      let BranchesData = await request.get(BranchesUrl, {
+        responseType: "json",
+        log: true,
+        gameName
+      })
       if (game === "ww") {
         const downloadData = await download.getDownloadData(game, type)
         let totalSize = downloadData.data.game_pkgs[0].size
@@ -64,18 +73,6 @@ class Notifier extends base {
         incrementalSize = api.formatSize(patchTotalSize)
         Ver = downloadData.patch.game_pkgs[0].version
       } else if (game === "ys" || game === "sr" || game === "zzz") {
-        let BranchesUrl = getGameChuckAPI(game)
-        let BranchesData = await request.get(BranchesUrl, {
-          responseType: "json",
-          log: true,
-          gameName
-        })
-        let BuildAPI, PatchBuildAPI, BuidldData, PatchBuildData
-        let mainBuildSize = 0
-        let mainPatchBuildSize = 0
-        let PreBuildSize = 0
-        let PrePatchBuildSize = 0
-        const excludedLanguages = ["en-us", "ja-jp", "ko-kr"]
         if (type === "pre") {
           Ver = BranchesData?.data?.game_branches?.[0]?.pre_download?.diff_tags[0]
           BuildAPI = getBuildAPI(
@@ -178,40 +175,44 @@ class Notifier extends base {
           formattedTotalSize = api.formatSize(mainBuildSize)
         }
       } else {
-        const downloadData = await download.getDownloadData(game, type)
-        let BranchesUrl = getGameChuckAPI(game)
-        let BranchesData = await request.get(BranchesUrl, {
-          responseType: "json",
-          log: true,
-          gameName
-        })
         Ver = BranchesData?.data?.game_branches?.[0]?.main?.tag
-        let totalSize = 0
-        if (downloadData.data?.game_pkgs) {
-          downloadData.data.game_pkgs.forEach((pkg) => {
-            totalSize += parseInt(pkg.size || "0", 10)
-          })
-        }
-        if (downloadData.data?.audio_pkgs) {
-          const chineseAudio = downloadData.data.audio_pkgs.find(
-            (a) => a.language.toLowerCase() === "zh-cn"
+        if (type === "pre") {
+          PatchBuildAPI = getBuildAPI(
+            type,
+            BranchesData?.data?.game_branches?.[0]?.pre_download?.package_id,
+            BranchesData?.data?.game_branches?.[0]?.pre_download?.password
           )
-          if (chineseAudio) totalSize += parseInt(chineseAudio.size || "0", 10)
-        }
-        formattedTotalSize = api.formatSize(totalSize)
-        let patchTotalSize = 0
-        if (downloadData.patch?.game_pkgs) {
-          downloadData.patch.game_pkgs.forEach((pkg) => {
-            patchTotalSize += parseInt(pkg.size || "0", 10)
+          PatchBuildData = await request.get(PatchBuildAPI, {
+            responseType: "json",
+            log: true,
+            gameName
           })
-        }
-        if (downloadData.patch?.audio_pkgs) {
-          const chineseAudio = downloadData.patch.audio_pkgs.find(
-            (a) => a.language.toLowerCase() === "zh-cn"
+          const manifests = PatchBuildData?.data?.manifests
+          const gameManifest = manifests?.find((m) => m.matching_field === "game")
+          const asbManifest = manifests?.find((m) => m.matching_field === "asb")
+          PrePatchBuildSize = gameManifest?.stats?.compressed_size
+          PreBuildSize = asbManifest.stats?.compressed_size
+          incrementalSize = api.formatSize(PrePatchBuildSize)
+          formattedTotalSize = api.formatSize(PreBuildSize)
+        } else {
+          BuildAPI = getBuildAPI(
+            type,
+            BranchesData?.data?.game_branches?.[0]?.main?.package_id,
+            BranchesData?.data?.game_branches?.[0]?.main?.password
           )
-          if (chineseAudio) patchTotalSize += parseInt(chineseAudio.size || "0", 10)
+          BuidldData = await request.get(BuildAPI, {
+            responseType: "json",
+            log: true,
+            gameName
+          })
+          const manifests = BuidldData?.data.manifests
+          const gameManifest = manifests?.find((m) => m.matching_field === "game")
+          const asbManifest = manifests?.find((m) => m.matching_field === "asb")
+          mainPatchBuildSize = gameManifest.stats?.compressed_size
+          mainBuildSize = asbManifest.stats?.compressed_size
+          incrementalSize = api.formatSize(mainPatchBuildSize)
+          formattedTotalSize = api.formatSize(mainBuildSize)
         }
-        incrementalSize = api.formatSize(patchTotalSize)
       }
 
       switch (type) {
@@ -265,6 +266,7 @@ class Notifier extends base {
       date: new Date().toLocaleDateString(),
       type
     }
+    console.log(data)
     const img = await puppeteer.screenshot("GamePush-Plugin", data)
     if (img) {
       api.sendToGroups(img, game, gameConfig, pushChangeType)
