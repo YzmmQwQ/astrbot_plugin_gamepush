@@ -9,6 +9,9 @@ const DB_DIR = path.join(
   BotName === "Karin" ? "@karinjs/karin-plugin-gamepush/data" : "data"
 )
 const DB_PATH = path.join(DB_DIR, "GamePush-Plugin.db")
+const VERSION_JSON_PATH = path.join(DB_DIR, "GamePush-Plugin-version.json")
+const REMOTE_VERSION_URL =
+  "https://cnb.cool/rainbowwarmth/resources/-/git/raw/main/GamePush-Plugin-version.json"
 
 const ensureDirExists = () => {
   if (!fs.existsSync(DB_DIR)) {
@@ -17,7 +20,36 @@ const ensureDirExists = () => {
   }
 }
 
-const downloadDatabase = () => {
+const fetchRemoteVersionInfo = async () => {
+  return new Promise((resolve, reject) => {
+    logger.debug("🌐 开始获取远程版本信息...")
+    https
+      .get(REMOTE_VERSION_URL, (response) => {
+        let data = ""
+
+        response.on("data", (chunk) => {
+          data += chunk
+        })
+
+        response.on("end", () => {
+          try {
+            const jsonData = JSON.parse(data)
+            logger.debug(`✅ 远程版本信息获取成功: ${jsonData.version}`)
+            resolve(jsonData)
+          } catch (e) {
+            logger.error("❌ 远程版本信息解析失败", e)
+            reject(new Error("Failed to parse remote version info"))
+          }
+        })
+      })
+      .on("error", (err) => {
+        logger.error("❌ 获取远程版本信息失败", err)
+        reject(err)
+      })
+  })
+}
+
+const downloadDatabase = async () => {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(DB_PATH)
     logger.debug("⬇️ 开始下载数据库文件...")
@@ -29,7 +61,7 @@ const downloadDatabase = () => {
           const { statusCode } = response
 
           if (statusCode !== 200) {
-            fs.unlinkSync(DB_PATH)
+            if (fs.existsSync(DB_PATH)) fs.unlinkSync(DB_PATH)
             return reject(new Error(`下载失败，HTTP状态码: ${statusCode}`))
           }
           response.pipe(file)
@@ -41,22 +73,77 @@ const downloadDatabase = () => {
         }
       )
       .on("error", (err) => {
-        fs.unlinkSync(DB_PATH)
+        if (fs.existsSync(DB_PATH)) fs.unlinkSync(DB_PATH)
         logger.error(`❌ 下载失败: ${err.message}`, err)
         reject(err)
       })
   })
 }
 
+const saveLocalVersionInfo = (versionInfo) => {
+  try {
+    fs.writeFileSync(VERSION_JSON_PATH, JSON.stringify(versionInfo, null, 2))
+    logger.debug(`💾 本地版本信息已更新: ${versionInfo.version}`)
+    return true
+  } catch (err) {
+    logger.error("❌ 保存本地版本信息失败", err)
+    return false
+  }
+}
+
 const checkDatabase = async () => {
   try {
     ensureDirExists()
-    if (!fs.existsSync(DB_PATH)) {
-      logger.debug("🔍 检测到数据库文件不存在")
-      await downloadDatabase()
-    } else {
-      logger.debug(`📁 数据库文件已存在: ${DB_PATH}`)
+
+    const dbExists = fs.existsSync(DB_PATH)
+    const versionFileExists = fs.existsSync(VERSION_JSON_PATH)
+
+    let remoteVersionInfo
+    try {
+      remoteVersionInfo = await fetchRemoteVersionInfo()
+    } catch (err) {
+      logger.error("⚠️ 无法获取远程版本信息，跳过版本检查", err)
+      if (dbExists) return true
     }
+
+    let localVersionInfo = {}
+    if (versionFileExists) {
+      try {
+        localVersionInfo = JSON.parse(fs.readFileSync(VERSION_JSON_PATH, "utf8"))
+        logger.debug(`📄 本地版本信息: ${localVersionInfo.version || "不存在"}`)
+      } catch (err) {
+        logger.error("❌ 解析本地版本信息失败", err)
+        localVersionInfo = {}
+      }
+    }
+
+    let needDownload = false
+    if (!dbExists) {
+      logger.debug("🔍 检测到数据库文件不存在")
+      needDownload = true
+    } else if (remoteVersionInfo && localVersionInfo.version !== remoteVersionInfo.version) {
+      logger.debug(
+        `🔍 检测到版本不一致 (本地: ${localVersionInfo.version || "无"}, 远程: ${remoteVersionInfo.version})`
+      )
+      needDownload = true
+    }
+
+    if (needDownload) {
+      logger.debug("⏫ 开始更新数据库...")
+      await downloadDatabase()
+
+      if (remoteVersionInfo) {
+        saveLocalVersionInfo(remoteVersionInfo)
+      } else if (versionFileExists) {
+        const newVersion = localVersionInfo.version
+          ? `${localVersionInfo.version}_local`
+          : `v${new Date().toISOString().slice(0, 10)}`
+        saveLocalVersionInfo({ ...localVersionInfo, version: newVersion })
+      }
+      return true
+    }
+
+    logger.debug(`📁 数据库文件已存在且版本一致: ${DB_PATH}`)
     return true
   } catch (err) {
     logger.error("❌ 数据库初始化前检查失败:", err)
