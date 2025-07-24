@@ -167,8 +167,7 @@ export class bh3Push extends plugin {
     }
 
     message += "\n\n📝 提示：发送 #崩三版本数据 [版本号] 查看详细数据"
-
-    return this.reply(await makeForwardMsg(e, [message]))
+    return this.reply(await makeForwardMsg(this.e, [message]))
   }
 
   /**
