@@ -149,9 +149,9 @@ export class zzzPush extends plugin {
     return this.showSpecificVersionData(input)
   }
 
-  async showAllVersionData(e) {
-    const mainVersions = await db.getMainData("zzz")
-    const preVersions = await db.getPreData("zzz")
+  async showAllVersionData() {
+    const mainVersions = await (await db).getMainData("zzz")
+    const preVersions = await (await db).getPreData("zzz")
 
     if ((!mainVersions || mainVersions.length === 0) && (!preVersions || preVersions.length === 0))
       return this.reply("暂无绝区零版本数据", true)
@@ -185,8 +185,8 @@ export class zzzPush extends plugin {
    * @param {string} version - 版本号
    */
   async showSpecificVersionData(version) {
-    const mainVersion = await db.getMainData("zzz", version)
-    const preVersion = await db.getPreData("zzz", version)
+    const mainVersion = await (await db).getMainData("zzz", version)
+    const preVersion = await (await db).getPreData("zzz", version)
 
     if ((!mainVersion || mainVersion.length === 0) && (!preVersion || preVersion.length === 0)) {
       return this.reply(`未找到绝区零版本 ${version} 的数据`, true)

@@ -139,9 +139,9 @@ export class wwPush extends plugin {
     return this.showSpecificVersionData(input)
   }
 
-  async showAllVersionData(e) {
-    const mainVersions = await db.getMainData("ww")
-    const preVersions = await db.getPreData("ww")
+  async showAllVersionData() {
+    const mainVersions = await (await db).getMainData("ww")
+    const preVersions = await (await db).getPreData("ww")
 
     if ((!mainVersions || mainVersions.length === 0) && (!preVersions || preVersions.length === 0))
       return this.reply("暂无鸣潮版本数据", true)
@@ -175,8 +175,8 @@ export class wwPush extends plugin {
    * @param {string} version - 版本号
    */
   async showSpecificVersionData(version) {
-    const mainVersion = await db.getMainData("ww", version)
-    const preVersion = await db.getPreData("ww", version)
+    const mainVersion = await (await db).getMainData("ww", version)
+    const preVersion = await (await db).getPreData("ww", version)
 
     if ((!mainVersion || mainVersion.length === 0) && (!preVersion || preVersion.length === 0)) {
       return this.reply(`未找到鸣潮版本 ${version} 的数据`, true)

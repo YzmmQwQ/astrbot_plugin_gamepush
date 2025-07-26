@@ -140,9 +140,9 @@ export class bh3Push extends plugin {
     return this.showSpecificVersionData(input)
   }
 
-  async showAllVersionData(e) {
-    const mainVersions = await db.getMainData("bh3")
-    const preVersions = await db.getPreData("bh3")
+  async showAllVersionData() {
+    const mainVersions = await (await db).getMainData("bh3")
+    const preVersions = await (await db).getPreData("bh3")
 
     if ((!mainVersions || mainVersions.length === 0) && (!preVersions || preVersions.length === 0))
       return this.reply("暂无崩坏3版本数据", true)
@@ -175,8 +175,8 @@ export class bh3Push extends plugin {
    * @param {string} version - 版本号
    */
   async showSpecificVersionData(version) {
-    const mainVersion = await db.getMainData("bh3", version)
-    const preVersion = await db.getPreData("bh3", version)
+    const mainVersion = await (await db).getMainData("bh3", version)
+    const preVersion = await (await db).getPreData("bh3", version)
 
     if ((!mainVersion || mainVersion.length === 0) && (!preVersion || preVersion.length === 0)) {
       return this.reply(`未找到崩坏3版本 ${version} 的数据`, true)

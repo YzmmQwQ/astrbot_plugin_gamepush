@@ -16,6 +16,32 @@ class GamePushDB {
     )
     this.DB_PATH = path.join(this.DB_DIR, "GamePush-Plugin.db")
     this.VERSION_JSON_PATH = path.join(this.DB_DIR, "GamePush-Plugin-version.json")
+
+    this.initialized = false
+    this.initializing = false
+  }
+
+  async ensureInitialized() {
+    if (this.initialized) return true
+    if (this.initializing) {
+      return new Promise((resolve) => {
+        const check = () => {
+          if (this.initialized) resolve(true)
+          else setTimeout(check, 100)
+        }
+        check()
+      })
+    }
+
+    this.initializing = true
+    try {
+      await this.initialize()
+      this.initialized = true
+      return true
+    } catch (err) {
+      this.initializing = false
+      throw err
+    }
   }
 
   ensureDirExists() {
@@ -239,7 +265,7 @@ class GamePushDB {
   }
 
   async storeMainSizeData(game, version, size) {
-    if (!this.MainModel) throw new Error("Database not initialized")
+    await this.ensureInitialized()
 
     try {
       const existing = await this.MainModel.findOne({
@@ -260,7 +286,7 @@ class GamePushDB {
   }
 
   async storePreSizeData(game, ver, oldver, size) {
-    if (!this.PreModel) throw new Error("Database not initialized")
+    await this.ensureInitialized()
 
     try {
       const existing = await this.PreModel.findOne({
@@ -288,7 +314,7 @@ class GamePushDB {
    * @returns {Promise<Array>} 返回匹配的数据记录
    */
   async getMainData(game, version = null) {
-    if (!this.MainModel) throw new Error("Database not initialized")
+    await this.ensureInitialized()
 
     try {
       const where = { game }
@@ -309,7 +335,7 @@ class GamePushDB {
    * @returns {Promise<Array>} 返回匹配的数据记录
    */
   async getPreData(game, ver = null) {
-    if (!this.PreModel) throw new Error("Database not initialized")
+    await this.ensureInitialized()
 
     try {
       const where = { game }

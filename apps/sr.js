@@ -151,9 +151,9 @@ export class srPush extends plugin {
     return this.showSpecificVersionData(input)
   }
 
-  async showAllVersionData(e) {
-    const mainVersions = await db.getMainData("sr")
-    const preVersions = await db.getPreData("sr")
+  async showAllVersionData() {
+    const mainVersions = await (await db).getMainData("sr")
+    const preVersions = await (await db).getPreData("sr")
 
     if ((!mainVersions || mainVersions.length === 0) && (!preVersions || preVersions.length === 0))
       return this.reply("暂无崩坏星穹铁道版本数据", true)
@@ -187,8 +187,8 @@ export class srPush extends plugin {
    * @param {string} version - 版本号
    */
   async showSpecificVersionData(version) {
-    const mainVersion = await db.getMainData("sr", version)
-    const preVersion = await db.getPreData("sr", version)
+    const mainVersion = await (await db).getMainData("sr", version)
+    const preVersion = await (await db).getPreData("sr", version)
 
     if ((!mainVersion || mainVersion.length === 0) && (!preVersion || preVersion.length === 0)) {
       return this.reply(`未找到崩坏星穹铁道版本 ${version} 的数据`, true)

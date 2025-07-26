@@ -101,9 +101,9 @@ export class ysPush extends plugin {
     return this.showSpecificVersionData(input)
   }
 
-  async showAllVersionData(e) {
-    const mainVersions = await db.getMainData("ys")
-    const preVersions = await db.getPreData("ys")
+  async showAllVersionData() {
+    const mainVersions = await (await db).getMainData("ys")
+    const preVersions = await (await db).getPreData("ys")
 
     if ((!mainVersions || mainVersions.length === 0) && (!preVersions || preVersions.length === 0))
       return this.reply("暂无原神版本数据", true)
@@ -137,8 +137,8 @@ export class ysPush extends plugin {
    * @param {string} version - 版本号
    */
   async showSpecificVersionData(version) {
-    const mainVersion = await db.getMainData("ys", version)
-    const preVersion = await db.getPreData("ys", version)
+    const mainVersion = await (await db).getMainData("ys", version)
+    const preVersion = await (await db).getPreData("ys", version)
 
     if ((!mainVersion || mainVersion.length === 0) && (!preVersion || preVersion.length === 0)) {
       return this.reply(`未找到原神版本 ${version} 的数据`, true)
