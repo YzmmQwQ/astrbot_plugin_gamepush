@@ -24,7 +24,7 @@ class Notifier extends base {
       return parts.filter(Boolean).join("\n")
     },
 
-    pre: ({ gameName, newVersion, formattedTotalSize, incrementalSize }) => {
+    pre: ({ game, gameName, newVersion, formattedTotalSize, incrementalSize }) => {
       const parts = [
         `🎁${gameName}预下载资源已开放`,
         `📦新版本：${newVersion}`,
@@ -35,7 +35,7 @@ class Notifier extends base {
           ? [incrementalSize && `🔄 增量更新大小：约${incrementalSize}`]
           : []),
         "📥请提前下载游戏资源",
-        ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取预下载链接】获取客户端`] : [])
+        `访问 https://game.451278.xyz/?game=${game} 启动 ${gameName} 客户端 进行预下载`
       ]
       return parts.filter(Boolean).join("\n")
     },
@@ -217,10 +217,10 @@ class Notifier extends base {
 
       switch (type) {
         case "main":
-          await db.storeMainSizeData(game, newVersion, formattedTotalSize)
+          await (await db).storeMainSizeData(game, newVersion, formattedTotalSize)
           break
         case "pre":
-          await db.storePreSizeData(game, newVersion, Ver, incrementalSize)
+          await (await db).storePreSizeData(game, newVersion, Ver, incrementalSize)
           break
         case "pre-remove":
           logger.info(`⛔ 预下载关闭通知，不存储大小数据`)
@@ -268,7 +268,16 @@ class Notifier extends base {
     }
     const img = await puppeteer.screenshot("GamePush-Plugin", data)
     if (img) {
-      api.sendToGroups(img, game, gameConfig, pushChangeType)
+      api.sendToGroups(
+        [
+          img,
+          `访问https://game.451278.xyz/?game=${game}
+          \n启动${this.getGameName(game)}客户端进行预下载`
+        ],
+        game,
+        gameConfig,
+        pushChangeType
+      )
     } else {
       logger.error(`[${pluginName}] 发送图片消息失败`)
     }
