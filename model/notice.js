@@ -35,7 +35,7 @@ class Notifier extends base {
           ? [incrementalSize && `🔄 增量更新大小：约${incrementalSize}`]
           : []),
         "📥请提前下载游戏资源",
-        `访问 https://game.451278.xyz/?game=${game} 启动 ${gameName} 客户端 进行预下载`
+        ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
       ]
       return parts.filter(Boolean).join("\n")
     },
@@ -268,16 +268,7 @@ class Notifier extends base {
     }
     const img = await puppeteer.screenshot("GamePush-Plugin", data)
     if (img) {
-      api.sendToGroups(
-        [
-          img,
-          `访问https://game.451278.xyz/?game=${game}
-          \n启动${this.getGameName(game)}客户端进行预下载`
-        ],
-        game,
-        gameConfig,
-        pushChangeType
-      )
+      api.sendToGroups(img, game, gameConfig, pushChangeType)
     } else {
       logger.error(`[${pluginName}] 发送图片消息失败`)
     }
