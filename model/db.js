@@ -76,26 +76,7 @@ class GamePushDB {
   async downloadDatabase() {
     this.ensureDirExists()
     logger.debug(`[${pluginName}] ⬇️ 开始下载数据库文件...`)
-
-    try {
-      const result = await common.downFile(this.DB_DOWNLOAD_URL, this.DB_PATH)
-
-      if (result === true || (result && result.success === true)) {
-        logger.debug(`[${pluginName}] ✅ 数据库文件已下载: ${this.DB_PATH}`)
-        return true
-      } else if (result && result.success === false) {
-        const errorMessage = result.message || "下载失败，未知原因"
-        throw new Error(errorMessage)
-      } else if (result === false) {
-        throw new Error("下载失败，未提供具体原因")
-      } else {
-        throw new Error("下载失败，返回结果格式未知")
-      }
-    } catch (err) {
-      if (fs.existsSync(this.DB_PATH)) fs.unlinkSync(this.DB_PATH)
-      logger.error(`[${pluginName}] ❌ 下载失败: ${err.message}`, err)
-      throw err
-    }
+    await common.downFile(this.DB_DOWNLOAD_URL, this.DB_PATH)
   }
 
   saveLocalVersionInfo(versionInfo) {
