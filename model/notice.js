@@ -237,11 +237,13 @@ class Notifier extends base {
         formattedTotalSize,
         incrementalSize
       }
-
-      if (pushChangeType === "1") {
-        await this.sendImageMessage(type, game, gameConfig, templateData, pushChangeType)
-      } else {
-        await this.sendTextMessage(type, game, gameConfig, templateData, pushChangeType)
+      
+      if (type !== 'pre-remove') {
+        if (pushChangeType === "1") {
+          await this.sendImageMessage(type, game, gameConfig, templateData, pushChangeType)
+        } else {
+          await this.sendTextMessage(type, game, gameConfig, templateData, pushChangeType)
+        }
       }
     } catch (err) {
       logger.error(
