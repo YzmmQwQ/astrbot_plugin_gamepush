@@ -2,7 +2,7 @@ import { cfg } from "#GamePush.components"
 import { plugin, redis, makeForwardMsg } from "#GamePush.lib"
 import { db, api, download, getRedisKeys } from "#GamePush.model"
 
-const srReg = "(sr|SR|星铁|星穹铁道|铁道|崩坏星穹铁道)"
+const srReg = "(\\*|sr|SR|星铁|星穹铁道|铁道|崩坏星穹铁道)"
 
 export class srPush extends plugin {
   constructor() {

@@ -23,7 +23,7 @@ const BotName = (() => {
     return "Trss-Yunzai"
   } else if (BotPackage.name === "yunzai") {
     logger.error("[GamePush-Plugin] 还有人玩Yunzai-Bot??")
-  }
+  } 
 })()
 
 const pluginRoot = path.join(_path, "plugins", pluginName)

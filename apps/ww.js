@@ -2,7 +2,7 @@ import { cfg } from "#GamePush.components"
 import { plugin, redis, makeForwardMsg } from "#GamePush.lib"
 import { db, api, download, getRedisKeys } from "#GamePush.model"
 
-const wwReg = "(~|鸣潮|ww|WW|mc)"
+const wwReg = "(~|～|鸣潮|ww|WW|mc)"
 
 export class wwPush extends plugin {
   constructor() {
