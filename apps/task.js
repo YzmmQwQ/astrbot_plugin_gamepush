@@ -6,7 +6,6 @@ const tasks = gameIds.map((gameId) => {
   const name = `${getGameName(gameId)}版本监控`
   const cron = cfg.getGameConfig(gameId)?.cron || "0 0/5 * * * *"
   const logset = cfg.getGameConfig(gameId)?.log || false
-
   logger.info(`[karin-plugin-gamepush] 创建定时任务: ${name} (cron: ${cron})`)
 
   return karin.task(

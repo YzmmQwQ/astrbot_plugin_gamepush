@@ -1,220 +1,44 @@
 import { puppeteer } from "#GamePush.lib"
 import { cfg, request, pluginName } from "#GamePush.components"
-import {
-  db,
-  api,
-  base,
-  download,
-  getGameChuckAPI,
-  getPatchBuildAPI,
-  getBuildAPI
-} from "#GamePush.model"
+import { db, api, base, download, getGameChuckAPI, getPatchBuildAPI, getBuildAPI } from "#GamePush.model"
 
 class Notifier extends base {
   TemplateMap = {
-    main: ({ gameName, oldVersion, newVersion, formattedTotalSize, incrementalSize }) => {
-      const parts = [
-        `✨${gameName}游戏版本更新通知`,
-        `🚀版本变更：${oldVersion} → ${newVersion}`,
-        formattedTotalSize && `📦完整大小（含中文语音）：${formattedTotalSize}`,
-        ...(incrementalSize ? [incrementalSize && `🔄 增量更新大小：约${incrementalSize}`] : []),
-        "📢 请及时更新客户端",
-        ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
-      ]
-      return parts.filter(Boolean).join("\n")
-    },
+    main: ({ gameName, oldVersion, newVersion, formattedTotalSize, incrementalSize }) => [
+      `✨${gameName}游戏版本更新通知`,
+      `🚀版本变更：${oldVersion} → ${newVersion}`,
+      formattedTotalSize && `📦完整大小（含中文语音）：${formattedTotalSize}`,
+      incrementalSize && `🔄 增量更新大小：约${incrementalSize}`,
+      "📢 请及时更新客户端",
+      ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
+    ].filter(Boolean).join("\n"),
 
-    pre: ({ game, gameName, newVersion, formattedTotalSize, incrementalSize }) => {
-      const parts = [
-        `🎁${gameName}预下载资源已开放`,
-        `📦新版本：${newVersion}`,
-        ...(gameName !== "原神"
-          ? [formattedTotalSize && `📦 完整大小（含中文语音）：${formattedTotalSize}`]
-          : []),
-        ...(gameName !== "崩坏3"
-          ? [incrementalSize && `🔄 增量更新大小：约${incrementalSize}`]
-          : []),
-        "📥请提前下载游戏资源",
-        ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
-      ]
-      return parts.filter(Boolean).join("\n")
-    },
+    pre: ({ gameName, newVersion, formattedTotalSize, incrementalSize }) => [
+      `🎁${gameName}预下载资源已开放`,
+      `📦新版本：${newVersion}`,
+      formattedTotalSize && `📦 完整大小（含中文语音）：${formattedTotalSize}`,
+      incrementalSize && `🔄 增量更新大小：约${incrementalSize}`,
+      "📥请提前下载游戏资源",
+      ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
+    ].filter(Boolean).join("\n"),
 
     "pre-remove": ({ gameName, oldVersion }) =>
-      [`🌙${gameName}预下载资源已关闭`, `🔒正式版本${oldVersion}即将上线`].join("\n")
+      `🌙${gameName}预下载资源已关闭\n🔒正式版本${oldVersion}即将上线`
   }
 
   /**
    * 推送通知
-   * @param {Object} options - 推送选项
+   * @param {string} type - 推送类型
+   * @param {string} game - 游戏ID
+   * @param {string} newVersion - 新版本号
+   * @param {string} oldVersion - 旧版本号
+   * @param {string} pushChangeType - 消息类型
    */
   async pushNotify({ type, game, newVersion, oldVersion, pushChangeType }) {
     try {
       const gameConfig = cfg.getGameConfig(game)
       const gameName = this.getGameName(game)
-      let formattedTotalSize, incrementalSize, Ver
-      let BuildAPI, PatchBuildAPI, BuidldData, PatchBuildData
-      let mainBuildSize = 0
-      let mainPatchBuildSize = 0
-      let PreBuildSize = 0
-      let PrePatchBuildSize = 0
-      const excludedLanguages = ["en-us", "ja-jp", "ko-kr"]
-      let BranchesUrl = getGameChuckAPI(game)
-      let BranchesData = await request.get(BranchesUrl, {
-        responseType: "json",
-        log: true,
-        gameName
-      })
-      if (game === "ww") {
-        const downloadData = await download.getDownloadData(game, type)
-        let totalSize = downloadData.data.game_pkgs[0].size
-        formattedTotalSize = api.formatSize(totalSize)
-        let patchTotalSize = downloadData.patch.game_pkgs[0].size
-        incrementalSize = api.formatSize(patchTotalSize)
-        Ver = downloadData.patch.game_pkgs[0].version
-      } else if (game === "ys" || game === "sr" || game === "zzz") {
-        if (type === "pre") {
-          Ver = BranchesData?.data?.game_branches?.[0]?.pre_download?.diff_tags[0]
-          BuildAPI = getBuildAPI(
-            type,
-            BranchesData?.data?.game_branches?.[0]?.pre_download?.package_id,
-            BranchesData?.data?.game_branches?.[0]?.pre_download?.password
-          )
-          PatchBuildAPI = getPatchBuildAPI(
-            type,
-            BranchesData?.data?.game_branches?.[0]?.pre_download?.package_id,
-            BranchesData?.data?.game_branches?.[0]?.pre_download?.password
-          )
-
-          BuidldData = await request.get(BuildAPI, {
-            responseType: "json",
-            log: true,
-            gameName
-          })
-          PatchBuildData = await request.post(PatchBuildAPI, {
-            responseType: "json",
-            log: true,
-            gameName
-          })
-
-          const manifests = BuidldData?.data?.manifests || []
-          for (const manifest of manifests) {
-            const matchingField = manifest.matching_field?.toLowerCase()
-            if (excludedLanguages.includes(matchingField)) continue
-            PreBuildSize += parseInt(
-              manifest?.deduplicated_stats?.uncompressed_size ||
-                manifest?.stats?.[Ver]?.uncompressed_size ||
-                "0",
-              10
-            )
-          }
-
-          const patchManifests = PatchBuildData?.data?.manifests || []
-          for (const manifest of patchManifests) {
-            const matchingField = manifest.matching_field?.toLowerCase()
-            if (excludedLanguages.includes(matchingField)) continue
-            PrePatchBuildSize += parseInt(
-              manifest?.deduplicated_stats?.uncompressed_size ||
-                manifest?.stats?.[Ver]?.uncompressed_size ||
-                "0",
-              10
-            )
-          }
-
-          incrementalSize = api.formatSize(PrePatchBuildSize)
-          formattedTotalSize = api.formatSize(PreBuildSize)
-        } else {
-          Ver = BranchesData?.data?.game_branches?.[0]?.main?.diff_tags[0]
-          BuildAPI = getBuildAPI(
-            type,
-            BranchesData?.data?.game_branches?.[0]?.main?.package_id,
-            BranchesData?.data?.game_branches?.[0]?.main?.password
-          )
-          PatchBuildAPI = getPatchBuildAPI(
-            type,
-            BranchesData?.data?.game_branches?.[0]?.main?.package_id,
-            BranchesData?.data?.game_branches?.[0]?.main?.password
-          )
-
-          BuidldData = await request.get(BuildAPI, {
-            responseType: "json",
-            log: true,
-            gameName
-          })
-          PatchBuildData = await request.post(PatchBuildAPI, {
-            responseType: "json",
-            log: true,
-            gameName
-          })
-
-          const manifests = BuidldData?.data?.manifests || []
-          for (const manifest of manifests) {
-            const matchingField = manifest.matching_field?.toLowerCase()
-            if (excludedLanguages.includes(matchingField)) continue
-            mainBuildSize += parseInt(
-              manifest?.deduplicated_stats?.uncompressed_size ||
-                manifest?.stats?.[Ver]?.uncompressed_size ||
-                "0",
-              10
-            )
-          }
-
-          const patchManifests = PatchBuildData?.data?.manifests || []
-          for (const manifest of patchManifests) {
-            const matchingField = manifest.matching_field?.toLowerCase()
-            if (excludedLanguages.includes(matchingField)) continue
-            mainPatchBuildSize += parseInt(
-              manifest?.deduplicated_stats?.uncompressed_size ||
-                manifest?.stats?.[Ver]?.uncompressed_size ||
-                "0",
-              10
-            )
-          }
-
-          incrementalSize = api.formatSize(mainPatchBuildSize)
-          formattedTotalSize = api.formatSize(mainBuildSize)
-        }
-      } else {
-        Ver = BranchesData?.data?.game_branches?.[0]?.main?.tag
-        if (type === "pre") {
-          PatchBuildAPI = getBuildAPI(
-            type,
-            BranchesData?.data?.game_branches?.[0]?.pre_download?.package_id,
-            BranchesData?.data?.game_branches?.[0]?.pre_download?.password
-          )
-          PatchBuildData = await request.get(PatchBuildAPI, {
-            responseType: "json",
-            log: true,
-            gameName
-          })
-          const manifests = PatchBuildData?.data?.manifests
-          const gameManifest = manifests?.find((m) => m.matching_field === "game")
-          const asbManifest = manifests?.find((m) => m.matching_field === "asb")
-          PrePatchBuildSize = gameManifest?.stats?.compressed_size
-          PreBuildSize = asbManifest.stats?.compressed_size
-          incrementalSize = api.formatSize(PrePatchBuildSize)
-          formattedTotalSize = api.formatSize(PreBuildSize)
-        } else {
-          BuildAPI = getBuildAPI(
-            type,
-            BranchesData?.data?.game_branches?.[0]?.main?.package_id,
-            BranchesData?.data?.game_branches?.[0]?.main?.password
-          )
-          BuidldData = await request.get(BuildAPI, {
-            responseType: "json",
-            log: true,
-            gameName
-          })
-          const manifests = BuidldData?.data.manifests
-          const gameManifest = manifests?.find((m) => m.matching_field === "game")
-          const asbManifest = manifests?.find((m) => m.matching_field === "asb")
-          mainPatchBuildSize = gameManifest.stats?.compressed_size
-          mainBuildSize = asbManifest.stats?.compressed_size
-          incrementalSize = api.formatSize(mainPatchBuildSize)
-          formattedTotalSize = api.formatSize(mainBuildSize)
-        }
-      }
-
+      const { formattedTotalSize, incrementalSize, Ver } = await this.fetchSizeInfo(game, type, gameName)
       switch (type) {
         case "main":
           await (await db).storeMainSizeData(game, newVersion, formattedTotalSize)
@@ -223,73 +47,121 @@ class Notifier extends base {
           await (await db).storePreSizeData(game, newVersion, Ver, incrementalSize)
           break
         case "pre-remove":
-          logger.info(`⛔ 预下载关闭通知，不存储大小数据`)
+          logger.debug(`⛔ 预下载关闭通知，不存储大小数据`)
           break
         default:
           logger.warn(`⚠️ 未知通知类型: ${type}`)
       }
 
-      const templateData = {
-        gameName,
-        oldVersion,
-        newVersion,
-        Ver,
-        formattedTotalSize,
-        incrementalSize
-      }
-      
-      if (type !== 'pre-remove') {
-        if (pushChangeType === "1") {
-          await this.sendImageMessage(type, game, gameConfig, templateData, pushChangeType)
-        } else {
-          await this.sendTextMessage(type, game, gameConfig, templateData, pushChangeType)
-        }
+      if (type === "pre-remove") return
+
+      const templateData = { gameName, oldVersion, newVersion, Ver, formattedTotalSize, incrementalSize }
+
+      if (pushChangeType === "1") {
+        await this.sendImageMessage(type, game, gameConfig, templateData, pushChangeType)
+      } else {
+        await this.sendTextMessage(type, game, gameConfig, templateData, pushChangeType)
       }
     } catch (err) {
-      logger.error(
-        `[${pluginName}][${this.getGameName(game)}通知] 推送通知失败: ${err.message}`,
-        err
-      )
+      logger.error(`[${pluginName}][${this.getGameName(game)}通知] 推送通知失败: ${err.message}`, err)
     }
   }
 
   /**
-   * 发送图片消息
+   * 获取大小信息
+   * @param {string} game - 游戏ID
+   * @param {string} type - 推送类型
+   * @param {string} gameName - 游戏名称
+   */
+  async fetchSizeInfo(game, type, gameName) {
+    const excludedLanguages = ["en-us", "ja-jp", "ko-kr"]
+    let formattedTotalSize, incrementalSize, Ver
+    let buildSize = 0, patchSize = 0
+
+    const BranchesData = await request.get(getGameChuckAPI(game), {
+      responseType: "json", log: true, gameName
+    })
+
+    const parseManifests = (manifests, version) => manifests
+      .filter(m => !excludedLanguages.includes(m.matching_field?.toLowerCase()))
+      .reduce((sum, m) => sum + parseInt(
+        m?.deduplicated_stats?.uncompressed_size ||
+        m?.stats?.[version]?.uncompressed_size || "0", 10
+      ), 0)
+
+    if (game === "ww") {
+      const d = await download.getDownloadData(game, type)
+      formattedTotalSize = api.formatSize(d.data.game_pkgs[0].size)
+      incrementalSize = api.formatSize(d.patch.game_pkgs[0].size)
+      Ver = d.patch.game_pkgs[0].version
+    } else if (["ys", "sr", "zzz"].includes(game)) {
+      const branch = BranchesData?.data?.game_branches?.[0]
+      const section = type === "pre" ? branch?.pre_download : branch?.main
+      Ver = section?.diff_tags?.[0]
+
+      const buildData = await request.get(
+        getBuildAPI(type, section?.package_id, section?.password),
+        { responseType: "json", log: true, gameName }
+      )
+      const patchData = await request.post(
+        getPatchBuildAPI(type, section?.package_id, section?.password),
+        { responseType: "json", log: true, gameName }
+      )
+
+      buildSize = parseManifests(buildData?.data?.manifests || [], Ver)
+      patchSize = parseManifests(patchData?.data?.manifests || [], Ver)
+
+      formattedTotalSize = api.formatSize(buildSize)
+      incrementalSize = api.formatSize(patchSize)
+    } else {
+      const branch = BranchesData?.data?.game_branches?.[0]
+      Ver = branch?.main?.tag
+      const section = type === "pre" ? branch?.pre_download : branch?.main
+
+      const data = await request.get(
+        getBuildAPI(type, section?.package_id, section?.password),
+        { responseType: "json", log: true, gameName }
+      )
+      const manifests = data?.data?.manifests || []
+      const gameManifest = manifests.find(m => m.matching_field === "game")
+      const asbManifest = manifests.find(m => m.matching_field === "asb")
+
+      patchSize = gameManifest?.stats?.compressed_size || 0
+      buildSize = asbManifest?.stats?.compressed_size || 0
+
+      formattedTotalSize = api.formatSize(buildSize)
+      incrementalSize = api.formatSize(patchSize)
+    }
+
+    return { formattedTotalSize, incrementalSize, Ver }
+  }
+
+  /** 发送图片消息 
    * @param {string} type - 推送类型
    * @param {string} game - 游戏ID
-   * @param {Object} gameConfig - 游戏配置
-   * @param {Object} templateData - 模板数据
+   * @param {object} gameConfig - 推送配置
+   * @param {object} templateData - 游戏数据
    * @param {string} pushChangeType - 消息类型
    */
   async sendImageMessage(type, game, gameConfig, templateData, pushChangeType) {
-    const data = {
-      ...this.screenData(game, type),
-      ...templateData,
-      date: new Date().toLocaleDateString(),
-      type
-    }
+    const data = { ...this.screenData(game, type), ...templateData, date: new Date().toLocaleDateString(), type }
     const img = await puppeteer.screenshot("GamePush-Plugin", data)
-    if (img) {
-      api.sendToGroups(img, game, gameConfig, pushChangeType)
-    } else {
-      logger.error(`[${pluginName}] 发送图片消息失败`)
-    }
+    img ? api.sendToGroups(img, game, gameConfig, pushChangeType)
+        : logger.error(`[${pluginName}] 发送图片消息失败`)
   }
 
-  /**
-   * 发送文本消息
+  /** 发送文本消息 
    * @param {string} type - 推送类型
    * @param {string} game - 游戏ID
-   * @param {Object} gameConfig - 游戏配置
-   * @param {Object} templateData - 模板数据
+   * @param {object} gameConfig - 推送配置
+   * @param {object} templateData - 游戏数据
    * @param {string} pushChangeType - 消息类型
    */
   async sendTextMessage(type, game, gameConfig, templateData, pushChangeType) {
     try {
       const template = this.TemplateMap[type]
-      if (!template) throw new Error(`[${pluginName}] 未知的推送类型: ${type}`)
-      const content = template(templateData)
-      api.sendToGroups(content, game, gameConfig, pushChangeType)
+      if (!template) throw new Error(`未知推送类型: ${type}`)
+      api.sendToGroups(template(templateData), game, gameConfig, pushChangeType)
     } catch (err) {
       logger.error(`[${pluginName}] 发送文本消息失败: ${err.message}`, err)
     }
