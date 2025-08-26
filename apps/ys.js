@@ -51,31 +51,24 @@ export class ysPush extends plugin {
   /**
    * 设置原神版本推送
    */
-  async ysPushSet() {
-    const e = this.e
-    const groupId = String(e.group_id)
+  async ysPushSet(e) {
     if (!e.isGroup) {
       return this.reply("❌ 该功能仅限群聊中使用", true)
     }
 
+    const groupId = String(e.group_id)
+    const botId = String(e.self_id || e.selfId)
     const isEnable = e.msg.includes("开启")
-    const botid = e.self_id || e.selfId
-    const groupIdentifier = `${botid}:${groupId}`
 
-    cfg.updateGameConfig("ys", (config) => {
-      config.pushGroups = config.pushGroups || []
+    if (isEnable) {
+      cfg.addPushGroup("ys", botId, groupId)
+    } else {
+      cfg.removePushGroup("ys", botId, groupId)
+    }
 
-      if (isEnable) {
-        config.pushGroups.push(groupIdentifier)
-      }
-
-      config.enable = isEnable
-      config.log = config.log || false
-      config.cron = config.cron || "0 0/5 * * * *"
-      config.pushChangeType = config.pushChangeType || "1"
-    })
-
-    const action = isEnable ? `已添加本群到推送列表（ID：${groupId}）` : "已移除本群推送"
+    const action = isEnable
+      ? `已添加本群到推送列表（ID：${groupId}）`
+      : `已移除本群推送（ID：${groupId}）`
     return this.reply(`✅ 已${isEnable ? "开启" : "关闭"}原神版本推送，${action}`, true)
   }
 

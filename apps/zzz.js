@@ -60,28 +60,20 @@ export class zzzPush extends plugin {
   /**
    * 设置绝区零版本推送
    */
-  async zzzPushSet() {
-    const e = this.e
-    const groupId = String(e.group_id)
+  async zzzPushSet(e) {
     if (!e.isGroup) {
       return this.reply("❌ 该功能仅限群聊中使用", true)
     }
 
+    const groupId = String(e.group_id)
+    const botId = String(e.self_id || e.selfId)
     const isEnable = e.msg.includes("开启")
-    const botid = e.self_id || e.selfId
-    const groupIdentifier = `${botid}:${groupId}`
 
-    cfg.updateGameConfig("zzz", (config) => {
-      config.pushGroups = config.pushGroups || []
-      if (isEnable) {
-        config.pushGroups.push(groupIdentifier)
-      }
-
-      config.enable = isEnable
-      config.log = config.log || false
-      config.cron = config.cron || "0 0/5 * * * *"
-      config.pushChangeType = config.pushChangeType || "1"
-    })
+    if (isEnable) {
+      cfg.addPushGroup("zzz", botId, groupId)
+    } else {
+      cfg.removePushGroup("zzz", botId, groupId)
+    }
 
     const action = isEnable ? `已添加本群到推送列表（ID：${groupId}）` : "已移除本群推送"
     return this.reply(`✅ 已${isEnable ? "开启" : "关闭"}绝区零版本推送，${action}`, true)

@@ -1,26 +1,40 @@
 import { puppeteer } from "#GamePush.lib"
 import { cfg, request, pluginName } from "#GamePush.components"
-import { db, api, base, download, getGameChuckAPI, getPatchBuildAPI, getBuildAPI } from "#GamePush.model"
+import {
+  db,
+  api,
+  base,
+  download,
+  getGameChuckAPI,
+  getPatchBuildAPI,
+  getBuildAPI
+} from "#GamePush.model"
 
 class Notifier extends base {
   TemplateMap = {
-    main: ({ gameName, oldVersion, newVersion, formattedTotalSize, incrementalSize }) => [
-      `✨${gameName}游戏版本更新通知`,
-      `🚀版本变更：${oldVersion} → ${newVersion}`,
-      formattedTotalSize && `📦完整大小（含中文语音）：${formattedTotalSize}`,
-      incrementalSize && `🔄 增量更新大小：约${incrementalSize}`,
-      "📢 请及时更新客户端",
-      ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
-    ].filter(Boolean).join("\n"),
+    main: ({ gameName, oldVersion, newVersion, formattedTotalSize, incrementalSize }) =>
+      [
+        `✨${gameName}游戏版本更新通知`,
+        `🚀版本变更：${oldVersion} → ${newVersion}`,
+        formattedTotalSize && `📦完整大小（含中文语音）：${formattedTotalSize}`,
+        incrementalSize && `🔄 增量更新大小：约${incrementalSize}`,
+        "📢 请及时更新客户端",
+        ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
+      ]
+        .filter(Boolean)
+        .join("\n"),
 
-    pre: ({ gameName, newVersion, formattedTotalSize, incrementalSize }) => [
-      `🎁${gameName}预下载资源已开放`,
-      `📦新版本：${newVersion}`,
-      formattedTotalSize && `📦 完整大小（含中文语音）：${formattedTotalSize}`,
-      incrementalSize && `🔄 增量更新大小：约${incrementalSize}`,
-      "📥请提前下载游戏资源",
-      ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
-    ].filter(Boolean).join("\n"),
+    pre: ({ gameName, newVersion, formattedTotalSize, incrementalSize }) =>
+      [
+        `🎁${gameName}预下载资源已开放`,
+        `📦新版本：${newVersion}`,
+        formattedTotalSize && `📦 完整大小（含中文语音）：${formattedTotalSize}`,
+        incrementalSize && `🔄 增量更新大小：约${incrementalSize}`,
+        "📥请提前下载游戏资源",
+        ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
+      ]
+        .filter(Boolean)
+        .join("\n"),
 
     "pre-remove": ({ gameName, oldVersion }) =>
       `🌙${gameName}预下载资源已关闭\n🔒正式版本${oldVersion}即将上线`
@@ -38,7 +52,11 @@ class Notifier extends base {
     try {
       const gameConfig = cfg.getGameConfig(game)
       const gameName = this.getGameName(game)
-      const { formattedTotalSize, incrementalSize, Ver } = await this.fetchSizeInfo(game, type, gameName)
+      const { formattedTotalSize, incrementalSize, Ver } = await this.fetchSizeInfo(
+        game,
+        type,
+        gameName
+      )
       switch (type) {
         case "main":
           await (await db).storeMainSizeData(game, newVersion, formattedTotalSize)
@@ -55,7 +73,14 @@ class Notifier extends base {
 
       if (type === "pre-remove") return
 
-      const templateData = { gameName, oldVersion, newVersion, Ver, formattedTotalSize, incrementalSize }
+      const templateData = {
+        gameName,
+        oldVersion,
+        newVersion,
+        Ver,
+        formattedTotalSize,
+        incrementalSize
+      }
 
       if (pushChangeType === "1") {
         await this.sendImageMessage(type, game, gameConfig, templateData, pushChangeType)
@@ -63,7 +88,10 @@ class Notifier extends base {
         await this.sendTextMessage(type, game, gameConfig, templateData, pushChangeType)
       }
     } catch (err) {
-      logger.error(`[${pluginName}][${this.getGameName(game)}通知] 推送通知失败: ${err.message}`, err)
+      logger.error(
+        `[${pluginName}][${this.getGameName(game)}通知] 推送通知失败: ${err.message}`,
+        err
+      )
     }
   }
 
@@ -76,18 +104,29 @@ class Notifier extends base {
   async fetchSizeInfo(game, type, gameName) {
     const excludedLanguages = ["en-us", "ja-jp", "ko-kr"]
     let formattedTotalSize, incrementalSize, Ver
-    let buildSize = 0, patchSize = 0
+    let buildSize = 0,
+      patchSize = 0
 
     const BranchesData = await request.get(getGameChuckAPI(game), {
-      responseType: "json", log: true, gameName
+      responseType: "json",
+      log: true,
+      gameName
     })
 
-    const parseManifests = (manifests, version) => manifests
-      .filter(m => !excludedLanguages.includes(m.matching_field?.toLowerCase()))
-      .reduce((sum, m) => sum + parseInt(
-        m?.deduplicated_stats?.uncompressed_size ||
-        m?.stats?.[version]?.uncompressed_size || "0", 10
-      ), 0)
+    const parseManifests = (manifests, version) =>
+      manifests
+        .filter((m) => !excludedLanguages.includes(m.matching_field?.toLowerCase()))
+        .reduce(
+          (sum, m) =>
+            sum +
+            parseInt(
+              m?.deduplicated_stats?.uncompressed_size ||
+                m?.stats?.[version]?.uncompressed_size ||
+                "0",
+              10
+            ),
+          0
+        )
 
     if (game === "ww") {
       const d = await download.getDownloadData(game, type)
@@ -118,13 +157,14 @@ class Notifier extends base {
       Ver = branch?.main?.tag
       const section = type === "pre" ? branch?.pre_download : branch?.main
 
-      const data = await request.get(
-        getBuildAPI(type, section?.package_id, section?.password),
-        { responseType: "json", log: true, gameName }
-      )
+      const data = await request.get(getBuildAPI(type, section?.package_id, section?.password), {
+        responseType: "json",
+        log: true,
+        gameName
+      })
       const manifests = data?.data?.manifests || []
-      const gameManifest = manifests.find(m => m.matching_field === "game")
-      const asbManifest = manifests.find(m => m.matching_field === "asb")
+      const gameManifest = manifests.find((m) => m.matching_field === "game")
+      const asbManifest = manifests.find((m) => m.matching_field === "asb")
 
       patchSize = gameManifest?.stats?.compressed_size || 0
       buildSize = asbManifest?.stats?.compressed_size || 0
@@ -136,7 +176,7 @@ class Notifier extends base {
     return { formattedTotalSize, incrementalSize, Ver }
   }
 
-  /** 发送图片消息 
+  /** 发送图片消息
    * @param {string} type - 推送类型
    * @param {string} game - 游戏ID
    * @param {object} gameConfig - 推送配置
@@ -144,13 +184,19 @@ class Notifier extends base {
    * @param {string} pushChangeType - 消息类型
    */
   async sendImageMessage(type, game, gameConfig, templateData, pushChangeType) {
-    const data = { ...this.screenData(game, type), ...templateData, date: new Date().toLocaleDateString(), type }
+    const data = {
+      ...this.screenData(game, type),
+      ...templateData,
+      date: new Date().toLocaleDateString(),
+      type
+    }
     const img = await puppeteer.screenshot("GamePush-Plugin", data)
-    img ? api.sendToGroups(img, game, gameConfig, pushChangeType)
-        : logger.error(`[${pluginName}] 发送图片消息失败`)
+    img
+      ? api.sendToGroups(img, game, gameConfig, pushChangeType)
+      : logger.error(`[${pluginName}] 发送图片消息失败`)
   }
 
-  /** 发送文本消息 
+  /** 发送文本消息
    * @param {string} type - 推送类型
    * @param {string} game - 游戏ID
    * @param {object} gameConfig - 推送配置

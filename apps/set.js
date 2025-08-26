@@ -7,16 +7,16 @@ const gameRegexMap = {
   sr: /(\*|星铁|星轨|穹轨|星穹|崩铁|星穹铁道|崩坏星穹铁道|铁道)/,
   zzz: /(%|％|绝区零|zzz|ZZZ|绝区)/,
   bh3: /(!|！|崩坏三|崩坏3|崩三|崩3|bbb|三崩子)/,
-  ww:  /(~|～|鸣潮|ww|WW|mc)/
+  ww: /(~|～|鸣潮|ww|WW|mc)/
 }
 
 // 游戏信息
 const gameInfoMap = {
-  ys:  { id: "ys",  display: "原神" },
-  sr:  { id: "sr",  display: "星铁" },
+  ys: { id: "ys", display: "原神" },
+  sr: { id: "sr", display: "星铁" },
   zzz: { id: "zzz", display: "绝区零" },
   bh3: { id: "bh3", display: "崩坏3" },
-  ww:  { id: "ww",  display: "鸣潮" }
+  ww: { id: "ww", display: "鸣潮" }
 }
 
 export class Set extends plugin {
@@ -138,6 +138,8 @@ export class Set extends plugin {
  * 构建正则：支持所有游戏别名
  */
 function buildReg(action) {
-  const allPatterns = Object.values(gameRegexMap).map(r => r.source).join("|")
+  const allPatterns = Object.values(gameRegexMap)
+    .map((r) => r.source)
+    .join("|")
   return new RegExp(`^#*(?:(?:${allPatterns})\\s*)?${action}$`)
 }

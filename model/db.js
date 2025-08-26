@@ -17,31 +17,11 @@ class GamePushDB {
     this.DB_PATH = path.join(this.DB_DIR, "GamePush-Plugin.db")
     this.VERSION_JSON_PATH = path.join(this.DB_DIR, "GamePush-Plugin-version.json")
 
-    this.initialized = false
-    this.initializing = false
+    this.initPromise = null
   }
 
   async ensureInitialized() {
-    if (this.initialized) return true
-    if (this.initializing) {
-      return new Promise((resolve) => {
-        const check = () => {
-          if (this.initialized) resolve(true)
-          else setTimeout(check, 100)
-        }
-        check()
-      })
-    }
-
-    this.initializing = true
-    try {
-      await this.initialize()
-      this.initialized = true
-      return true
-    } catch (err) {
-      this.initializing = false
-      throw err
-    }
+    return (this.initPromise ??= this.initialize().then(() => true))
   }
 
   ensureDirExists() {
@@ -52,242 +32,130 @@ class GamePushDB {
   }
 
   async fetchRemoteVersionInfo() {
-    logger.debug(`[${pluginName}] 🌐 开始获取远程版本信息...`)
-
     try {
+      logger.debug(`[${pluginName}] 🌐 获取远程版本信息...`)
       const res = await request.get(this.REMOTE_VERSION_URL, {
         responseType: "json",
         log: true
       })
-
-      if (!res) {
-        logger.error(`[${pluginName}] ❌ 获取远程版本信息失败：请求返回空`)
-        throw new Error("Failed to fetch remote version info")
-      }
-
-      logger.debug(`[${pluginName}] ✅ 远程版本信息获取成功: ${res.version}`)
+      if (!res) throw new Error("请求返回空")
+      logger.debug(`[${pluginName}] ✅ 远程版本: ${res.version}`)
       return res
     } catch (err) {
-      logger.error(`[${pluginName}] ❌ 获取远程版本信息失败`, err)
-      throw new Error("Failed to fetch remote version info")
+      logger.error(`[${pluginName}] ❌ 获取远程版本失败`, err)
+      throw err
     }
   }
 
   async downloadDatabase() {
     this.ensureDirExists()
-    logger.debug(`[${pluginName}] ⬇️ 开始下载数据库文件...`)
+    logger.debug(`[${pluginName}] ⬇️ 下载数据库文件...`)
     await common.downFile(this.DB_DOWNLOAD_URL, this.DB_PATH)
   }
 
-  saveLocalVersionInfo(versionInfo) {
+  saveLocalVersionInfo(info) {
     try {
-      fs.writeFileSync(this.VERSION_JSON_PATH, JSON.stringify(versionInfo, null, 2))
-      logger.debug(`[${pluginName}] 💾 本地版本信息已更新: ${versionInfo.version}`)
-      return true
+      fs.writeFileSync(this.VERSION_JSON_PATH, JSON.stringify(info, null, 2))
+      logger.debug(`[${pluginName}] 💾 本地版本已更新: ${info.version}`)
     } catch (err) {
-      logger.error(`[${pluginName}] ❌ 保存本地版本信息失败`, err)
-      return false
+      logger.error(`[${pluginName}] ❌ 保存本地版本失败`, err)
     }
   }
 
   async checkDatabase() {
+    this.ensureDirExists()
+    const dbExists = fs.existsSync(this.DB_PATH)
+    const versionFileExists = fs.existsSync(this.VERSION_JSON_PATH)
+
+    let remoteInfo = null
     try {
-      this.ensureDirExists()
-
-      const dbExists = fs.existsSync(this.DB_PATH)
-      const versionFileExists = fs.existsSync(this.VERSION_JSON_PATH)
-
-      let remoteVersionInfo
-      try {
-        remoteVersionInfo = await this.fetchRemoteVersionInfo()
-      } catch (err) {
-        logger.error(`[${pluginName}] ⚠️ 无法获取远程版本信息，跳过版本检查`, err)
-        if (dbExists) return true
-      }
-
-      let localVersionInfo = {}
-      if (versionFileExists) {
-        try {
-          localVersionInfo = JSON.parse(fs.readFileSync(this.VERSION_JSON_PATH, "utf8"))
-          logger.debug(`[${pluginName}] 📄 本地版本信息: ${localVersionInfo.version || "不存在"}`)
-        } catch (err) {
-          logger.error(`[${pluginName}] ❌ 解析本地版本信息失败`, err)
-          localVersionInfo = {}
-        }
-      }
-
-      let needDownload = false
-      if (!dbExists) {
-        logger.debug(`[${pluginName}] 🔍 检测到数据库文件不存在`)
-        needDownload = true
-      } else if (remoteVersionInfo && localVersionInfo.version !== remoteVersionInfo.version) {
-        logger.debug(
-          `[${pluginName}] 🔍 检测到版本不一致 (本地: ${localVersionInfo.version || "无"}, 远程: ${remoteVersionInfo.version})`
-        )
-        needDownload = true
-      }
-
-      if (needDownload) {
-        logger.debug(`[${pluginName}] ⏫ 开始更新数据库...`)
-        await this.downloadDatabase()
-
-        if (remoteVersionInfo) {
-          this.saveLocalVersionInfo(remoteVersionInfo)
-        } else if (versionFileExists) {
-          const newVersion = localVersionInfo.version
-            ? `${localVersionInfo.version}_local`
-            : `v${new Date().toISOString().slice(0, 10)}`
-          this.saveLocalVersionInfo({ ...localVersionInfo, version: newVersion })
-        }
-        return true
-      }
-
-      logger.debug(`[${pluginName}] 📁 数据库文件已存在且版本一致: ${this.DB_PATH}`)
-      return true
-    } catch (err) {
-      logger.error(`[${pluginName}] ❌ 数据库初始化前检查失败:`, err)
-      throw err
+      remoteInfo = await this.fetchRemoteVersionInfo()
+    } catch {
+      if (dbExists) return true
     }
+
+    let localInfo = versionFileExists
+      ? JSON.parse(fs.readFileSync(this.VERSION_JSON_PATH, "utf8") || "{}")
+      : {}
+
+    const needDownload = !dbExists || (remoteInfo && localInfo.version !== remoteInfo.version)
+
+    if (needDownload) {
+      await this.downloadDatabase()
+      this.saveLocalVersionInfo(
+        remoteInfo || {
+          ...localInfo,
+          version: localInfo.version + "_local" || `v${new Date().toISOString().slice(0, 10)}`
+        }
+      )
+    }
+
+    return true
+  }
+
+  defineModel(name, fields) {
+    return this.sequelize.define(name, fields, {
+      tableName: name,
+      timestamps: false,
+      freezeTableName: true
+    })
   }
 
   initializeModels() {
-    if (!this.sequelize) throw new Error("Sequelize not initialized")
+    this.MainModel = this.defineModel("main", {
+      id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+      game: { type: DataTypes.STRING, allowNull: false },
+      version: { type: DataTypes.STRING, allowNull: false },
+      size: { type: DataTypes.STRING, allowNull: false }
+    })
 
-    this.MainModel = this.sequelize.define(
-      "main",
-      {
-        id: {
-          type: DataTypes.INTEGER,
-          primaryKey: true,
-          autoIncrement: true
-        },
-        game: {
-          type: DataTypes.STRING,
-          allowNull: false
-        },
-        version: {
-          type: DataTypes.STRING,
-          allowNull: false
-        },
-        size: {
-          type: DataTypes.STRING,
-          allowNull: false
-        }
-      },
-      {
-        tableName: "main",
-        timestamps: false
-      }
-    )
-
-    this.PreModel = this.sequelize.define(
-      "pre",
-      {
-        id: {
-          type: DataTypes.INTEGER,
-          primaryKey: true,
-          autoIncrement: true
-        },
-        game: {
-          type: DataTypes.STRING,
-          allowNull: false
-        },
-        ver: {
-          type: DataTypes.STRING,
-          allowNull: false,
-          field: "ver"
-        },
-        oldver: {
-          type: DataTypes.STRING,
-          allowNull: false
-        },
-        size: {
-          type: DataTypes.STRING,
-          allowNull: false
-        }
-      },
-      {
-        tableName: "pre",
-        timestamps: false,
-        underscored: false
-      }
-    )
+    this.PreModel = this.defineModel("pre", {
+      id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+      game: { type: DataTypes.STRING, allowNull: false },
+      ver: { type: DataTypes.STRING, allowNull: false },
+      oldver: { type: DataTypes.STRING, allowNull: false },
+      size: { type: DataTypes.STRING, allowNull: false }
+    })
   }
 
   async initialize() {
-    try {
-      await this.checkDatabase()
+    await this.checkDatabase()
 
-      this.sequelize = new Sequelize({
-        dialect: "sqlite",
-        storage: this.DB_PATH,
-        logging: false,
-        define: {
-          freezeTableName: true,
-          timestamps: false
-        },
-        dialectOptions: {
-          foreign_keys: "ON"
-        }
-      })
+    this.sequelize = new Sequelize({
+      dialect: "sqlite",
+      storage: this.DB_PATH,
+      logging: false,
+      define: { freezeTableName: true, timestamps: false },
+      dialectOptions: { foreign_keys: "ON" }
+    })
 
-      await this.sequelize.authenticate()
-      logger.debug(`[${pluginName}] 📊 数据库连接成功: ${this.DB_PATH}`)
+    await this.sequelize.authenticate()
+    logger.debug(`[${pluginName}] 📊 数据库连接成功: ${this.DB_PATH}`)
 
-      this.initializeModels()
-      await this.sequelize.sync()
-      logger.debug(`[${pluginName}] ✅ 数据库模型同步完成`)
-
-      return true
-    } catch (err) {
-      logger.error(`[${pluginName}] ❌ 数据库初始化失败:`, err)
-      throw err
-    }
+    this.initializeModels()
+    await this.sequelize.sync()
+    logger.debug(`[${pluginName}] ✅ 数据库模型同步完成`)
   }
 
   async storeMainSizeData(game, version, size) {
     await this.ensureInitialized()
-
-    try {
-      const existing = await this.MainModel.findOne({
-        where: { game, version }
-      })
-
-      if (existing) {
-        logger.debug(`[${pluginName}] ⏩ 跳过重复记录: ${game}-${version}`)
-        return false
-      }
-      await this.MainModel.create({ game, version, size })
-      logger.debug(`[${pluginName}] 💾 存储到 main 表: ${game}-${version} | ${size}`)
-      return true
-    } catch (err) {
-      logger.error(`[${pluginName}] ❌ 存储 main 表数据失败: ${err.message}`, err)
-      throw err
-    }
+    const [record, created] = await this.MainModel.findOrCreate({
+      where: { game, version },
+      defaults: { size }
+    })
+    if (created) logger.debug(`[${pluginName}] 💾 main 表新增: ${game}-${version} | ${size}`)
+    return created
   }
 
   async storePreSizeData(game, ver, oldver, size) {
     await this.ensureInitialized()
-
-    try {
-      const existing = await this.PreModel.findOne({
-        where: { game, ver, oldver }
-      })
-
-      if (existing) {
-        logger.debug(`[${pluginName}] ⏩ 跳过重复预下载记录: ${game}-${ver} | ${oldver}`)
-        return false
-      }
-
-      await this.PreModel.create({ game, ver, oldver, size })
-      logger.debug(
-        `[${pluginName}] 💾 存储到 pre 表: ${game}-${ver} | old: ${oldver} | size: ${size}`
-      )
-      return true
-    } catch (err) {
-      logger.error(`[${pluginName}] ❌ 存储 pre 表数据失败: ${err.message}`, err)
-      throw err
-    }
+    const [record, created] = await this.PreModel.findOrCreate({
+      where: { game, ver, oldver },
+      defaults: { size }
+    })
+    if (created)
+      logger.debug(`[${pluginName}] 💾 pre 表新增: ${game}-${ver} | old: ${oldver} | ${size}`)
+    return created
   }
 
   /**
@@ -298,17 +166,7 @@ class GamePushDB {
    */
   async getMainData(game, version = null) {
     await this.ensureInitialized()
-
-    try {
-      const where = { game }
-      if (version) where.version = version
-
-      const data = await this.MainModel.findAll({ where })
-      return data
-    } catch (err) {
-      logger.error(`[${pluginName}] ❌ 查询 main 表失败: ${err.message}`, err)
-      throw err
-    }
+    return this.MainModel.findAll({ where: { game, ...(version && { version }) } })
   }
 
   /**
@@ -319,43 +177,18 @@ class GamePushDB {
    */
   async getPreData(game, ver = null) {
     await this.ensureInitialized()
-
-    try {
-      const where = { game }
-      if (ver) where.ver = ver
-
-      const data = await this.PreModel.findAll({ where })
-      return data
-    } catch (err) {
-      logger.error(`[${pluginName}] ❌ 查询 pre 表失败: ${err.message}`, err)
-      throw err
-    }
+    return this.PreModel.findAll({ where: { game, ...(ver && { ver }) } })
   }
 
   async close() {
-    try {
-      if (this.sequelize) {
-        await this.sequelize.close()
-        logger.info(`[${pluginName}] 🔌 数据库连接已关闭`)
-      }
-    } catch (err) {
-      logger.error(`[${pluginName}] ❌ 关闭数据库连接失败: ${err.message}`, err)
-      throw err
+    if (this.sequelize) {
+      await this.sequelize.close()
+      logger.info(`[${pluginName}] 🔌 数据库连接已关闭`)
     }
   }
 }
 
 const dbInstance = new GamePushDB()
-
-const dbPromise = dbInstance
-  .initialize()
-  .then(() => {
-    logger.debug(`[${pluginName}] ✅ 数据库模块已成功初始化`)
-    return dbInstance
-  })
-  .catch((err) => {
-    logger.error(`[${pluginName}] ❌ 数据库初始化失败:`, err)
-    throw err
-  })
+const dbPromise = dbInstance.ensureInitialized().then(() => dbInstance)
 
 export default dbPromise
