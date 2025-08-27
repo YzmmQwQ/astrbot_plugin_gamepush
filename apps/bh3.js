@@ -9,7 +9,7 @@ export class bh3Push extends plugin {
       name: "[GamePush-Plugin]崩坏3功能",
       dsc: "崩坏3版本更新及预下载推送",
       event: "message",
-      priority: 7000,
+      priority: 100,
       rule: [
         {
           reg: `^#*${bh3Reg}版本监控$`,

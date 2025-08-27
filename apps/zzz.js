@@ -10,7 +10,7 @@ export class zzzPush extends plugin {
       name: "[GamePush-Plugin]绝区零功能",
       dsc: "绝区零版本更新及预下载推送",
       event: "message",
-      priority: 7000,
+      priority: 100,
       rule: [
         {
           reg: `^#*${zzzReg}版本监控$`,

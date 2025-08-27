@@ -9,7 +9,7 @@ export class ysPush extends plugin {
       name: "[GamePush-Plugin]原神功能",
       dsc: "原神版本更新及预下载推送",
       event: "message",
-      priority: 7000,
+      priority: 100,
       rule: [
         {
           reg: `^#*${ysReg}?版本监控$`,

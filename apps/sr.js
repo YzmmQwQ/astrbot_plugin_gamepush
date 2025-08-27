@@ -10,7 +10,7 @@ export class srPush extends plugin {
       name: "[GamePush-Plugin]星铁功能",
       dsc: "星铁版本更新及预下载推送",
       event: "message",
-      priority: 7000,
+      priority: 100,
       rule: [
         {
           reg: `^#*${srReg}版本监控$`,

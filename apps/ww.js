@@ -10,7 +10,7 @@ export class wwPush extends plugin {
       name: "[GamePush-Plugin]鸣潮功能",
       dsc: "鸣潮版本更新及预下载推送",
       event: "message",
-      priority: 7000,
+      priority: 100,
       rule: [
         {
           reg: `^#*${wwReg}版本监控$`,
