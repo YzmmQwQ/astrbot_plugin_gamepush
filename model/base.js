@@ -1,5 +1,4 @@
 import { BotName, pluginName, PluginPackage, pluginPath } from "#GamePush.components"
-import _ from "lodash"
 import path from "path"
 
 /**

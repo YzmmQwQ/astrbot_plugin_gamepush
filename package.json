@@ -1,6 +1,6 @@
 {
   "name": "GamePush-Plugin",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "自动监控游戏版本更新并推送通知，支持Yunzai和Karin",
   "main": "index.js",
   "author": "rainbowwarmth",
@@ -17,7 +17,6 @@
   },
   "keywords": [],
   "dependencies": {
-    "lodash": "^4.17.21",
     "chokidar": "^4.0.3",
     "node-fetch": "^3.3.2",
     "yaml": "^2.8.0",
