@@ -50,6 +50,11 @@ class Notifier extends base {
    */
   async pushNotify({ type, game, newVersion, oldVersion, pushChangeType }) {
     try {
+      if (oldVersion === "0.0.0") {
+        logger.debug(`[${pluginName}] 初始版本0.0.0，不推送通知且不更新数据库`)
+        return
+      }
+
       const gameConfig = cfg.getGameConfig(game)
       const gameName = this.getGameName(game)
       const { formattedTotalSize, incrementalSize, Ver } = await this.fetchSizeInfo(

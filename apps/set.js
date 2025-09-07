@@ -58,7 +58,6 @@ export class Set extends plugin {
     for (const [id, regex] of Object.entries(gameRegexMap)) {
       if (regex.test(msg)) return gameInfoMap[id]
     }
-    // 如果没有匹配到游戏别名，但命令是设置rediskey，则默认ys
     if (/^#*(删除|设置)(预下载)?rediskey/.test(msg)) {
       return gameInfoMap["ys"]
     }
@@ -103,7 +102,6 @@ export class Set extends plugin {
       const keys = getRedisKeys(match.id)
       if (!keys?.main) return this.e.reply("配置中未找到主RedisKey")
 
-      // 改为安全正则，只匹配设置rediskey后的值
       const [, value] = this.e.msg.match(/设置rediskey\s*(.+)/i) || []
       if (!value) return this.e.reply("请提供要设置的值")
 
@@ -122,7 +120,6 @@ export class Set extends plugin {
       const keys = getRedisKeys(match.id)
       if (!keys?.pre) return this.e.reply("配置中未找到预下载RedisKey")
 
-      // 改为安全正则，只匹配设置预下载rediskey后的值
       const [, value] = this.e.msg.match(/设置预下载rediskey\s*(.+)/i) || []
       if (!value) return this.e.reply("请提供要设置的值")
 

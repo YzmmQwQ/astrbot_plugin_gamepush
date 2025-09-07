@@ -22,7 +22,9 @@ const BotName = (() => {
   } else if (BotPackage.name === "trss-yunzai") {
     return "Trss-Yunzai"
   } else if (BotPackage.name === "yunzai") {
-    logger.error("[GamePush-Plugin] 还有人玩Yunzai-Bot??")
+    logger.error("[GamePush-Plugin] 未适配的框架, 请使用Miao-Yunzai或Trss-Yunzai")
+  } else {
+    logger.error("[GamePush-Plugin] 未适配的框架, 请使用Miao-Yunzai或Trss-Yunzai")
   }
 })()
 
