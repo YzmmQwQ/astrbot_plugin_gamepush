@@ -1,6 +1,6 @@
 import { BotName, pluginName, PluginPackage, pluginPath, request } from "#GamePush.components"
 import { GAME_CONFIG, getGameIcon } from "#GamePush.model"
-
+import path from "path"
 /**
  * 基础类，提供共享功能
  */
