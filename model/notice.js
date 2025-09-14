@@ -189,8 +189,9 @@ class Notifier extends base {
    * @param {string} pushChangeType - 消息类型
    */
   async sendImageMessage(type, game, gameConfig, templateData, pushChangeType) {
+    const screenData = await this.screenData(game, type);
     const data = {
-      ...this.screenData(game, type),
+      ...screenData,
       ...templateData,
       date: new Date().toLocaleDateString(),
       type

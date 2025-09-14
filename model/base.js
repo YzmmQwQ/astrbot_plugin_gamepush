@@ -1,6 +1,6 @@
-import { BotName, pluginName, PluginPackage, pluginPath } from "#GamePush.components"
+import { BotName, pluginName, PluginPackage, pluginPath, request } from "#GamePush.components"
+import { GAME_CONFIG, getGameIcon } from "#GamePush.model"
 import path from "path"
-
 /**
  * 基础类，提供共享功能
  */
@@ -40,6 +40,14 @@ export default class base {
     }
     return gameNames[game] || "未知游戏"
   }
+  
+async GameIcon(game) {
+  if (game === 'ww') return 'https://cn.bing.com/th?id=OSK.d2e8b2efa5867fba330b354d0472f5e5&w=120&h=120&qlt=120&c=6&rs=1&cdv=1&pid=RS'
+  const res = await request.get(getGameIcon(), { responseType: "json", log: true, gameName: this.getGameName(game)})
+  const config = GAME_CONFIG[game]
+  const gameData = res.data.games.find(g => g.id === config.id || g.biz === config.biz)
+  return gameData.display?.icon?.url
+}
 
   /**
    * @returns {string} 当前日期，格式为YYYYMMDD
@@ -68,7 +76,7 @@ export default class base {
    * @param {string} type - 截图类型（可选）
    * @returns {Object} 截图数据
    */
-  getScreenData(game, type = "") {
+  async getScreenData(game, type = "") {
     const currentDate = this.getCurrentDate()
     let basic
     if (BotName === "Karin") {
@@ -106,19 +114,12 @@ export default class base {
       }
     }
 
-    const icons = {
-      zzz: "https://www.miyoushe.com/_static/img/game-zzz.3ca2bac.png",
-      sr: "https://c-ssl.duitang.com/uploads/blog/202110/11/20211011094243_6ff48.jpeg",
-      ys: "https://bbs-static.miyoushe.com/avatar/avatar10011.png",
-      bh3: "https://www.miyoushe.com/_static/img/game-bh3.abe5ead.jpg",
-      ww: "https://cn.bing.com/th?id=OSK.d2e8b2efa5867fba330b354d0472f5e5&w=120&h=120&qlt=120&c=6&rs=1&cdv=1&pid=RS"
-    }
-
+    const iconUrl = await this.GameIcon(game);
     return {
       ...other,
       ...basic,
       gameName: this.getGameName(game),
-      icon: icons[game]
+      icon: iconUrl
     }
   }
 }
