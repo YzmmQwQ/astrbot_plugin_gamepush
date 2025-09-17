@@ -1,5 +1,6 @@
-import { plugin, redis } from "#GamePush.lib"
-import { getRedisKeys } from "#GamePush.model"
+import { plugin, redis, common } from "#GamePush.lib"
+import { db, getRedisKeys } from "#GamePush.model"
+import fs from "fs"
 
 // 各游戏匹配规则
 const gameRegexMap = {
@@ -45,6 +46,11 @@ export class Set extends plugin {
         {
           reg: buildReg("设置预下载rediskey\\s*(.+)"),
           fnc: "setPrekey",
+          permission: "master"
+        },
+        {
+          reg: "#更新游戏版本数据",
+          fnc: 'updatedb',
           permission: "master"
         }
       ]
@@ -129,8 +135,17 @@ export class Set extends plugin {
       this.e.reply(`设置失败: ${error.message}`)
     }
   }
-}
 
+  async updatedb() {
+    const DB_DOWNLOAD_URL = (await db).DB_DOWNLOAD_URL
+    const DB_PATH = (await db).DB_PATH
+    const VERSION_JSON_PATH = (await db).VERSION_JSON_PATH
+    await this.e.reply(`正在更新版本数据，请稍候...`)
+    await common.downFile(DB_DOWNLOAD_URL, DB_PATH)
+    const localInfo = JSON.parse(fs.readFileSync(VERSION_JSON_PATH, "utf8") || "{}")
+    await this.e.reply(`版本数据更新完成！, 当前数据版本：${localInfo.version || '未知'}`)
+  }
+}
 /**
  * 构建正则：支持所有游戏别名
  */
