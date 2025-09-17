@@ -125,6 +125,10 @@ export class bh3Push extends plugin {
     }
   }
 
+  /**
+   * 
+   * @returns 
+   */
   async bh3VersionData() {
     const input = this.e.msg.replace(new RegExp(`#*${bh3Reg}版本数据`, "i"), "").trim()
     if (!input) return this.showAllVersionData()

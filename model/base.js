@@ -41,23 +41,21 @@ export default class base {
     return gameNames[game] || "未知游戏"
   }
   
-async GameIcon(game) {
-  if (game === 'ww') return 'https://cn.bing.com/th?id=OSK.d2e8b2efa5867fba330b354d0472f5e5&w=120&h=120&qlt=120&c=6&rs=1&cdv=1&pid=RS'
-  const res = await request.get(getGameIcon(), { responseType: "json", log: true, gameName: this.getGameName(game)})
-  const config = GAME_CONFIG[game]
-  const gameData = res.data.games.find(g => g.id === config.id || g.biz === config.biz)
-  return gameData.display?.icon?.url
-}
+  /**
+   * @param {string} game - 游戏ID 
+   */
+  async GameIcon(game) {
+    if (game === 'ww') return 'https://cn.bing.com/th?id=OSK.d2e8b2efa5867fba330b354d0472f5e5&w=120&h=120&qlt=120&c=6&rs=1&cdv=1&pid=RS'
+    const res = await request.get(getGameIcon(), { responseType: "json", log: true, gameName: this.getGameName(game)})
+    const { id, biz } = GAME_CONFIG[game]
+    return res.data.games.find(g => g.id === id || g.biz === biz)?.display?.icon?.url || ""
+  }
 
   /**
    * @returns {string} 当前日期，格式为YYYYMMDD
    */
   getCurrentDate() {
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = (now.getMonth() + 1).toString().padStart(2, "0")
-    const day = now.getDate().toString().padStart(2, "0")
-    return `${year}${month}${day}`
+    return new Date().toISOString().slice(0, 10).replace(/-/g, "")
   }
 
   /**
