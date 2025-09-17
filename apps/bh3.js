@@ -126,8 +126,7 @@ export class bh3Push extends plugin {
   }
 
   /**
-   * 
-   * @returns 
+   * 处理崩坏3版本数据查询
    */
   async bh3VersionData() {
     const input = this.e.msg.replace(new RegExp(`#*${bh3Reg}版本数据`, "i"), "").trim()
@@ -135,6 +134,9 @@ export class bh3Push extends plugin {
     return this.showSpecificVersionData(input)
   }
 
+  /**
+   * 显示崩坏3所有版本数据
+   */
   async showAllVersionData() {
     const mainVersions = await (await db).getMainData("bh3")
     const preVersions = await (await db).getPreData("bh3")

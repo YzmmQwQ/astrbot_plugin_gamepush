@@ -125,12 +125,18 @@ export class wwPush extends plugin {
     }
   }
 
+  /**
+   * 处理鸣朝版本数据查询
+   */
   async wwVersionData() {
     const input = this.e.msg.replace(new RegExp(`#*${wwReg}版本数据`, "i"), "").trim()
     if (!input) return this.showAllVersionData()
     return this.showSpecificVersionData(input)
   }
 
+  /**
+   * 显示鸣朝所有版本数据
+   */
   async showAllVersionData() {
     const mainVersions = await (await db).getMainData("ww")
     const preVersions = await (await db).getPreData("ww")

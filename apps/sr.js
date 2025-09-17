@@ -137,12 +137,18 @@ export class srPush extends plugin {
     }
   }
 
+  /**
+   * 处理星铁版本数据查询
+   */
   async srVersionData() {
     const input = this.e.msg.replace(new RegExp(`#*${srReg}版本数据`, "i"), "").trim()
     if (!input) return this.showAllVersionData()
     return this.showSpecificVersionData(input)
   }
 
+  /**
+   * 显示星铁所有版本数据
+   */
   async showAllVersionData() {
     const mainVersions = await (await db).getMainData("sr")
     const preVersions = await (await db).getPreData("sr")

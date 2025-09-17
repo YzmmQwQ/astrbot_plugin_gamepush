@@ -88,12 +88,18 @@ export class ysPush extends plugin {
     return this.reply(msg, true)
   }
 
+  /**
+   * 处理原神版本数据查询
+   */
   async ysVersionData() {
     const input = this.e.msg.replace(new RegExp(`#*${ysReg}?版本数据`, "i"), "").trim()
     if (!input) return this.showAllVersionData()
     return this.showSpecificVersionData(input)
   }
 
+  /**
+   * 显示原神所有版本数据
+   */
   async showAllVersionData() {
     const mainVersions = await (await db).getMainData("ys")
     const preVersions = await (await db).getPreData("ys")
