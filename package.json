@@ -10,7 +10,7 @@
     "lint": "eslint --ext .js,.vue src",
     "format": "prettier --write \"./**/*.{js,vue}\"",
     "fix": "eslint --fix --ext .js && npm run format",
-    "install": "pnpx @karinjs/prebuild-install -r napi --target 6 --pkg_version=5.1.7 --pkg_name=sqlite3 && node -e \"const fs = require('fs'); const path = require('path'); if(fs.existsSync('build')) { fs.rmSync(path.join('node_modules', 'sqlite3', 'build'), { recursive: true, force: true }); fs.renameSync('build', path.join('node_modules', 'sqlite3', 'build')); }\""
+    "install": "node -e \"const fs=require('fs');const path=require('path');const sqlite3Path=path.join('node_modules','sqlite3');if(fs.existsSync(sqlite3Path)){const buildPath=path.join(sqlite3Path,'build');if(!fs.existsSync(buildPath)){require('child_process').execSync('pnpx @karinjs/prebuild-install -r napi --target 6 --pkg_version=5.1.7 --pkg_name=sqlite3',{cwd:sqlite3Path,stdio:'inherit'})}}\""
   },
   "repository": {
     "type": "git",
