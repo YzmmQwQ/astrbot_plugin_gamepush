@@ -40,15 +40,20 @@ export default class base {
     }
     return gameNames[game] || "未知游戏"
   }
-  
+
   /**
-   * @param {string} game - 游戏ID 
+   * @param {string} game - 游戏ID
    */
   async GameIcon(game) {
-    if (game === 'ww') return 'https://cn.bing.com/th?id=OSK.d2e8b2efa5867fba330b354d0472f5e5&w=120&h=120&qlt=120&c=6&rs=1&cdv=1&pid=RS'
-    const res = await request.get(getGameIcon(), { responseType: "json", log: true, gameName: this.getGameName(game)})
+    if (game === "ww")
+      return "https://cn.bing.com/th?id=OSK.d2e8b2efa5867fba330b354d0472f5e5&w=120&h=120&qlt=120&c=6&rs=1&cdv=1&pid=RS"
+    const res = await request.get(getGameIcon(), {
+      responseType: "json",
+      log: true,
+      gameName: this.getGameName(game)
+    })
     const { id, biz } = GAME_CONFIG[game]
-    return res.data.games.find(g => g.id === id || g.biz === biz)?.display?.icon?.url || ""
+    return res.data.games.find((g) => g.id === id || g.biz === biz)?.display?.icon?.url || ""
   }
 
   /**
@@ -64,8 +69,8 @@ export default class base {
    * @param {string} type - 截图类型（可选）
    * @returns {Object} 截图数据
    */
-  screenData(game, type = "") {
-    return this.getScreenData(game, type)
+  screenData(game, type = "", html = "") {
+    return this.getScreenData(game, type, html)
   }
 
   /**
@@ -74,12 +79,12 @@ export default class base {
    * @param {string} type - 截图类型（可选）
    * @returns {Object} 截图数据
    */
-  async getScreenData(game, type = "") {
+  async getScreenData(game, type = "", html = "") {
     const currentDate = this.getCurrentDate()
     let basic
     if (BotName === "Karin") {
       basic = {
-        tplFile: `${pluginPath}/resources/html/GamePush-Plugin/GamePush-Plugin.html`,
+        tplFile: `${pluginPath}/resources/html/GamePush-Plugin/GamePush-Plugin-${html}.html`,
         fontsPath: `${pluginPath}/resources/fonts/`,
         pluResPath: `${pluginPath}/resources/`,
         htmlSavePath: `${this._path}/@karinjs/${pluginName}/html/`,
@@ -92,7 +97,7 @@ export default class base {
       basic = {
         tplFile: path.join(
           this._path,
-          "plugins/GamePush-Plugin/resources/html/GamePush-Plugin/GamePush-Plugin.html"
+          `plugins/GamePush-Plugin/resources/html/GamePush-Plugin/GamePush-Plugin-${html}.html`
         ),
         fontsPath: path.join(this._path, "plugins/GamePush-Plugin/resources/fonts/"),
         pluResPath: path.join(this._path, "plugins/GamePush-Plugin/resources/"),
@@ -112,7 +117,7 @@ export default class base {
       }
     }
 
-    const iconUrl = await this.GameIcon(game);
+    const iconUrl = await this.GameIcon(game)
     return {
       ...other,
       ...basic,

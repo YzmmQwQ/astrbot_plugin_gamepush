@@ -154,7 +154,7 @@ class ApiTools extends base {
    * @param {Object} gameConfig - 游戏配置
    * @param {string} pushChangeType - 消息类型
    */
-  sendToGroups(msg, game, gameConfig, pushChangeType) {
+  sendToGroups(msg, game, gameConfig, pushChangeType, html) {
     if (!gameConfig?.pushGroups?.length) {
       logger.debug(`[${pluginName}][${getGameName(game)}] 未配置推送群组`)
       return

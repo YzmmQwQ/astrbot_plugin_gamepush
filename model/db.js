@@ -7,6 +7,7 @@ import { pluginName, BotName, request } from "#GamePush.components"
 class GamePushDB {
   REMOTE_VERSION_URL =
     "https://cnb.cool/rainbowwarmth/resources/-/git/raw/main/GamePush-Plugin-version.json"
+
   DB_DOWNLOAD_URL = "https://cnb.cool/rainbowwarmth/resources/-/git/raw/main/GamePush-Plugin.db"
 
   constructor() {

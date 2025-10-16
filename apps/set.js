@@ -50,7 +50,7 @@ export class Set extends plugin {
         },
         {
           reg: "#更新游戏版本数据",
-          fnc: 'updatedb',
+          fnc: "updatedb",
           permission: "master"
         }
       ]
@@ -65,6 +65,7 @@ export class Set extends plugin {
       if (regex.test(msg)) return gameInfoMap[id]
     }
     if (/^#*(删除|设置)(预下载)?rediskey/.test(msg)) {
+      // eslint-disable-next-line dot-notation
       return gameInfoMap["ys"]
     }
     return null
@@ -143,7 +144,7 @@ export class Set extends plugin {
     await this.e.reply(`正在更新版本数据，请稍候...`)
     await common.downFile(DB_DOWNLOAD_URL, DB_PATH)
     const localInfo = JSON.parse(fs.readFileSync(VERSION_JSON_PATH, "utf8") || "{}")
-    await this.e.reply(`版本数据更新完成！, 当前数据版本：${localInfo.version || '未知'}`)
+    await this.e.reply(`版本数据更新完成！, 当前数据版本：${localInfo.version || "未知"}`)
   }
 }
 /**

@@ -93,6 +93,19 @@ export function supportGuoba() {
                   ],
                   placeholder: "请选择消息推送类型"
                 }
+              },
+              {
+                field: `${gameId}.html`,
+                label: "html模板",
+                bottomHelpMessage: "1. 默认模板 2. 测试模板",
+                component: "RadioGroup",
+                componentProps: {
+                  options: [
+                    { label: "默认html", value: "default" },
+                    { label: "测试html01", value: "BETA_01" }
+                  ],
+                  placeholder: "请选择消息推送类型"
+                }
               }
             ]
           })

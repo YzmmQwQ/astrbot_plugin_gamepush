@@ -75,7 +75,7 @@ export class bh3Push extends plugin {
       cfg.removePushGroup("bh3", botId, groupId)
     }
 
-    const action = isEnable ? `已添加本群到推送列表（ID：${groupIdentifier}）` : "已移除本群推送"
+    const action = isEnable ? `已添加本群到推送列表（ID：${groupId}）` : "已移除本群推送"
     return this.reply(`✅ 已${isEnable ? "开启" : "关闭"}崩坏3版本推送，${action}`, true)
   }
 

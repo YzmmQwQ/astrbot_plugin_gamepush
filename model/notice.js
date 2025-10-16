@@ -48,7 +48,7 @@ class Notifier extends base {
    * @param {string} oldVersion - 旧版本号
    * @param {string} pushChangeType - 消息类型
    */
-  async pushNotify({ type, game, newVersion, oldVersion, pushChangeType }) {
+  async pushNotify({ type, game, newVersion, oldVersion, pushChangeType, html }) {
     try {
       if (oldVersion === "0.0.0") {
         logger.debug(`[${pluginName}] 初始版本0.0.0，不推送通知且不更新数据库`)
@@ -88,7 +88,14 @@ class Notifier extends base {
       }
 
       if (pushChangeType === "1") {
-        await this.sendImageMessage(type, game, gameConfig, templateData, pushChangeType)
+        await this.sendImageMessage(
+          type,
+          game,
+          gameConfig,
+          templateData,
+          pushChangeType,
+          gameConfig.html
+        )
       } else {
         await this.sendTextMessage(type, game, gameConfig, templateData, pushChangeType)
       }
@@ -109,8 +116,8 @@ class Notifier extends base {
   async fetchSizeInfo(game, type, gameName) {
     const excludedLanguages = ["en-us", "ja-jp", "ko-kr"]
     let formattedTotalSize, incrementalSize, Ver
-    let buildSize = 0,
-      patchSize = 0
+    let buildSize = 0
+    let patchSize = 0
 
     const BranchesData = await request.get(getGameChuckAPI(game), {
       responseType: "json",
@@ -188,15 +195,15 @@ class Notifier extends base {
    * @param {object} templateData - 游戏数据
    * @param {string} pushChangeType - 消息类型
    */
-  async sendImageMessage(type, game, gameConfig, templateData, pushChangeType) {
-    const screenData = await this.screenData(game, type);
+  async sendImageMessage(type, game, gameConfig, templateData, pushChangeType, html) {
+    const screenData = await this.screenData(game, type, html)
     const data = {
       ...screenData,
       ...templateData,
       date: new Date().toLocaleDateString(),
       type
     }
-    const img = await puppeteer.screenshot("GamePush-Plugin", data)
+    const img = await puppeteer.screenshot(`GamePush-Plugin`, data)
     img
       ? api.sendToGroups(img, game, gameConfig, pushChangeType)
       : logger.error(`[${pluginName}] 发送图片消息失败`)
