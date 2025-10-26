@@ -81,6 +81,24 @@ export default defineConfig({
                   })
                 ],
                 description: "选择推送的变更类型"
+              }),
+              components.radio.group(`pushChangeType`, {
+                label: "html模板",
+                orientation: "horizontal",
+                defaultValue: gameConfig.pushChangeType || "1",
+                radio: [
+                  components.radio.create("type-1", {
+                    label: "默认模板",
+                    description: "以默认的html模板渲染推送内容",
+                    value: "default"
+                  }),
+                  components.radio.create("type-2", {
+                    label: "简约模板",
+                    description: "以简约的html模板渲染推送内容",
+                    value: "default"
+                  })
+                ],
+                description: "请选择渲染的html模板"
               })
             ]
           })
@@ -99,13 +117,15 @@ export default defineConfig({
       const cron = gameConfig.cron || "0 0/5 * * * *"
       const pushChangeType = gameConfig.pushChangeType || "1"
       const pushGroups = gameConfig.pushGroups || []
+      const html = gameConfig.html || "default"
       saveData[gameId] = [
         {
           enable,
           cron,
           log,
           pushGroups,
-          pushChangeType
+          pushChangeType,
+          html
         }
       ]
     })
