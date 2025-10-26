@@ -95,7 +95,7 @@ export default defineConfig({
                   components.radio.create("type-2", {
                     label: "简约模板",
                     description: "以简约的html模板渲染推送内容",
-                    value: "default"
+                    value: "Simple"
                   })
                 ],
                 description: "请选择渲染的html模板"
