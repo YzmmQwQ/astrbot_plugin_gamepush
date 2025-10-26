@@ -28,6 +28,12 @@ $bg-end: #eef3f8;
 	src: url("../../fonts/HYWenHei-55W.ttf");
 }
 
+.emoji-text {
+  font-family: "NotoColorEmoji", sans-serif;
+	display: inline-block;
+	margin-right: 4px;
+}
+
 * {
   margin: 0;
   padding: 0;

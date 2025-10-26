@@ -17,6 +17,12 @@
   font-family: "HYWenHei";
   src: url("../../fonts/HYWenHei-55W.ttf");
 }
+.emoji-text {
+  font-family: "NotoColorEmoji", sans-serif;
+  display: inline-block;
+  margin-right: 4px;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -276,4 +282,4 @@ body::before {
   }
 }
 
-/*# sourceMappingURL=GamePush-Plugin-BETA_01.css.map */
+/*# sourceMappingURL=GamePush-Plugin-Simple.css.map */
