@@ -27,14 +27,6 @@ export class bh3Push extends plugin {
           permission: "all"
         },
         {
-          reg: `^#*${bh3Reg}获取下载链接$`,
-          fnc: "bh3DownloadLinks"
-        },
-        {
-          reg: `^#*${bh3Reg}获取预下载链接$`,
-          fnc: "bh3PreDownloadLinks"
-        },
-        {
           reg: `^#*${bh3Reg}版本数据(.*)$`,
           fnc: "bh3VersionData"
         }
@@ -93,36 +85,6 @@ export class bh3Push extends plugin {
     ].join("\n")
 
     this.reply(msg)
-  }
-
-  /**
-   * 获取崩坏3下载链接
-   */
-  async bh3DownloadLinks(e) {
-    try {
-      const { data, patch } = await download.getDownloadData("bh3", "main")
-      if (!data) return this.reply("当前没有可用的正式版本下载", true)
-
-      const { msg, client } = download.formatDownloadInfo("bh3", data, "main", patch)
-      return this.reply(await makeForwardMsg(e, [msg, client]))
-    } catch (err) {
-      return this.reply(`❌ 获取失败：${err.message}`, true)
-    }
-  }
-
-  /**
-   * 获取崩坏3预下载链接
-   */
-  async bh3PreDownloadLinks(e) {
-    try {
-      const { data, patch } = await download.getDownloadData("bh3", "pre")
-      if (!data) return this.reply("🚫 崩坏3当前未开放预下载", true)
-
-      const { msg, client } = download.formatDownloadInfo("bh3", data, "pre", patch)
-      return this.reply(await makeForwardMsg(e, [msg, client]))
-    } catch (err) {
-      return this.reply(`❌ 预下载获取失败：${err.message}`, true)
-    }
   }
 
   /**

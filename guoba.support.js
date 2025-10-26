@@ -97,14 +97,14 @@ export function supportGuoba() {
               {
                 field: `${gameId}.html`,
                 label: "html模板",
-                bottomHelpMessage: "1. 默认模板 2. 测试模板",
+                bottomHelpMessage: "1. 默认模板 2. 简约模板",
                 component: "RadioGroup",
                 componentProps: {
                   options: [
                     { label: "默认html", value: "default" },
-                    { label: "测试html01", value: "BETA_01" }
+                    { label: "简约", value: "Simple" }
                   ],
-                  placeholder: "请选择消息推送类型"
+                  placeholder: "请选择渲染的html模板"
                 }
               }
             ]
