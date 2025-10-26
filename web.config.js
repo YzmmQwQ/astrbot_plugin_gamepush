@@ -82,10 +82,10 @@ export default defineConfig({
                 ],
                 description: "选择推送的变更类型"
               }),
-              components.radio.group(`pushChangeType`, {
+              components.radio.group(`html`, {
                 label: "html模板",
                 orientation: "horizontal",
-                defaultValue: gameConfig.pushChangeType || "1",
+                defaultValue: gameConfig.html || "Simple",
                 radio: [
                   components.radio.create("type-1", {
                     label: "默认模板",
