@@ -11,6 +11,30 @@ const CONFIG_DIR = path.join(
 const CONFIG_PATH = path.join(CONFIG_DIR, "GamePush-Plugin.yaml")
 const DEFAULT_CRON = "0 0/5 * * * *"
 
+/**
+ * 推送组配置接口
+ */
+class PushGroup {
+  constructor(botId, groupId) {
+    this.botId = String(botId)
+    this.groupId = String(groupId)
+  }
+}
+
+/**
+ * 游戏配置接口
+ */
+class GameConfig {
+  constructor() {
+    this.enable = true
+    this.log = false
+    this.cron = DEFAULT_CRON
+    this.pushGroups = []
+    this.pushChangeType = "1"
+    this.html = "default"
+  }
+}
+
 class Config {
   configCache = {}
   watcher = null
@@ -34,19 +58,49 @@ class Config {
 
   /** 默认配置 */
   getDefaultConfig() {
-    return Object.fromEntries(
-      gameIds.map((id) => [
-        id,
-        {
-          enable: true,
-          log: false,
-          cron: DEFAULT_CRON,
-          pushGroups: [],
-          pushChangeType: "1",
-          html: "default"
-        }
-      ])
-    )
+    const defaultConfig = {}
+
+    for (const gameId of gameIds) {
+      defaultConfig[gameId] = new GameConfig()
+    }
+
+    return defaultConfig
+  }
+
+  /**
+   * 验证单个游戏配置的有效性
+   * @param {Object} cfg - 游戏配置对象
+   * @returns {Object} 验证后的有效配置
+   */
+  validateGameConfig(cfg) {
+    const validConfig = new GameConfig()
+
+    // 验证并设置配置项
+    if (typeof cfg.enable === "boolean") {
+      validConfig.enable = cfg.enable
+    }
+
+    if (typeof cfg.log === "boolean") {
+      validConfig.log = cfg.log
+    }
+
+    if (typeof cfg.cron === "string" && cfg.cron.trim()) {
+      validConfig.cron = cfg.cron.trim()
+    }
+
+    if (Array.isArray(cfg.pushGroups)) {
+      validConfig.pushGroups = Config.formatPushGroups(cfg.pushGroups)
+    }
+
+    if (typeof cfg.pushChangeType === "string" && ["1", "2", "3"].includes(cfg.pushChangeType)) {
+      validConfig.pushChangeType = cfg.pushChangeType
+    }
+
+    if (typeof cfg.html === "string" && ["default", "simple"].includes(cfg.html)) {
+      validConfig.html = cfg.html
+    }
+
+    return validConfig
   }
 
   /** 格式化 pushGroups */
@@ -75,15 +129,7 @@ class Config {
 
       for (const gameId of gameIds) {
         if (raw[gameId]) {
-          const cfg = raw[gameId]
-          this.configCache[gameId] = {
-            enable: !!cfg.enable,
-            log: !!cfg.log,
-            cron: cfg.cron || DEFAULT_CRON,
-            pushGroups: Config.formatPushGroups(cfg.pushGroups),
-            pushChangeType: cfg.pushChangeType || "1",
-            html: cfg.html || "default"
-          }
+          this.configCache[gameId] = this.validateGameConfig(raw[gameId])
         }
       }
     } catch (err) {
@@ -95,8 +141,16 @@ class Config {
   /** 保存配置 */
   saveConfig(newConfig) {
     try {
+      // 验证所有游戏配置
+      const validatedConfig = {}
+      for (const gameId of gameIds) {
+        if (newConfig[gameId]) {
+          validatedConfig[gameId] = this.validateGameConfig(newConfig[gameId])
+        }
+      }
+
       const saveData = Object.fromEntries(
-        Object.entries(newConfig).map(([gameId, cfg]) => [
+        Object.entries(validatedConfig).map(([gameId, cfg]) => [
           gameId,
           {
             enable: cfg.enable,
@@ -108,8 +162,9 @@ class Config {
           }
         ])
       )
+
       fs.writeFileSync(CONFIG_PATH, YAML.stringify(saveData, { indent: 2 }), "utf8")
-      this.configCache = newConfig
+      this.configCache = validatedConfig
       return true
     } catch (err) {
       logger.error(`[${pluginName}] 配置保存失败`, err)

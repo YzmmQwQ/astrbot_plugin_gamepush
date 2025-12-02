@@ -24,5 +24,18 @@ module.exports = {
     "new-cap": "off",
     "no-unused-vars": "off",
     semi: ["error", "never"]
-  }
+  },
+  settings: {
+    "import/resolver": {
+      "custom-alias": {
+        alias: {
+          "#GamePush.lib": "./lib/index.js",
+          "#GamePush.model": "./model/index.js",
+          "#GamePush.components": "./components/index.js"
+        },
+        extensions: [".js", ".json"]
+      }
+    }
+  },
+  ignorePatterns: ["*.min.js"]
 }

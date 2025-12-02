@@ -37,7 +37,7 @@ class Request {
   }
 
   /**
-   * 核心请求方法
+   * 核心请求方法（带重试机制）
    * @param {string} method - HTTP方法
    * @param {string} url - 请求URL
    * @param {Object} [options={}] - 请求选项
@@ -46,28 +46,62 @@ class Request {
    * @param {Object} [options.headers={}] - 自定义请求头
    * @param {boolean} [options.log=true] - 是否记录请求日志
    * @param {string} [options.gameName] - 游戏名称（用于日志前缀）
+   * @param {number} [options.retry=3] - 重试次数
+   * @param {number} [options.retryDelay=1000] - 重试间隔（毫秒）
    * @returns {Promise<any|boolean>} 成功返回响应数据，失败返回false
    */
   async request(method, url, options = {}) {
-    const { body, responseType = "json", headers = {}, log = true, gameName } = options
+    const {
+      body,
+      responseType = "json",
+      headers = {},
+      log = true,
+      gameName,
+      retry = 3,
+      retryDelay = 1000
+    } = options
+
     const requestOptions = this.createOptions(method, { body, headers })
     const gamePrefix = gameName ? `[${pluginName}][${gameName}]` : `[${pluginName}]`
-    try {
-      if (log) {
-        logger.debug(`${gamePrefix} ${method}请求URL:`, url)
-      }
-      const response = await fetch(url, requestOptions)
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`HTTP ${response.status}: ${errorText}`)
-      }
 
-      return await this.handleRequest(response, responseType)
-    } catch (error) {
-      const gamePrefix = gameName ? `[${pluginName}][${gameName}]` : `[${pluginName}]`
-      if (log) logger.error(`${gamePrefix} ${method}请求失败:`, error.message)
-      return false
+    // 带重试机制的请求逻辑
+    let lastError = null
+    for (let attempt = 1; attempt <= retry; attempt++) {
+      try {
+        if (log) {
+          logger.debug(
+            `${gamePrefix} ${method}请求URL:`,
+            url,
+            attempt > 1 ? `(重试 ${attempt}/${retry})` : ""
+          )
+        }
+
+        const response = await fetch(url, requestOptions)
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          throw new Error(`HTTP ${response.status}: ${errorText}`)
+        }
+
+        return await this.handleRequest(response, responseType)
+      } catch (error) {
+        lastError = error
+
+        // 如果不是最后一次尝试，等待后重试
+        if (attempt < retry) {
+          if (log) {
+            logger.debug(`${gamePrefix} ${method}请求失败，${retryDelay}ms后重试:`, error.message)
+          }
+          await new Promise((resolve) => setTimeout(resolve, retryDelay))
+        }
+      }
     }
+
+    // 所有重试都失败
+    if (log) {
+      logger.error(`${gamePrefix} ${method}请求失败 (${retry}次尝试):`, lastError.message)
+    }
+    return false
   }
 
   /**
@@ -78,6 +112,8 @@ class Request {
    * @param {"json"|"text"|"raw"} [options.responseType] - 响应数据类型
    * @param {boolean} [options.log] - 是否记录日志
    * @param {string} [options.gameName] - 游戏名称
+   * @param {number} [options.retry] - 重试次数
+   * @param {number} [options.retryDelay] - 重试间隔（毫秒）
    * @returns {Promise<any|boolean>} 响应数据或false
    */
   async get(url, options = {}) {
@@ -93,6 +129,8 @@ class Request {
    * @param {"json"|"text"|"raw"} [options.responseType] - 响应数据类型
    * @param {boolean} [options.log] - 是否记录日志
    * @param {string} [options.gameName] - 游戏名称
+   * @param {number} [options.retry] - 重试次数
+   * @param {number} [options.retryDelay] - 重试间隔（毫秒）
    * @returns {Promise<any|boolean>} 响应数据或false
    */
   async post(url, body, options = {}) {

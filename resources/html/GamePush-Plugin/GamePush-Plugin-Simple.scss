@@ -19,19 +19,19 @@ $bg-end: #eef3f8;
 }
 
 @font-face {
-	font-family: "NotoColorEmoji";
-	src: url("../../fonts/NotoColorEmoji.ttf");
+  font-family: "NotoColorEmoji";
+  src: url("../../fonts/NotoColorEmoji.ttf");
 }
 
 @font-face {
-	font-family: "HYWenHei";
-	src: url("../../fonts/HYWenHei-55W.ttf");
+  font-family: "HYWenHei";
+  src: url("../../fonts/HYWenHei-55W.ttf");
 }
 
 .emoji-text {
   font-family: "NotoColorEmoji", sans-serif;
-	display: inline-block;
-	margin-right: 4px;
+  display: inline-block;
+  margin-right: 4px;
 }
 
 * {
@@ -40,9 +40,16 @@ $bg-end: #eef3f8;
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   height: 100%;
-  font-family: "HYWenHei", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+  font-family:
+    "HYWenHei",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    "Noto Sans SC",
+    sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -60,8 +67,8 @@ body {
     inset: 0;
     pointer-events: none;
     background:
-      radial-gradient(600px 300px at 80% 10%, rgba(0,122,255,0.05), transparent 18%),
-      radial-gradient(500px 250px at 10% 85%, rgba(0,191,165,0.04), transparent 16%);
+      radial-gradient(600px 300px at 80% 10%, rgba(0, 122, 255, 0.05), transparent 18%),
+      radial-gradient(500px 250px at 10% 85%, rgba(0, 191, 165, 0.04), transparent 16%);
     z-index: 0;
   }
 }
@@ -72,11 +79,11 @@ body {
   overflow: hidden;
   position: relative;
   z-index: 2;
-  background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(250,251,253,0.95));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 251, 253, 0.95));
   box-shadow:
     0 18px 50px rgba(15, 23, 42, 0.12),
-    inset 0 1px 0 rgba(255,255,255,0.6);
-  border: 1px solid rgba(200,210,220,0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(200, 210, 220, 0.35);
 }
 
 .header {
@@ -95,7 +102,7 @@ body {
     right: 0;
     top: 0;
     height: 10%;
-    background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.02));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.02));
     pointer-events: none;
     mix-blend-mode: overlay;
   }
@@ -105,8 +112,8 @@ body {
     height: 80px;
     border-radius: 16px;
     object-fit: cover;
-    box-shadow: 0 6px 22px rgba(12,22,40,0.12);
-    border: 1px solid rgba(255,255,255,0.7);
+    box-shadow: 0 6px 22px rgba(12, 22, 40, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.7);
     flex-shrink: 0;
   }
 
@@ -134,21 +141,23 @@ body {
     font-weight: 600;
     display: inline-block;
     padding: 6px 12px;
-    background: linear-gradient(90deg, rgba(0,122,255,0.06), rgba(0,191,165,0.04));
+    background: linear-gradient(90deg, rgba(0, 122, 255, 0.06), rgba(0, 191, 165, 0.04));
     border-radius: 10px;
-    border: 1px solid rgba(0,122,255,0.06);
+    border: 1px solid rgba(0, 122, 255, 0.06);
     backdrop-filter: blur(4px);
   }
 }
 
 .main-content {
   padding: 28px 40px 36px;
-  background: linear-gradient(180deg,
-    rgba(250,252,255,0.85) 0%,
-    rgba(248,250,253,0.92) 50%,
-    rgba(245,248,252,0.95) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(250, 252, 255, 0.85) 0%,
+    rgba(248, 250, 253, 0.92) 50%,
+    rgba(245, 248, 252, 0.95) 100%
+  );
   backdrop-filter: blur(6px);
-  border-top: 1px solid rgba(255,255,255,0.4);
+  border-top: 1px solid rgba(255, 255, 255, 0.4);
 
   .cards {
     display: flex;
@@ -162,18 +171,20 @@ body {
     min-width: 180px;
     border-radius: 14px;
     padding: 18px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(249,250,252,0.96));
-    border: 1px solid rgba(230,235,240,0.8);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(249, 250, 252, 0.96));
+    border: 1px solid rgba(230, 235, 240, 0.8);
     box-shadow:
       0 10px 28px rgba(15, 25, 45, 0.08),
-      inset 0 1px 0 rgba(255,255,255,0.5);
-    transition: transform .22s ease, box-shadow .22s ease;
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transition:
+      transform 0.22s ease,
+      box-shadow 0.22s ease;
 
     &:hover {
       transform: translateY(-6px);
       box-shadow:
-        0 18px 40px rgba(12,22,40,0.12),
-        inset 0 1px 0 rgba(255,255,255,0.7);
+        0 18px 40px rgba(12, 22, 40, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
     }
 
     .card-title {
@@ -222,7 +233,7 @@ body {
     border-radius: 10px;
     font-size: 11px;
     font-weight: 700;
-    box-shadow: 0 4px 10px rgba(7,22,52,0.12);
+    box-shadow: 0 4px 10px rgba(7, 22, 52, 0.12);
   }
 }
 
@@ -281,8 +292,8 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 16px 40px;
-  background: linear-gradient(180deg, rgba(250,250,252,0.98), rgba(245,247,250,0.98));
-  border-top: 1px solid rgba(230,235,240,0.8);
+  background: linear-gradient(180deg, rgba(250, 250, 252, 0.98), rgba(245, 247, 250, 0.98));
+  border-top: 1px solid rgba(230, 235, 240, 0.8);
 
   .creator-info {
     font-size: 13px;

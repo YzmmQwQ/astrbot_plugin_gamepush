@@ -1,6 +1,6 @@
+import fs from "fs"
 import { plugin, redis, common } from "#GamePush.lib"
 import { db, getRedisKeys } from "#GamePush.model"
-import fs from "fs"
 
 // 各游戏匹配规则
 const gameRegexMap = {
