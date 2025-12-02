@@ -10,6 +10,7 @@ export class zzzPush extends GamePushBase {
       gameId: "zzz",
       gameName: "绝区零",
       regPattern: zzzReg,
+      priority: 100,
       extraRules: [
         {
           reg: `^#*${zzzReg}获取下载链接$`,

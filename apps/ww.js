@@ -10,6 +10,7 @@ export class wwPush extends GamePushBase {
       gameId: "ww",
       gameName: "鸣潮",
       regPattern: wwReg,
+      priority: 100,
       extraRules: [
         {
           reg: `^#*${wwReg}获取下载链接$`,

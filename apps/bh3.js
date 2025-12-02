@@ -6,7 +6,8 @@ export class bh3Push extends GamePushBase {
     super({
       gameId: "bh3",
       gameName: "崩坏3",
-      regPattern: bh3Reg
+      regPattern: bh3Reg,
+      priority: 100
     })
   }
 }

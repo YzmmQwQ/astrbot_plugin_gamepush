@@ -1,6 +1,6 @@
 import { cfg } from "#GamePush.components"
 import { plugin, redis, makeForwardMsg } from "#GamePush.lib"
-import { db, api } from "#GamePush.model"
+import { db, api, getRedisKeys } from "#GamePush.model"
 
 /**
  * 通用游戏应用基类
@@ -16,13 +16,12 @@ export class GamePushBase extends plugin {
    * @param {Array} options.extraRules - 额外的规则配置
    */
   constructor(options) {
-    const { gameId, gameName, regPattern, extraRules = [] } = options
-
+    const { gameId, gameName, regPattern, extraRules = [], priority = 100 } = options
     super({
       name: `[GamePush-Plugin]${gameName}功能`,
       dsc: `${gameName}版本更新及预下载推送`,
       event: "message",
-      priority: 100,
+      priority: priority,
       rule: [
         {
           reg: `^#*${regPattern}?版本监控$`,
@@ -100,7 +99,6 @@ export class GamePushBase extends plugin {
    * 当前版本查询方法
    */
   async currentVersion() {
-    const { getRedisKeys } = await import("#GamePush.model")
     const { main, pre } = getRedisKeys(this.gameId)
     const [mainVer, preVer] = await Promise.all([redis.get(main), redis.get(pre)])
 

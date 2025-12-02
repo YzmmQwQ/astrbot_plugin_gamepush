@@ -7,7 +7,8 @@ export class ysPush extends GamePushBase {
     super({
       gameId: "ys",
       gameName: "原神",
-      regPattern: ysReg
+      regPattern: ysReg,
+      priority: 99
     })
   }
 }

@@ -10,6 +10,7 @@ export class srPush extends GamePushBase {
       gameId: "sr",
       gameName: "星铁",
       regPattern: srReg,
+      priority: 100,
       extraRules: [
         {
           reg: `^#*${srReg}获取下载链接$`,
