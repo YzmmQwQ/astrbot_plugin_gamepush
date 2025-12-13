@@ -21,6 +21,10 @@ export function supportGuoba() {
             const gameName = getGameName(gameId)
             return [
               {
+                label: `${gameName}`,
+                component: "SOFT_GROUP_BEGIN"
+              },
+              {
                 label: `${gameName}配置`,
                 component: "Divider"
               },
