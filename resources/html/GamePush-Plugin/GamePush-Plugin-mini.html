@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{gameName}}更新通知</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" type="text/css" href="{{pluResPath}}html/GamePush-Plugin/GamePush-Plugin-mini.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="top-banner">
+        <img class="banner-icon" src="{{icon}}" alt="{{gameName}} icon" />
+        <div class="banner-text">
+          <h1 class="banner-title">{{gameName}}更新通知</h1>
+          <p class="banner-subtitle">{{ type === 'pre' ? '预下载资源已开放' : type === 'main'? '新版本已发布' : '预下载资源已关闭' }}</p>
+          <div class="banner-time">{{ type === 'pre' ? '开放时间: ' : type === 'main' ? '更新时间：': '关闭时间：' }}{{date}}</div>
+        </div>
+      </div>
+      
+      <div class="version-card version-tag" data-old-version="{{oldVersion}}" data-new-version="{{newVersion}}">
+        <span class="tag-label">版本更新：</span>
+        <div class="version-value"></div>
+      </div>
+
+      <div class="content-list">
+        <div class="content-card">
+          <div class="card-left">
+            <div class="card-title">📦 完整安装包大小</div>
+            <div class="card-label">包含中文语音资源包</div>
+          </div>
+          <div class="card-right">{{formattedTotalSize}}</div>
+        </div>
+        <div class="content-card">
+          <div class="card-left">
+            <div class="card-title">⚡ 增量更新包大小</div>
+            <div class="card-label">包含中文语音资源包</div>
+          </div>
+          <div class="card-right warning">{{incrementalSize}}</div>
+        </div>
+      </div>
+      
+      <div class="prompt-area">
+        <div class="update-prompt">{{ type === 'pre' ? '请提前下载游戏资源' : '请及时更新客户端以获取完整游戏体验' }}</div>
+      </div>
+
+      <div class="footer">
+        <div>Created by {{bot.name}} • <span class="plugin-name">{{plugin.name}} v{{plugin.version}}</span></div>
+      </div>
+    </div>
+
+    <script>
+      document.querySelectorAll(".version-card").forEach(card => {
+        const oldVersion = card.dataset.oldVersion?.trim()
+        const newVersion = card.dataset.newVersion?.trim()
+        const el = card.querySelector(".version-value")
+        
+        if (!el || !newVersion) return;
+
+        if (oldVersion) {
+          el.innerHTML = `
+            <span class="old-version">${oldVersion}</span>
+            <span class="arrow">→</span>
+            <span class="new-version">${newVersion}</span>
+          `
+        } else {
+          el.innerHTML = `<span class="new-version">${newVersion}</span>`
+        }
+      });
+    </script>
+  </body>
+</html>

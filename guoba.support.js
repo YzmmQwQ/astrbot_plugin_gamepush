@@ -101,12 +101,13 @@ export function supportGuoba() {
               {
                 field: `${gameId}.html`,
                 label: "html模板",
-                bottomHelpMessage: "1. 默认模板 2. 简约模板",
+                bottomHelpMessage: "1. 默认模板 2. 简约模板 3. mini模板",
                 component: "RadioGroup",
                 componentProps: {
                   options: [
                     { label: "默认html", value: "default" },
-                    { label: "简约", value: "Simple" }
+                    { label: "简约", value: "Simple" },
+                    { label: "mini", value: "mini" }
                   ],
                   placeholder: "请选择渲染的html模板"
                 }
