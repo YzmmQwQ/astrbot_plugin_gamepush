@@ -1,23 +1,21 @@
 import { GamePushBase } from "./base.js"
-import { download } from "#GamePush.model"
+import { GAME_CONFIG, download } from "#GamePush.model"
 import { makeForwardMsg } from "#GamePush.lib"
-
-const wwReg = "(~|～|鸣潮|ww|WW|mc)"
 
 export class wwPush extends GamePushBase {
   constructor() {
     super({
       gameId: "ww",
       gameName: "鸣潮",
-      regPattern: wwReg,
+      regPattern: GAME_CONFIG.ww.reg,
       priority: 100,
       extraRules: [
         {
-          reg: `^#*${wwReg}获取下载链接$`,
+          reg: `^#*${GAME_CONFIG.ww.reg}获取下载链接$`,
           fnc: "wwDownloadLinks"
         },
         {
-          reg: `^#*${wwReg}获取预下载链接$`,
+          reg: `^#*${GAME_CONFIG.ww.reg}获取预下载链接$`,
           fnc: "wwPreDownloadLinks"
         }
       ]

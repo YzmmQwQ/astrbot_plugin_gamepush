@@ -1,23 +1,21 @@
 import { GamePushBase } from "./base.js"
-import { download } from "#GamePush.model"
+import { GAME_CONFIG, download } from "#GamePush.model"
 import { makeForwardMsg } from "#GamePush.lib"
-
-const srReg = "(\\*|星铁|星轨|穹轨|星穹|崩铁|星穹铁道|崩坏星穹铁道|铁道)"
 
 export class srPush extends GamePushBase {
   constructor() {
     super({
       gameId: "sr",
       gameName: "星铁",
-      regPattern: srReg,
+      regPattern: GAME_CONFIG.sr.reg,
       priority: 100,
       extraRules: [
         {
-          reg: `^#*${srReg}获取下载链接$`,
+          reg: `^#*${GAME_CONFIG.sr.reg}获取下载链接$`,
           fnc: "srDownloadLinks"
         },
         {
-          reg: `^#*${srReg}获取预下载链接$`,
+          reg: `^#*${GAME_CONFIG.sr.reg}获取预下载链接$`,
           fnc: "srPreDownloadLinks"
         }
       ]

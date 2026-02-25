@@ -221,7 +221,7 @@ body::before {
   transition: all 0.3s ease;
 }
 
-.update-prompt-pre {
+.update-prompt-main {
   background: linear-gradient(90deg, rgba(255, 80, 80, 0.06), rgba(255, 80, 80, 0.03));
   color: #f06f6f;
   border: 1px solid rgba(240, 111, 111, 0.2);
@@ -229,7 +229,7 @@ body::before {
   backdrop-filter: blur(6px) saturate(1.03);
 }
 
-.update-prompt-main {
+.update-prompt-pre {
   background: linear-gradient(90deg, rgba(70, 201, 109, 0.08), rgba(70, 201, 109, 0.04));
   color: #00bfa5;
   border: 1px solid rgba(70, 201, 109, 0.25);
@@ -281,5 +281,3 @@ body::before {
     padding: 22px;
   }
 }
-
-/*# sourceMappingURL=GamePush-Plugin-Simple.css.map */

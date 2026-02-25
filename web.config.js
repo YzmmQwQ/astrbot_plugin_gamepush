@@ -96,11 +96,6 @@ export default defineConfig({
                     label: "简约模板",
                     description: "以简约的html模板渲染推送内容",
                     value: "Simple"
-                  }),
-                  components.radio.create("type-3", {
-                    label: "mini模板",
-                    description: "以mini的html模板渲染推送内容",
-                    value: "mini"
                   })
                 ],
                 description: "请选择渲染的html模板"
@@ -112,6 +107,7 @@ export default defineConfig({
     })
   },
   save: async (config) => {
+    console.log("收到配置保存请求:", config)
     const saveData = {}
 
     gameIds.forEach((gameId) => {
@@ -135,7 +131,9 @@ export default defineConfig({
       ]
     })
 
+    console.log("整理后的保存数据:", saveData)
     const result = await cfg.saveFromFrontend(saveData)
+    console.log("配置保存结果:", result)
 
     return {
       success: result.success,

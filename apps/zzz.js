@@ -1,5 +1,5 @@
 import { GamePushBase } from "./base.js"
-import { download } from "#GamePush.model"
+import { GAME_CONFIG, download } from "#GamePush.model"
 import { makeForwardMsg } from "#GamePush.lib"
 
 const zzzReg = "(%|％|绝区零|zzz|ZZZ|绝区)"
@@ -9,15 +9,15 @@ export class zzzPush extends GamePushBase {
     super({
       gameId: "zzz",
       gameName: "绝区零",
-      regPattern: zzzReg,
+      regPattern: GAME_CONFIG.zzz.reg,
       priority: 100,
       extraRules: [
         {
-          reg: `^#*${zzzReg}获取下载链接$`,
+          reg: `^#*${GAME_CONFIG.zzz.reg}获取下载链接$`,
           fnc: "zzzDownloadLinks"
         },
         {
-          reg: `^#*${zzzReg}获取预下载链接$`,
+          reg: `^#*${GAME_CONFIG.zzz.reg}获取预下载链接$`,
           fnc: "zzzPreDownloadLinks"
         }
       ]

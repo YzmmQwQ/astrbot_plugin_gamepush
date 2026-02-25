@@ -74,13 +74,13 @@ export function supportGuoba() {
                       }
                     },
                     {
-                      field: "groupId",
-                      label: "群号",
-                      component: "Input",
-                      required: true,
+                      field: "Group",
+                      helpMessage: "检测到UP更新后推送的群列表",
+                      label: "推送群",
                       componentProps: {
-                        placeholder: "请输入群号"
-                      }
+                        placeholder: "点击选择要推送的群"
+                      },
+                      component: "GSelectGroup"
                     }
                   ]
                 }
@@ -101,13 +101,12 @@ export function supportGuoba() {
               {
                 field: `${gameId}.html`,
                 label: "html模板",
-                bottomHelpMessage: "1. 默认模板 2. 简约模板 3. mini模板",
+                bottomHelpMessage: "1. 默认模板 2. 简约模板",
                 component: "RadioGroup",
                 componentProps: {
                   options: [
                     { label: "默认html", value: "default" },
-                    { label: "简约", value: "Simple" },
-                    { label: "mini", value: "mini" }
+                    { label: "简约", value: "Simple" }
                   ],
                   placeholder: "请选择渲染的html模板"
                 }
