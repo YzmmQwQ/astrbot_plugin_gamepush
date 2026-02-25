@@ -26,22 +26,6 @@ export default class base {
   }
 
   /**
-   * 获取游戏名称
-   * @param {string} game - 游戏ID
-   * @returns {string} 游戏名称
-   */
-  getGameName(game) {
-    const gameNames = {
-      sr: "星穹铁道",
-      ys: "原神",
-      zzz: "绝区零",
-      bh3: "崩坏3",
-      ww: "鸣潮"
-    }
-    return gameNames[game] || "未知游戏"
-  }
-
-  /**
    * @param {string} game - 游戏ID
    */
   async GameIcon(game) {
@@ -50,7 +34,7 @@ export default class base {
     const res = await request.get(getGameIcon(), {
       responseType: "json",
       log: true,
-      gameName: this.getGameName(game)
+      gameName: GAME_CONFIG[game]?.name || "未知游戏"
     })
     const { id, biz } = GAME_CONFIG[game]
     return res.data.games.find((g) => g.id === id || g.biz === biz)?.display?.icon?.url || ""
@@ -121,7 +105,7 @@ export default class base {
     return {
       ...other,
       ...basic,
-      gameName: this.getGameName(game),
+      gameName: GAME_CONFIG[game]?.name || "未知游戏",
       icon: iconUrl
     }
   }

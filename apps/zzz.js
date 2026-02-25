@@ -8,7 +8,7 @@ export class zzzPush extends GamePushBase {
   constructor() {
     super({
       gameId: "zzz",
-      gameName: "绝区零",
+      gameName: GAME_CONFIG.zzz.name,
       regPattern: GAME_CONFIG.zzz.reg,
       priority: 100,
       extraRules: [

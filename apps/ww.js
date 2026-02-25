@@ -6,7 +6,7 @@ export class wwPush extends GamePushBase {
   constructor() {
     super({
       gameId: "ww",
-      gameName: "鸣潮",
+      gameName: GAME_CONFIG.ww.name,
       regPattern: GAME_CONFIG.ww.reg,
       priority: 100,
       extraRules: [

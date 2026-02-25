@@ -6,7 +6,7 @@ export class srPush extends GamePushBase {
   constructor() {
     super({
       gameId: "sr",
-      gameName: "星铁",
+      gameName: GAME_CONFIG.sr.name,
       regPattern: GAME_CONFIG.sr.reg,
       priority: 100,
       extraRules: [

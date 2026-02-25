@@ -4,7 +4,7 @@ export class ysPush extends GamePushBase {
   constructor() {
     super({
       gameId: "ys",
-      gameName: "原神",
+      gameName: GAME_CONFIG.ys.name,
       regPattern: GAME_CONFIG.ys.reg,
       priority: 99
     })

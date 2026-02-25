@@ -7,7 +7,8 @@ import {
   download,
   getGameChuckAPI,
   getPatchBuildAPI,
-  getBuildAPI
+  getBuildAPI,
+  getGameName
 } from "#GamePush.model"
 
 class Notifier extends base {
@@ -56,7 +57,7 @@ class Notifier extends base {
       }
 
       const gameConfig = cfg.getGameConfig(game)
-      const gameName = this.getGameName(game)
+      const gameName = getGameName(game)
       const { formattedTotalSize, incrementalSize, Ver } = await this.fetchSizeInfo(
         game,
         type,
@@ -100,10 +101,7 @@ class Notifier extends base {
         await this.sendTextMessage(type, game, gameConfig, templateData, pushChangeType)
       }
     } catch (err) {
-      logger.error(
-        `[${pluginName}][${this.getGameName(game)}通知] 推送通知失败: ${err.message}`,
-        err
-      )
+      logger.error(`[${pluginName}][${getGameName(game)}通知] 推送通知失败: ${err.message}`, err)
     }
   }
 
