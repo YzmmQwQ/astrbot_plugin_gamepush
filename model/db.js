@@ -108,7 +108,8 @@ class GamePushDB {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
       game: { type: DataTypes.STRING, allowNull: false },
       version: { type: DataTypes.STRING, allowNull: false },
-      size: { type: DataTypes.STRING, allowNull: false }
+      size: { type: DataTypes.STRING, allowNull: false },
+      time: { type: DataTypes.DATE, allowNull: false }
     })
 
     this.PreModel = this.defineModel("pre", {
@@ -116,7 +117,8 @@ class GamePushDB {
       game: { type: DataTypes.STRING, allowNull: false },
       ver: { type: DataTypes.STRING, allowNull: false },
       oldver: { type: DataTypes.STRING, allowNull: false },
-      size: { type: DataTypes.STRING, allowNull: false }
+      size: { type: DataTypes.STRING, allowNull: false },
+      time: { type: DataTypes.DATE, allowNull: false }
     })
   }
 
@@ -143,7 +145,7 @@ class GamePushDB {
     await this.ensureInitialized()
     const [record, created] = await this.MainModel.findOrCreate({
       where: { game, version },
-      defaults: { size }
+      defaults: { size, time: new Date() }
     })
     if (created) logger.debug(`[${pluginName}] 💾 main 表新增: ${game}-${version} | ${size}`)
     return created
@@ -153,7 +155,7 @@ class GamePushDB {
     await this.ensureInitialized()
     const [record, created] = await this.PreModel.findOrCreate({
       where: { game, ver, oldver },
-      defaults: { size }
+      defaults: { size, time: new Date() }
     })
     if (created)
       logger.debug(`[${pluginName}] 💾 pre 表新增: ${game}-${ver} | old: ${oldver} | ${size}`)
