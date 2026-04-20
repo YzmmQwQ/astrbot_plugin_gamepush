@@ -109,7 +109,7 @@ class GamePushDB {
       game: { type: DataTypes.STRING, allowNull: false },
       version: { type: DataTypes.STRING, allowNull: false },
       size: { type: DataTypes.STRING, allowNull: false },
-      time: { type: DataTypes.DATE, allowNull: false }
+      time: { type: DataTypes.DATE, allowNull: true }
     })
 
     this.PreModel = this.defineModel("pre", {
@@ -118,7 +118,7 @@ class GamePushDB {
       ver: { type: DataTypes.STRING, allowNull: false },
       oldver: { type: DataTypes.STRING, allowNull: false },
       size: { type: DataTypes.STRING, allowNull: false },
-      time: { type: DataTypes.DATE, allowNull: false }
+      time: { type: DataTypes.DATE, allowNull: true }
     })
   }
 
@@ -137,7 +137,7 @@ class GamePushDB {
     logger.debug(`[${pluginName}] 📊 数据库连接成功: ${this.DB_PATH}`)
 
     this.initializeModels()
-    await this.sequelize.sync()
+    await this.sequelize.sync({ alter: true })
     logger.debug(`[${pluginName}] ✅ 数据库模型同步完成`)
   }
 
