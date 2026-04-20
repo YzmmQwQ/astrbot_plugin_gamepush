@@ -109,7 +109,7 @@ class GamePushDB {
       game: { type: DataTypes.STRING, allowNull: false },
       version: { type: DataTypes.STRING, allowNull: false },
       size: { type: DataTypes.STRING, allowNull: false },
-      time: { type: DataTypes.DATE, allowNull: true }
+      time: { type: DataTypes.TEXT, allowNull: true }
     })
 
     this.PreModel = this.defineModel("pre", {
@@ -118,7 +118,7 @@ class GamePushDB {
       ver: { type: DataTypes.STRING, allowNull: false },
       oldver: { type: DataTypes.STRING, allowNull: false },
       size: { type: DataTypes.STRING, allowNull: false },
-      time: { type: DataTypes.DATE, allowNull: true }
+      time: { type: DataTypes.TEXT, allowNull: true }
     })
   }
 
@@ -143,9 +143,18 @@ class GamePushDB {
 
   async storeMainSizeData(game, version, size) {
     await this.ensureInitialized()
+    const Time = new Date().toLocaleString("zh-CN", {
+      timeZone: "Asia/Shanghai",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    })
     const [record, created] = await this.MainModel.findOrCreate({
       where: { game, version },
-      defaults: { size, time: new Date() }
+      defaults: { size, time: Time }
     })
     if (created) logger.debug(`[${pluginName}] 💾 main 表新增: ${game}-${version} | ${size}`)
     return created
@@ -153,9 +162,18 @@ class GamePushDB {
 
   async storePreSizeData(game, ver, oldver, size) {
     await this.ensureInitialized()
+    const Time = new Date().toLocaleString("zh-CN", {
+      timeZone: "Asia/Shanghai",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    })
     const [record, created] = await this.PreModel.findOrCreate({
       where: { game, ver, oldver },
-      defaults: { size, time: new Date() }
+      defaults: { size, time: Time }
     })
     if (created)
       logger.debug(`[${pluginName}] 💾 pre 表新增: ${game}-${ver} | old: ${oldver} | ${size}`)
