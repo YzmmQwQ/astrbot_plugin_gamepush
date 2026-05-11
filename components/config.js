@@ -54,8 +54,13 @@ class Config {
     return list
       .map((item) => {
         if (typeof item === "string") {
-          const [botId, groupId] = item.split(":")
-          return botId && groupId ? { botId, groupId } : null
+          const colonIndex = item.indexOf(":")
+          if (colonIndex > 0) {
+            const botId = item.slice(0, colonIndex)
+            const groupId = item.slice(colonIndex + 1)
+            return botId && groupId ? { botId, groupId } : null
+          }
+          return null
         }
         return item && typeof item === "object" ? item : null
       })
@@ -64,7 +69,7 @@ class Config {
 
   /** 序列化 pushGroups（保存时用） */
   static serializePushGroups(list = []) {
-    return list.map((item) => (typeof item === "string" ? item : `${item.botId}:${item.groupId}`))
+    return list.map((item) => `${item.botId}:${item.groupId}`)
   }
 
   /** 加载配置 */
