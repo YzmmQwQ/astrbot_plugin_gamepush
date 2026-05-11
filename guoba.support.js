@@ -1,4 +1,4 @@
-import { cfg } from "#GamePush.components"
+﻿import { cfg } from "#GamePush.components"
 import { gameIds, getGameName } from "#GamePush.model"
 
 export function supportGuoba() {
@@ -74,7 +74,7 @@ export function supportGuoba() {
                       }
                     },
                     {
-                      field: "Group",
+                      field: "groupId",
                       helpMessage: "检测到UP更新后推送的群列表",
                       label: "推送群",
                       componentProps: {
