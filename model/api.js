@@ -45,17 +45,21 @@ class ApiTools extends base {
       throw new Error(`[${pluginName}] 无效的游戏标识: ${game}`)
     }
     try {
-      const apiUrl = this.gameApis.get(game)
-      const data = await request.get(apiUrl, {
-        responseType: "json",
-        log: true,
-        gameName: getGameName(game)
-      })
-
-      if (game === "ww") {
-        await this.processWWData(data, game, auto)
+      if (game === "zmd") {
+        await this.processHypergryphData(game, auto)
       } else {
-        await this.processMHYData(data, game, auto)
+        const apiUrl = this.gameApis.get(game)
+        const data = await request.get(apiUrl, {
+          responseType: "json",
+          log: true,
+          gameName: getGameName(game)
+        })
+
+        if (game === "ww") {
+          await this.processWWData(data, game, auto)
+        } else {
+          await this.processMHYData(data, game, auto)
+        }
       }
     } catch (err) {
       logger.error(`[${pluginName}][${getGameName(game)}版本监控] 错误`, err)
@@ -90,6 +94,113 @@ class ApiTools extends base {
     await this.processMainVersion(game, gameCheckData.main?.tag, auto)
 
     await this.processPreDownload(game, gameCheckData.pre_download, auto)
+  }
+
+  /**
+   * 处理鹰角游戏数据
+   * @param {string} game - 游戏ID
+   * @param {boolean} auto - 是否自动检查
+   */
+  async processHypergryphData(game, auto) {
+    const url = "https://launcher.hypergryph.com/api/proxy/batch_proxy"
+    const headers = {
+      Host: "launcher.hypergryph.com",
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "x-hg-launcher-device-id": "83a5d5ca-7f0e-4277-ba71-c9e66dafd7e4",
+      "x-hg-user-token": "",
+      Connection: "Keep-Alive",
+      "Accept-Language": "zh-CN,en,*",
+      "User-Agent": "Mozilla/5.0",
+      "Accept-Encoding": "gzip, deflate"
+    }
+
+    const makeBody = (version) => ({
+      proxy_reqs: [
+        {
+          kind: "get_latest_game",
+          get_latest_game_req: {
+            appcode: "6LL0KJuqHBVz33WK",
+            channel: "1",
+            sub_channel: "1",
+            version: version,
+            launcher_appcode: "abYeZZ16BPluCFyT",
+            launcher_sub_channel: "1",
+            disk_type: 0,
+            patch_encrypt: true
+          }
+        }
+      ]
+    })
+
+    // 第一步：空版本请求获取当前版本
+    const emptyRes = await request.post(url, makeBody(""), {
+      headers,
+      responseType: "json",
+      log: true,
+      gameName: getGameName(game),
+      retry: 3,
+      retryDelay: 1000
+    })
+
+    if (!emptyRes?.proxy_rsps?.[0]?.get_latest_game_rsp) {
+      throw new Error(`[${pluginName}] ${getGameName(game)}版本数据获取失败`)
+    }
+
+    const currentVersion = emptyRes.proxy_rsps[0].get_latest_game_rsp.version
+    if (!currentVersion) throw new Error(`[${pluginName}] ${getGameName(game)}未获取到版本号`)
+
+    // 第二步：带版本请求获取预下载数据
+    const versionRes = await request.post(url, makeBody(currentVersion), {
+      headers,
+      responseType: "json",
+      log: true,
+      gameName: getGameName(game),
+      retry: 3,
+      retryDelay: 1000
+    })
+
+    const gameRsp = versionRes?.proxy_rsps?.[0]?.get_latest_game_rsp
+    if (!gameRsp) throw new Error(`[${pluginName}] ${getGameName(game)}预下载数据获取失败`)
+
+    // 处理主版本
+    await this.processMainVersion(game, currentVersion, auto)
+
+    // 处理预下载数据（pre_patch）
+    await this.processHypergryphPreDownload(game, gameRsp.pre_patch, currentVersion, auto)
+  }
+
+  /**
+   * 处理鹰角预下载信息
+   * @param {string} game - 游戏ID
+   * @param {Object} prePatch - 预下载补丁数据
+   * @param {string} currentVersion - 当前版本
+   */
+  async processHypergryphPreDownload(game, prePatch, currentVersion, auto) {
+    const { pre: preKey } = getRedisKeys(game)
+    const storedPre = await redis.get(preKey)
+
+    if (prePatch?.version) {
+      const preVersion = prePatch.version
+      if (preVersion !== storedPre) {
+        await redis.set(preKey, preVersion)
+        notice.pushNotify({
+          type: "pre",
+          game,
+          newVersion: preVersion,
+          oldVersion: storedPre,
+          pushChangeType: cfg.getGameConfig(game).pushChangeType
+        })
+      }
+    } else if (storedPre) {
+      await redis.del(preKey)
+      notice.pushNotify({
+        type: "pre-remove",
+        game,
+        oldVersion: storedPre,
+        pushChangeType: cfg.getGameConfig(game).pushChangeType
+      })
+    }
   }
 
   /**

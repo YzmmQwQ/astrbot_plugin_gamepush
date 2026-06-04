@@ -35,9 +35,13 @@ class Download {
    * @returns {Promise<Object>} 下载数据
    */
   async fetchDownloadData(game, type) {
-    const apiUrl = getGameAPI(game)
-
     try {
+      // 鹰角游戏必须使用 POST，不经过 GET 请求
+      if (game === "zmd") {
+        return this.handleHypergryphData(type)
+      }
+
+      const apiUrl = getGameAPI(game)
       const data = await request.get(apiUrl, {
         responseType: "json",
         log: true,
@@ -138,6 +142,117 @@ class Download {
       return {
         data: mainData,
         patch: mainPatch,
+        type
+      }
+    }
+  }
+
+  /**
+   * 处理鹰角游戏数据
+   * @param {string} type - 下载类型
+   * @returns {Promise<Object>} 处理后的下载数据
+   */
+  async handleHypergryphData(type) {
+    const url = "https://launcher.hypergryph.com/api/proxy/batch_proxy"
+    const headers = {
+      Host: "launcher.hypergryph.com",
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "x-hg-launcher-device-id": "83a5d5ca-7f0e-4277-ba71-c9e66dafd7e4",
+      "x-hg-user-token": "",
+      Connection: "Keep-Alive",
+      "Accept-Language": "zh-CN,en,*",
+      "User-Agent": "Mozilla/5.0",
+      "Accept-Encoding": "gzip, deflate"
+    }
+
+    const makeBody = (version) => ({
+      proxy_reqs: [
+        {
+          kind: "get_latest_game",
+          get_latest_game_req: {
+            appcode: "6LL0KJuqHBVz33WK",
+            channel: "1",
+            sub_channel: "1",
+            version: version,
+            launcher_appcode: "abYeZZ16BPluCFyT",
+            launcher_sub_channel: "1",
+            disk_type: 0,
+            patch_encrypt: true
+          }
+        }
+      ]
+    })
+
+    // 第一步：空版本请求获取当前版本和完整包数据
+    const emptyRes = await request.post(url, makeBody(""), {
+      headers,
+      responseType: "json",
+      log: true,
+      gameName: getGameName("zmd"),
+      retry: 3,
+      retryDelay: 1000
+    })
+
+    if (!emptyRes?.proxy_rsps?.[0]?.get_latest_game_rsp) {
+      return { data: null, patch: { game_pkgs: [], audio_pkgs: [] }, type }
+    }
+
+    const gameRsp = emptyRes.proxy_rsps[0].get_latest_game_rsp
+    const currentVersion = gameRsp.version
+
+    if (type === "pre") {
+      // 预下载：带版本请求获取 pre_patch 数据
+      const versionRes = await request.post(url, makeBody(currentVersion), {
+        headers,
+        responseType: "json",
+        log: true,
+        gameName: getGameName("zmd"),
+        retry: 3,
+        retryDelay: 1000
+      })
+
+      const prePatch = versionRes?.proxy_rsps?.[0]?.get_latest_game_rsp?.pre_patch
+      if (!prePatch?.patches?.length) {
+        return { data: null, patch: { game_pkgs: [], audio_pkgs: [] }, type }
+      }
+
+      const patchPkgs = prePatch.patches.map((p) => ({
+        url: p.url,
+        md5: p.md5 || "",
+        size: p.package_size || 0,
+        version: prePatch.version
+      }))
+
+      return {
+        data: {
+          version: prePatch.version,
+          game_pkgs: []
+        },
+        patch: { game_pkgs: patchPkgs, audio_pkgs: [] },
+        type
+      }
+    } else {
+      // 正式版：从 pkg.packs 获取完整包
+      const pkg = gameRsp.pkg || {}
+      const packs = pkg.packs || []
+
+      if (!packs.length) {
+        return { data: null, patch: { game_pkgs: [], audio_pkgs: [] }, type }
+      }
+
+      const gamePkgs = packs.map((p) => ({
+        url: p.url,
+        md5: p.md5 || "",
+        size: p.package_size || 0
+      }))
+
+      return {
+        data: {
+          version: currentVersion,
+          game_pkgs: gamePkgs
+        },
+        patch: { game_pkgs: [], audio_pkgs: [] },
         type
       }
     }
