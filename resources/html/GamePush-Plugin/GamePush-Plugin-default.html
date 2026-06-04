@@ -46,11 +46,13 @@
             </div>
           </div>
 
+          {{ if gameName !== '终末地'}}
           <div class="info-card fullsize-card">
             <div class="card-title"><span class="emoji-text">📦</span> 完整大小</div>
             <div class="size-value">{{formattedTotalSize}}</div>
             <div class="size-label">含中文语音资源包</div>
           </div>
+          {{ /if }}
 
           {{ if incrementalSize }}
           <div class="info-card incr-card">

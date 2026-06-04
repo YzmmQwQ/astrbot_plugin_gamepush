@@ -31,6 +31,7 @@ export default class base {
   async GameIcon(game) {
     if (game === "ww")
       return "https://cn.bing.com/th?id=OSK.d2e8b2efa5867fba330b354d0472f5e5&w=120&h=120&qlt=120&c=6&rs=1&cdv=1&pid=RS"
+    if (game === "zmd") return "https://bbs.hycdn.cn/asset/endfield.png"
     const res = await request.get(getGameIcon(), {
       responseType: "json",
       log: true,

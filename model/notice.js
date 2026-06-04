@@ -8,8 +8,10 @@ import {
   getGameChuckAPI,
   getPatchBuildAPI,
   getBuildAPI,
-  getGameName
+  getGameName,
+  getRedisKeys
 } from "#GamePush.model"
+import { redis } from "#GamePush.lib"
 
 class Notifier extends base {
   TemplateMap = {
@@ -29,7 +31,9 @@ class Notifier extends base {
       [
         `🎁${gameName}预下载资源已开放`,
         `📦新版本：${newVersion}`,
-        formattedTotalSize && `📦 完整大小（含中文语音）：${formattedTotalSize}`,
+        gameName !== "终末地" &&
+          formattedTotalSize &&
+          `📦 完整大小（含中文语音）：${formattedTotalSize}`,
         incrementalSize && `🔄 增量更新大小：约${incrementalSize}`,
         "📥请提前下载游戏资源",
         ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
@@ -68,7 +72,9 @@ class Notifier extends base {
           await (await db).storeMainSizeData(game, newVersion, formattedTotalSize)
           break
         case "pre":
-          await (await db).storePreSizeData(game, newVersion, Ver, incrementalSize)
+          if (Ver) {
+            await (await db).storePreSizeData(game, newVersion, Ver, incrementalSize)
+          }
           break
         case "pre-remove":
           logger.debug(`⛔ 预下载关闭通知，不存储大小数据`)
@@ -116,6 +122,23 @@ class Notifier extends base {
     let formattedTotalSize, incrementalSize, Ver
     let buildSize = 0
     let patchSize = 0
+
+    // 鹰角游戏必须使用 POST 请求
+    if (game === "zmd") {
+      const { data, patch } = await download.getDownloadData(game, type)
+      if (data?.game_pkgs?.length) {
+        const totalSize = data.game_pkgs.reduce((sum, pkg) => sum + Number(pkg.size || 0), 0)
+        formattedTotalSize = api.formatSize(totalSize)
+      }
+      if (patch?.game_pkgs?.length) {
+        const patchTotal = patch.game_pkgs.reduce((sum, pkg) => sum + Number(pkg.size || 0), 0)
+        incrementalSize = api.formatSize(patchTotal)
+        // Ver 为预下载补丁的源版本（当前已安装版本），从 Redis 主版本读取
+        const mainKey = getRedisKeys(game).main
+        Ver = (await redis.get(mainKey)) || ""
+      }
+      return { formattedTotalSize, incrementalSize, Ver }
+    }
 
     const BranchesData = await request.get(getGameChuckAPI(game), {
       responseType: "json",

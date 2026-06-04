@@ -51,7 +51,7 @@ export const GAME_CONFIG = {
   zmd: {
     name: "终末地",
     redisPrefix: "zmd",
-    reg: "(:|：zmd|终末地)"
+    reg: "(:|：|zmd|终末地)"
   }
 }
 

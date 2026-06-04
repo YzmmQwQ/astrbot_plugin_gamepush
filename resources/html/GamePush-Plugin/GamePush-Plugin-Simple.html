@@ -24,11 +24,13 @@
 					<div class="card-title"><span class="emoji-text">🛠️</span> 新版本</div>
 					<div class="version-value"></div>
 				</div>
+				{{ if gameName !== '终末地'}}
 				<div class="card">
 					<div class="card-title"><span class="emoji-text">📦</span> 完整大小</div>
 					<div class="card-size">{{formattedTotalSize}}</div>
 					<div class="card-label">含中文语音资源包</div>
 				</div>
+				{{ /if }}
 				<div class="card">
 					<div class="card-title"><span class="emoji-text">⚡</span> 增量更新</div>
 					<div class="card-size warning">{{incrementalSize}}</div>
@@ -40,7 +42,7 @@
 		<footer class="footer">
 			<div class="creator-info"> Created by <strong>{{bot.name}}</strong> &nbsp;•&nbsp; <span class="plugin">{{plugin.name}} <span class="version">v{{plugin.version}}</span> </span>
 			</div>
-			<div class="date-info">2025/10/13</div>
+			<div class="date-info">{{date}}</div>
 		</footer>
 	</div>
 	<script>
