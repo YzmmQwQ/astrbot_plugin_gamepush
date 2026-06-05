@@ -133,7 +133,7 @@ class ApiTools extends base {
       ]
     })
 
-    // 第一步：空版本请求获取当前版本
+    // 第一步：空版本请求获取最新版本号
     const emptyRes = await request.post(url, makeBody(""), {
       headers,
       responseType: "json",
@@ -147,11 +147,14 @@ class ApiTools extends base {
       throw new Error(`[${pluginName}] ${getGameName(game)}版本数据获取失败`)
     }
 
-    const currentVersion = emptyRes.proxy_rsps[0].get_latest_game_rsp.version
-    if (!currentVersion) throw new Error(`[${pluginName}] ${getGameName(game)}未获取到版本号`)
+    const latestVersion = emptyRes.proxy_rsps[0].get_latest_game_rsp.version
+    if (!latestVersion) throw new Error(`[${pluginName}] ${getGameName(game)}未获取到版本号`)
 
-    // 第二步：带版本请求获取预下载数据
-    const versionRes = await request.post(url, makeBody(currentVersion), {
+    // 第二步：用本地旧版本请求，获取 patch 差分增量包 + pkg 完整包
+    const { main: redisKey } = getRedisKeys(game)
+    const oldVer = (await redis.get(redisKey)) || ""
+
+    const versionRes = await request.post(url, makeBody(oldVer), {
       headers,
       responseType: "json",
       log: true,
@@ -161,13 +164,13 @@ class ApiTools extends base {
     })
 
     const gameRsp = versionRes?.proxy_rsps?.[0]?.get_latest_game_rsp
-    if (!gameRsp) throw new Error(`[${pluginName}] ${getGameName(game)}预下载数据获取失败`)
+    if (!gameRsp) throw new Error(`[${pluginName}] ${getGameName(game)}版本数据解析失败`)
 
     // 处理主版本
-    await this.processMainVersion(game, currentVersion, auto)
+    await this.processMainVersion(game, latestVersion, auto)
 
     // 处理预下载数据（pre_patch）
-    await this.processHypergryphPreDownload(game, gameRsp.pre_patch, currentVersion, auto)
+    await this.processHypergryphPreDownload(game, gameRsp.pre_patch, latestVersion, auto)
   }
 
   /**

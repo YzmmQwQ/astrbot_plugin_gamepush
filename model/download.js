@@ -1,5 +1,6 @@
 import { request, pluginName } from "#GamePush.components"
-import { api, getGameAPI, getGameName, versionComparator } from "#GamePush.model"
+import { api, getGameAPI, getGameName, getRedisKeys, versionComparator } from "#GamePush.model"
+import { redis } from "#GamePush.lib"
 
 class Download {
   cache = new Map()
@@ -184,7 +185,7 @@ class Download {
       ]
     })
 
-    // 第一步：空版本请求获取当前版本和完整包数据
+    // 第一步：空版本请求获取最新版本号
     const emptyRes = await request.post(url, makeBody(""), {
       headers,
       responseType: "json",
@@ -198,12 +199,11 @@ class Download {
       return { data: null, patch: { game_pkgs: [], audio_pkgs: [] }, type }
     }
 
-    const gameRsp = emptyRes.proxy_rsps[0].get_latest_game_rsp
-    const currentVersion = gameRsp.version
+    const latestVersion = emptyRes.proxy_rsps[0].get_latest_game_rsp.version
 
     if (type === "pre") {
-      // 预下载：带版本请求获取 pre_patch 数据
-      const versionRes = await request.post(url, makeBody(currentVersion), {
+      // 预下载：用最新版本号请求获取 pre_patch 数据
+      const versionRes = await request.post(url, makeBody(latestVersion), {
         headers,
         responseType: "json",
         log: true,
@@ -233,26 +233,48 @@ class Download {
         type
       }
     } else {
-      // 正式版：从 pkg.packs 获取完整包
-      const pkg = gameRsp.pkg || {}
-      const packs = pkg.packs || []
+      // 正式版：用本地旧版本请求，获取 patch 差分增量包 + pkg 完整包
+      const mainKey = getRedisKeys("zmd").main
+      const oldVer = (await redis.get(mainKey)) || ""
 
-      if (!packs.length) {
+      const versionRes = await request.post(url, makeBody(oldVer), {
+        headers,
+        responseType: "json",
+        log: true,
+        gameName: getGameName("zmd"),
+        retry: 3,
+        retryDelay: 1000
+      })
+
+      const gameRsp = versionRes?.proxy_rsps?.[0]?.get_latest_game_rsp
+      if (!gameRsp) {
         return { data: null, patch: { game_pkgs: [], audio_pkgs: [] }, type }
       }
 
+      // 完整包数据
+      const pkg = gameRsp.pkg || {}
+      const packs = pkg.packs || []
       const gamePkgs = packs.map((p) => ({
         url: p.url,
         md5: p.md5 || "",
         size: p.package_size || 0
       }))
 
+      // 差分增量包数据（从旧版本到最新版本）
+      const patchData = gameRsp.patch || {}
+      const patchPkgs = (patchData.patches || []).map((p) => ({
+        url: p.url,
+        md5: p.md5 || "",
+        size: p.package_size || 0,
+        version: latestVersion
+      }))
+
       return {
         data: {
-          version: currentVersion,
+          version: latestVersion,
           game_pkgs: gamePkgs
         },
-        patch: { game_pkgs: [], audio_pkgs: [] },
+        patch: { game_pkgs: patchPkgs, audio_pkgs: [] },
         type
       }
     }

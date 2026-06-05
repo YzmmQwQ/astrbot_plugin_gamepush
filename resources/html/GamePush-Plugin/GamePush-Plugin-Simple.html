@@ -31,11 +31,13 @@
 					<div class="card-label">含中文语音资源包</div>
 				</div>
 				{{ /if }}
-				<div class="card">
-					<div class="card-title"><span class="emoji-text">⚡</span> 增量更新</div>
-					<div class="card-size warning">{{incrementalSize}}</div>
-					<div class="card-label">含中文语音资源包</div>
-				</div>
+			{{ if incrementalSize && !(gameName === '终末地' && type === 'pre') }}
+			<div class="card">
+				<div class="card-title"><span class="emoji-text">⚡</span> 增量更新</div>
+				<div class="card-size warning">{{incrementalSize}}</div>
+				<div class="card-label">含中文语音资源包</div>
+			</div>
+			{{ /if }}
 			</div>
 			<div class="update-prompt update-prompt-{{ type === 'pre' ? 'pre' : 'main' }}">{{ type === 'pre' ? '请提前下载游戏资源' : '请及时更新客户端以获取完整游戏体验' }}</div>
 		</main>
