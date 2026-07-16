@@ -126,17 +126,26 @@ class Notifier extends base {
     // 鹰角游戏必须使用 POST 请求
     if (game === "zmd") {
       const { data, patch } = await download.getDownloadData(game, type)
-      if (data?.game_pkgs?.length) {
+      if (data?.total_size) {
+        formattedTotalSize = api.formatSize(Number(data.total_size))
+      } else if (data?.game_pkgs?.length) {
         const totalSize = data.game_pkgs.reduce((sum, pkg) => sum + Number(pkg.size || 0), 0)
         formattedTotalSize = api.formatSize(totalSize)
+      } else {
+        logger.debug(`[${pluginName}][${gameName}] 未获取到完整包大小`)
       }
-      if (patch?.game_pkgs?.length) {
+
+      if (patch?.total_size) {
+        incrementalSize = api.formatSize(Number(patch.total_size))
+      } else if (patch?.game_pkgs?.length) {
         const patchTotal = patch.game_pkgs.reduce((sum, pkg) => sum + Number(pkg.size || 0), 0)
         incrementalSize = api.formatSize(patchTotal)
-        // Ver 为预下载补丁的源版本（当前已安装版本），从 Redis 主版本读取
-        const mainKey = getRedisKeys(game).main
-        Ver = (await redis.get(mainKey)) || ""
+      } else {
+        logger.debug(`[${pluginName}][${gameName}] 未获取到增量包大小`)
       }
+
+      const mainKey = getRedisKeys(game).main
+      Ver = (await redis.get(mainKey)) || ""
       return { formattedTotalSize, incrementalSize, Ver }
     }
 

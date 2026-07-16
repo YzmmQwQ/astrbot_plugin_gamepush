@@ -218,14 +218,14 @@ class ApiTools extends base {
     const stored = (await redis.get(redisKey)) || "0.0.0"
 
     if (versionComparator.compare(currentVersion, stored) > 0) {
-      await redis.set(redisKey, currentVersion)
-      notice.pushNotify({
+      await notice.pushNotify({
         type: "main",
         game,
         newVersion: currentVersion,
         oldVersion: stored,
         pushChangeType: cfg.getGameConfig(game).pushChangeType
       })
+      await redis.set(redisKey, currentVersion)
     }
   }
 

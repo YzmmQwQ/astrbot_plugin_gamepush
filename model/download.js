@@ -212,7 +212,8 @@ class Download {
         retryDelay: 1000
       })
 
-      const prePatch = versionRes?.proxy_rsps?.[0]?.get_latest_game_rsp?.pre_patch
+      const gameRsp = versionRes?.proxy_rsps?.[0]?.get_latest_game_rsp
+      const prePatch = gameRsp?.pre_patch
       if (!prePatch?.patches?.length) {
         return { data: null, patch: { game_pkgs: [], audio_pkgs: [] }, type }
       }
@@ -224,12 +225,21 @@ class Download {
         version: prePatch.version
       }))
 
+      const pkg = gameRsp?.pkg || {}
+      const packs = pkg.packs || []
+      const gamePkgs = packs.map((p) => ({
+        url: p.url,
+        md5: p.md5 || "",
+        size: p.package_size || 0
+      }))
+
       return {
         data: {
           version: prePatch.version,
-          game_pkgs: []
+          game_pkgs: gamePkgs,
+          total_size: pkg.total_size
         },
-        patch: { game_pkgs: patchPkgs, audio_pkgs: [] },
+        patch: { game_pkgs: patchPkgs, audio_pkgs: [], total_size: prePatch.total_size },
         type
       }
     } else {
@@ -272,9 +282,10 @@ class Download {
       return {
         data: {
           version: latestVersion,
-          game_pkgs: gamePkgs
+          game_pkgs: gamePkgs,
+          total_size: pkg.total_size
         },
-        patch: { game_pkgs: patchPkgs, audio_pkgs: [] },
+        patch: { game_pkgs: patchPkgs, audio_pkgs: [], total_size: patchData.total_size },
         type
       }
     }

@@ -108,7 +108,7 @@ class GamePushDB {
       id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
       game: { type: DataTypes.STRING, allowNull: false },
       version: { type: DataTypes.STRING, allowNull: false },
-      size: { type: DataTypes.STRING, allowNull: false },
+      size: { type: DataTypes.STRING, allowNull: true },
       time: { type: DataTypes.TEXT, allowNull: true }
     })
 
@@ -117,7 +117,7 @@ class GamePushDB {
       game: { type: DataTypes.STRING, allowNull: false },
       ver: { type: DataTypes.STRING, allowNull: false },
       oldver: { type: DataTypes.STRING, allowNull: false },
-      size: { type: DataTypes.STRING, allowNull: false },
+      size: { type: DataTypes.STRING, allowNull: true },
       time: { type: DataTypes.TEXT, allowNull: true }
     })
   }
