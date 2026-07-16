@@ -224,6 +224,10 @@ class Download {
         size: p.package_size || 0,
         version: prePatch.version
       }))
+      const patchTotalSize = prePatch.patches.reduce(
+        (sum, p) => sum + Number(p.package_size || 0),
+        0
+      )
 
       const pkg = gameRsp?.pkg || {}
       const packs = pkg.packs || []
@@ -232,14 +236,15 @@ class Download {
         md5: p.md5 || "",
         size: p.package_size || 0
       }))
+      const pkgTotalSize = packs.reduce((sum, p) => sum + Number(p.package_size || 0), 0)
 
       return {
         data: {
           version: prePatch.version,
           game_pkgs: gamePkgs,
-          total_size: pkg.total_size
+          total_size: pkgTotalSize
         },
-        patch: { game_pkgs: patchPkgs, audio_pkgs: [], total_size: prePatch.total_size },
+        patch: { game_pkgs: patchPkgs, audio_pkgs: [], total_size: patchTotalSize },
         type
       }
     } else {
@@ -269,6 +274,7 @@ class Download {
         md5: p.md5 || "",
         size: p.package_size || 0
       }))
+      const pkgTotalSize = packs.reduce((sum, p) => sum + Number(p.package_size || 0), 0)
 
       // 差分增量包数据（从旧版本到最新版本）
       const patchData = gameRsp.patch || {}
@@ -278,14 +284,18 @@ class Download {
         size: p.package_size || 0,
         version: latestVersion
       }))
+      const patchTotalSize = (patchData.patches || []).reduce(
+        (sum, p) => sum + Number(p.package_size || 0),
+        0
+      )
 
       return {
         data: {
           version: latestVersion,
           game_pkgs: gamePkgs,
-          total_size: pkg.total_size
+          total_size: pkgTotalSize
         },
-        patch: { game_pkgs: patchPkgs, audio_pkgs: [], total_size: patchData.total_size },
+        patch: { game_pkgs: patchPkgs, audio_pkgs: [], total_size: patchTotalSize },
         type
       }
     }

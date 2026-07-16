@@ -105,7 +105,7 @@ export function supportGuoba() {
                 component: "RadioGroup",
                 componentProps: {
                   options: [
-                    { label: "默认html", value: "default" },
+                    { label: "默认", value: "default" },
                     { label: "简约", value: "Simple" }
                   ],
                   placeholder: "请选择渲染的html模板"
