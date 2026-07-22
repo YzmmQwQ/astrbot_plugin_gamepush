@@ -22,7 +22,7 @@ class Notifier extends base {
         formattedTotalSize && `📦完整大小（含中文语音）：${formattedTotalSize}`,
         incrementalSize && `🔄 增量更新大小：约${incrementalSize}`,
         "📢 请及时更新客户端",
-        ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
+        ...(gameName !== "原神" && gameName !== "崩坏3" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
       ]
         .filter(Boolean)
         .join("\n"),
@@ -31,12 +31,10 @@ class Notifier extends base {
       [
         `🎁${gameName}预下载资源已开放`,
         `📦新版本：${newVersion}`,
-        gameName !== "终末地" &&
-          formattedTotalSize &&
-          `📦 完整大小（含中文语音）：${formattedTotalSize}`,
+        formattedTotalSize && `📦完整大小（含中文语音）：${formattedTotalSize}`,
         incrementalSize && `🔄 增量更新大小：约${incrementalSize}`,
         "📥请提前下载游戏资源",
-        ...(gameName !== "原神" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
+        ...(gameName !== "原神" && gameName !== "崩坏3" ? [`💾 发送【#${gameName}获取下载链接】获取客户端`] : [])
       ]
         .filter(Boolean)
         .join("\n"),
