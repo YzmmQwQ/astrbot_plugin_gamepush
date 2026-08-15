@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -15,14 +14,14 @@ from astrbot.core.message.message_event_result import MessageChain
 from .gamepush_service import GAME_CONFIG, GamePushService, game_name
 
 
-def _game_pattern() -> str:
-    aliases = [alias for game in GAME_CONFIG.values() for alias in game["aliases"]]
-    return "|".join(re.escape(alias) for alias in sorted(aliases, key=len, reverse=True))
-
-
-GAME_PATTERN = _game_pattern()
-GAME_COMMAND_PATTERN = rf"^\s*[#/]?(?:{GAME_PATTERN})(?:版本监控|开启版本推送|关闭版本推送|当前版本|版本数据(?:\s+.*)?|获取下载链接|获取预下载链接)\s*$"
-ADMIN_COMMAND_PATTERN = rf"^\s*#?(?:(?:{GAME_PATTERN})\s*)?(?:删除(?:预下载)?rediskey|设置(?:预下载)?rediskey\s+.+)\s*$|^\s*#?更新游戏版本数据\s*$"
+def _command_aliases(action: str) -> set[str]:
+    aliases = {
+        f"{alias}{action}"
+        for game in GAME_CONFIG.values()
+        for alias in game["aliases"]
+    }
+    aliases.discard(f"原神{action}")
+    return aliases
 
 
 @register(
@@ -156,7 +155,7 @@ class GamePushPlugin(Star):
         return False
 
     def _parse_game_command(self, message: str) -> tuple[str, str] | None:
-        clean = message.strip().lstrip("#/").strip()
+        clean = message.strip().lstrip("/").strip()
         for game, info in GAME_CONFIG.items():
             for alias in sorted(info["aliases"], key=len, reverse=True):
                 if clean.lower().startswith(alias.lower()):
@@ -189,79 +188,126 @@ class GamePushPlugin(Star):
             self.config.save_config()
         return True
 
-    @filter.regex(GAME_COMMAND_PATTERN)
-    async def game_command(self, event: AstrMessageEvent):
+    async def _handle_game_command(self, event: AstrMessageEvent, action: str, value: str = "") -> str:
         parsed = self._parse_game_command(event.get_message_str())
         if not parsed or not self.service:
-            return
-        game, action = parsed
-        event.stop_event()
+            return "插件尚未完成初始化"
+        game, _ = parsed
         try:
             if action == "版本监控":
                 if not event.is_admin():
-                    yield event.plain_result("该命令仅限管理员使用")
-                    return
+                    return "该命令仅限管理员使用"
                 await self.service.check_version(game)
-                yield event.plain_result(f"已完成 {game_name(game)} 版本检查")
+                return f"已完成 {game_name(game)} 版本检查"
             elif action in ("开启版本推送", "关闭版本推送"):
                 if not event.is_admin():
-                    yield event.plain_result("该命令仅限管理员使用")
-                    return
+                    return "该命令仅限管理员使用"
                 target = self._target_from_event(event)
                 if not target:
-                    yield event.plain_result("该功能仅限群聊中使用")
-                    return
+                    return "该功能仅限群聊中使用"
                 enabled = action.startswith("开启")
                 changed = self._save_push_target(game, target, enabled)
                 if changed:
-                    yield event.plain_result(f"已{'开启' if enabled else '关闭'}本群 {game_name(game)} 版本推送")
-                else:
-                    yield event.plain_result("本群推送配置未发生变化")
+                    return f"已{'开启' if enabled else '关闭'}本群 {game_name(game)} 版本推送"
+                return "本群推送配置未发生变化"
             elif action == "当前版本":
                 main = await self.service.db.get_state(game, "main") or "未知"
                 pre = await self.service.db.get_state(game, "pre") or "未开启"
-                yield event.plain_result(f"{game_name(game)}当前版本信息\n正式版本：{main}\n预下载版本：{pre}")
-            elif action.startswith("版本数据"):
-                version = action.removeprefix("版本数据").strip()
-                main, pre = await self.service.db.history(game, version)
+                return f"{game_name(game)}当前版本信息\n正式版本：{main}\n预下载版本：{pre}"
+            elif action == "版本数据":
+                main, pre = await self.service.db.history(game, value)
                 if not main and not pre:
-                    yield event.plain_result(f"暂无 {game_name(game)} 版本数据")
-                    return
+                    return f"暂无 {game_name(game)} 版本数据"
                 lines = [f"{game_name(game)}历史版本数据"]
                 lines += [f"正式版 {row[0]} | {row[1] or '大小未知'} | {row[2]}" for row in main]
                 lines += [f"预下载 {row[0]}（旧版 {row[1] or '未知'}）| {row[2] or '大小未知'} | {row[3]}" for row in pre]
-                yield event.plain_result("\n".join(lines))
+                return "\n".join(lines)
             elif action in ("获取下载链接", "获取预下载链接"):
                 if game in ("ys", "bh3"):
-                    yield event.plain_result(f"{game_name(game)}暂不支持获取下载链接")
-                    return
+                    return f"{game_name(game)}暂不支持获取下载链接"
                 kind = "pre" if action == "获取预下载链接" else "main"
                 download = await self.service.get_download_data(game, kind)
-                yield event.plain_result(self.service.download_text(game, kind, download))
+                return self.service.download_text(game, kind, download)
         except Exception as error:
             logger.error(f"[{game_name(game)}] 命令执行失败: {error}")
-            yield event.plain_result(f"操作失败：{error}")
+            return f"操作失败：{error}"
+        return "未知命令"
 
-    @filter.regex(ADMIN_COMMAND_PATTERN)
-    async def state_command(self, event: AstrMessageEvent):
+    async def _handle_state_command(self, event: AstrMessageEvent, action: str, value: str = "") -> str:
         if not event.is_admin() or not self.service:
-            return
-        event.stop_event()
-        text = event.get_message_str().strip().lstrip("#").strip()
-        if text == "更新游戏版本数据":
-            yield event.plain_result("AstrBot 版本使用本地 SQLite 自动维护历史数据，无需下载外部数据库。")
-            return
-        parsed = self._parse_game_command(text)
+            return "该命令仅限管理员使用"
+        parsed = self._parse_game_command(event.get_message_str())
         game = parsed[0] if parsed else "ys"
-        action = parsed[1] if parsed else text
         kind = "pre" if "预下载" in action else "main"
         if action.startswith("删除"):
             await self.service.db.delete_state(game, kind)
-            yield event.plain_result(f"已删除 {game_name(game)} {'预下载' if kind == 'pre' else '正式版'}版本状态")
-        elif action.startswith("设置"):
-            value = re.split(r"设置(?:预下载)?rediskey", action, maxsplit=1, flags=re.I)[-1].strip()
+            return f"已删除 {game_name(game)} {'预下载' if kind == 'pre' else '正式版'}版本状态"
+        if action.startswith("设置"):
             if not value:
-                yield event.plain_result("请提供要设置的版本号")
-                return
+                return "请提供要设置的版本号"
             await self.service.db.set_state(game, kind, value)
-            yield event.plain_result(f"已设置 {game_name(game)} {'预下载' if kind == 'pre' else '正式版'}版本为 {value}")
+            return f"已设置 {game_name(game)} {'预下载' if kind == 'pre' else '正式版'}版本为 {value}"
+        return "未知管理命令"
+
+    @filter.command("原神版本监控", alias=_command_aliases("版本监控"))
+    async def version_monitor(self, event: AstrMessageEvent):
+        event.stop_event()
+        yield event.plain_result(await self._handle_game_command(event, "版本监控"))
+
+    @filter.command("原神开启版本推送", alias=_command_aliases("开启版本推送"))
+    async def enable_push(self, event: AstrMessageEvent):
+        event.stop_event()
+        yield event.plain_result(await self._handle_game_command(event, "开启版本推送"))
+
+    @filter.command("原神关闭版本推送", alias=_command_aliases("关闭版本推送"))
+    async def disable_push(self, event: AstrMessageEvent):
+        event.stop_event()
+        yield event.plain_result(await self._handle_game_command(event, "关闭版本推送"))
+
+    @filter.command("原神当前版本", alias=_command_aliases("当前版本"))
+    async def current_version(self, event: AstrMessageEvent):
+        event.stop_event()
+        yield event.plain_result(await self._handle_game_command(event, "当前版本"))
+
+    @filter.command("原神版本数据", alias=_command_aliases("版本数据"))
+    async def version_history(self, event: AstrMessageEvent, version: str = ""):
+        event.stop_event()
+        yield event.plain_result(await self._handle_game_command(event, "版本数据", version))
+
+    @filter.command("原神获取下载链接", alias=_command_aliases("获取下载链接"))
+    async def download_links(self, event: AstrMessageEvent):
+        event.stop_event()
+        yield event.plain_result(await self._handle_game_command(event, "获取下载链接"))
+
+    @filter.command("原神获取预下载链接", alias=_command_aliases("获取预下载链接"))
+    async def predownload_links(self, event: AstrMessageEvent):
+        event.stop_event()
+        yield event.plain_result(await self._handle_game_command(event, "获取预下载链接"))
+
+    @filter.command("原神删除rediskey", alias=_command_aliases("删除rediskey"))
+    async def delete_main_state(self, event: AstrMessageEvent):
+        event.stop_event()
+        yield event.plain_result(await self._handle_state_command(event, "删除rediskey"))
+
+    @filter.command("原神删除预下载rediskey", alias=_command_aliases("删除预下载rediskey"))
+    async def delete_pre_state(self, event: AstrMessageEvent):
+        event.stop_event()
+        yield event.plain_result(await self._handle_state_command(event, "删除预下载rediskey"))
+
+    @filter.command("原神设置rediskey", alias=_command_aliases("设置rediskey"))
+    async def set_main_state(self, event: AstrMessageEvent, version: str):
+        event.stop_event()
+        yield event.plain_result(await self._handle_state_command(event, "设置rediskey", version))
+
+    @filter.command("原神设置预下载rediskey", alias=_command_aliases("设置预下载rediskey"))
+    async def set_pre_state(self, event: AstrMessageEvent, version: str):
+        event.stop_event()
+        yield event.plain_result(await self._handle_state_command(event, "设置预下载rediskey", version))
+
+    @filter.command("更新游戏版本数据")
+    async def update_history(self, event: AstrMessageEvent):
+        event.stop_event()
+        if not event.is_admin():
+            yield event.plain_result("该命令仅限管理员使用")
+            return
+        yield event.plain_result("AstrBot 版本使用本地 SQLite 自动维护历史数据，无需下载外部数据库。")
