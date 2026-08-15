@@ -324,7 +324,7 @@ class GamePushService:
         image_path = ""
         if kind != "pre-remove" and str(cfg.get("push_change_type")) == "1":
             try:
-                icon = await self.game_icon(game)
+                icon = await self.inline_image(await self.game_icon(game))
                 image_path = await self.render_image(str(cfg.get("html", "default")), {
                     "gameName": game_name(game), "type": kind, "newVersion": new_version,
                     "oldVersion": old_version, "formattedTotalSize": total or "",
@@ -458,6 +458,24 @@ class GamePushService:
         except Exception as error:
             logger.warning(f"[{game_name(game)}] 获取图标失败: {error}")
         return ""
+
+    async def inline_image(self, url: str) -> str:
+        """Fetch a remote icon before rendering so Chromium does not need network access."""
+        if not url.startswith(("https://", "http://")):
+            return url
+        if not self.session:
+            await self.initialize()
+        assert self.session
+        try:
+            async with self.session.get(url) as response:
+                if response.status >= 400:
+                    return url
+                content_type = response.headers.get("Content-Type", "image/png").split(";", 1)[0]
+                payload = base64.b64encode(await response.read()).decode("ascii")
+                return f"data:{content_type};base64,{payload}"
+        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+            logger.warning(f"游戏图标下载失败，将保留远程地址: {error}")
+            return url
 
     def template(self, style: str) -> str:
         style = "Simple" if style.lower() == "simple" else "default"

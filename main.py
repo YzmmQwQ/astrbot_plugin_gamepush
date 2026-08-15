@@ -330,8 +330,12 @@ class GamePushPlugin(Star):
             yield event.plain_result("本地图片渲染器未启动，当前只能使用文本推送")
             return
 
+        images = []
+        failures = []
         for index, game in enumerate(("ys", "sr", "zzz", "bh3", "ww"), start=1):
             try:
+                assert self.service
+                icon = await self.service.inline_image(await self.service.game_icon(game))
                 image = await self._render_card(
                     "default",
                     {
@@ -342,10 +346,15 @@ class GamePushPlugin(Star):
                         "formattedTotalSize": "12.34 GB",
                         "incrementalSize": "1.23 GB",
                         "date": datetime.now().strftime("%Y-%m-%d"),
-                        "icon": "",
+                        "icon": icon,
                     },
                 )
-                yield event.image_result(image)
+                images.append(Comp.Image.fromFileSystem(image))
             except Exception as error:
                 logger.error(f"[{game_name(game)}] 渲染测试失败: {error}")
-                yield event.plain_result(f"{game_name(game)} 渲染失败：{error}")
+                failures.append(f"{game_name(game)}：{error}")
+
+        if images:
+            yield event.chain_result(images)
+        if failures:
+            yield event.plain_result("渲染失败\n" + "\n".join(failures))
