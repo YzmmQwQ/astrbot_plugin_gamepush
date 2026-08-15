@@ -1,0 +1,1 @@
+"""AstrBot GamePush plugin package."""

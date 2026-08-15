@@ -1,0 +1,68 @@
+{
+  "ys": {
+    "description": "原神",
+    "type": "object",
+    "items": {
+      "enable": { "description": "启用监控", "type": "bool", "default": true },
+      "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
+      "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
+      "html": { "description": "图片模板（default或Simple）", "type": "text", "default": "default" },
+      "push_groups": { "description": "推送群组", "type": "list", "default": [] }
+    }
+  },
+  "sr": {
+    "description": "崩坏：星穹铁道",
+    "type": "object",
+    "items": {
+      "enable": { "description": "启用监控", "type": "bool", "default": true },
+      "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
+      "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
+      "html": { "description": "图片模板（default或Simple）", "type": "text", "default": "default" },
+      "push_groups": { "description": "推送群组", "type": "list", "default": [] }
+    }
+  },
+  "zzz": {
+    "description": "绝区零",
+    "type": "object",
+    "items": {
+      "enable": { "description": "启用监控", "type": "bool", "default": true },
+      "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
+      "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
+      "html": { "description": "图片模板（default或Simple）", "type": "text", "default": "default" },
+      "push_groups": { "description": "推送群组", "type": "list", "default": [] }
+    }
+  },
+  "bh3": {
+    "description": "崩坏3",
+    "type": "object",
+    "items": {
+      "enable": { "description": "启用监控", "type": "bool", "default": true },
+      "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
+      "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
+      "html": { "description": "图片模板（default或Simple）", "type": "text", "default": "default" },
+      "push_groups": { "description": "推送群组", "type": "list", "default": [] }
+    }
+  },
+  "ww": {
+    "description": "鸣潮",
+    "type": "object",
+    "items": {
+      "enable": { "description": "启用监控", "type": "bool", "default": true },
+      "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
+      "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
+      "html": { "description": "图片模板（default或Simple）", "type": "text", "default": "default" },
+      "push_groups": { "description": "推送群组", "type": "list", "default": [] }
+    }
+  },
+  "zmd": {
+    "description": "终末地",
+    "type": "object",
+    "items": {
+      "enable": { "description": "启用监控", "type": "bool", "default": true },
+      "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
+      "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
+      "html": { "description": "图片模板（default或Simple）", "type": "text", "default": "default" },
+      "push_groups": { "description": "推送群组", "type": "list", "default": [] }
+    }
+  }
+}
