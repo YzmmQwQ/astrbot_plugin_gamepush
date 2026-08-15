@@ -2,5 +2,5 @@ name: astrbot_plugin_gamepush
 display_name: 游戏版本推送
 desc: 监控原神、星穹铁道、绝区零、崩坏3、鸣潮和终末地版本更新并推送通知
 version: v2.0.0
-author: Yzmm
+author: YzmmQwQ
 repo: https://github.com/YzmmQwQ/astrbot_plugin_gamepush

@@ -4,6 +4,8 @@ AstrBot 原生游戏版本监控插件。它监控官方启动器数据，在版
 
 支持原神、崩坏：星穹铁道、绝区零、崩坏3、鸣潮和终末地。通知卡片继续使用本仓库原有的 HTML、CSS 和字体资源。
 
+基于 https://github.com/rainbowwarmth/GamePush-Plugin 打造。
+
 ## 安装
 
 将本目录安装到 AstrBot 的插件目录：
