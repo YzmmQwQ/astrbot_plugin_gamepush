@@ -12,6 +12,7 @@ from astrbot.api.star import Context, Star, StarTools, register
 from astrbot.core.message.message_event_result import MessageChain
 
 from .gamepush_service import GAME_CONFIG, GamePushService, game_name
+from .renderer import LocalCardRenderer
 
 
 def _command_aliases(action: str) -> set[str]:
@@ -36,6 +37,7 @@ class GamePushPlugin(Star):
         self.config = config if config is not None else {}
         self.plugin_dir = Path(__file__).parent
         self.service: GamePushService | None = None
+        self.renderer: LocalCardRenderer | None = None
         self.monitor_task: asyncio.Task[None] | None = None
         self._last_runs: dict[str, str] = {}
 
@@ -49,6 +51,12 @@ class GamePushPlugin(Star):
             self._render_card,
         )
         await self.service.initialize()
+        self.renderer = LocalCardRenderer(data_dir / "renders")
+        try:
+            await self.renderer.start()
+        except Exception as error:
+            self.renderer = None
+            logger.error(f"GamePush 本地图片渲染器启动失败，将使用文本推送: {error}")
         self.monitor_task = asyncio.create_task(self._monitor_loop())
         logger.info("GamePush AstrBot 插件已加载")
 
@@ -61,6 +69,8 @@ class GamePushPlugin(Star):
                 pass
         if self.service:
             await self.service.close()
+        if self.renderer:
+            await self.renderer.stop()
 
     async def _render_card(self, style: str, data: dict[str, Any]) -> str:
         assert self.service
@@ -69,12 +79,9 @@ class GamePushPlugin(Star):
             "plugin": {"name": "GamePush", "version": "2.0.0"},
             "pluResPath": "",
         }
-        return await self.html_render(
-            self.service.template(style),
-            data,
-            return_url=False,
-            options={"type": "jpeg", "quality": 75, "full_page": True},
-        )
+        if not self.renderer:
+            raise RuntimeError("本地图片渲染器未启动")
+        return await self.renderer.render(self.service.template(style), data)
 
     async def _send_target(self, target: dict[str, str], content: str, is_image: bool) -> None:
         chain = MessageChain([
@@ -311,3 +318,34 @@ class GamePushPlugin(Star):
             yield event.plain_result("该命令仅限管理员使用")
             return
         yield event.plain_result("AstrBot 版本使用本地 SQLite 自动维护历史数据，无需下载外部数据库。")
+
+    @filter.command("游戏推送渲染测试")
+    async def render_test(self, event: AstrMessageEvent):
+        """管理员私聊渲染五张测试卡片，不请求游戏接口也不发送群推送。"""
+        event.stop_event()
+        if not event.is_admin() or not event.is_private_chat():
+            yield event.plain_result("该命令仅限管理员私聊使用")
+            return
+        if not self.renderer:
+            yield event.plain_result("本地图片渲染器未启动，当前只能使用文本推送")
+            return
+
+        for index, game in enumerate(("ys", "sr", "zzz", "bh3", "ww"), start=1):
+            try:
+                image = await self._render_card(
+                    "default",
+                    {
+                        "gameName": game_name(game),
+                        "type": "main",
+                        "oldVersion": f"{index}.0.0",
+                        "newVersion": f"{index}.0.1",
+                        "formattedTotalSize": "12.34 GB",
+                        "incrementalSize": "1.23 GB",
+                        "date": datetime.now().strftime("%Y-%m-%d"),
+                        "icon": "",
+                    },
+                )
+                yield event.image_result(image)
+            except Exception as error:
+                logger.error(f"[{game_name(game)}] 渲染测试失败: {error}")
+                yield event.plain_result(f"{game_name(game)} 渲染失败：{error}")

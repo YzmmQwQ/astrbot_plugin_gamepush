@@ -44,6 +44,8 @@ AstrBot/data/plugins/astrbot_plugin_gamepush/
 
 所有原有游戏别名仍可使用，例如 `ys`、`sr`、`zzz`、`bh3`、`ww`、`zmd`。
 
+管理员可在私聊中执行 `/游戏推送渲染测试`，一次生成五张本地测试卡片，用于确认 Playwright 和字体资源已正常部署。该命令不请求游戏接口，也不会发送群推送。
+
 管理员还可以使用：
 
 ```text
@@ -57,4 +59,4 @@ AstrBot/data/plugins/astrbot_plugin_gamepush/
 
 ## 依赖与渲染
 
-插件使用 AstrBot 内置的 HTML 渲染能力。原模板使用的是 Yunzai 模板语法，运行时会转换为 Jinja2 并内嵌原 CSS 和字体，因此不需要改动现有 UI 资源。
+插件使用本地 Playwright 渲染通知卡片，不依赖 AstrBot 的 t2i 服务。原模板使用的是 Yunzai 模板语法，运行时会转换为 Jinja2 并内嵌原 CSS 和字体，因此不需要改动现有 UI 资源。
