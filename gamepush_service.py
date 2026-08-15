@@ -205,7 +205,8 @@ class GamePushService:
         self.locks = {game: asyncio.Lock() for game in GAME_CONFIG}
 
     async def initialize(self) -> None:
-        self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30), trust_env=True)
+        # Keep the same direct-connection behavior as the original node-fetch client.
+        self.session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30), trust_env=False)
 
     async def close(self) -> None:
         if self.session:
@@ -231,6 +232,7 @@ class GamePushService:
                 last_error = error
                 if attempt < 2:
                     await asyncio.sleep(attempt + 1)
+        logger.error(f"GamePush 请求失败: {method} {url} - {last_error}")
         raise RuntimeError(f"请求失败: {last_error}")
 
     def check_url(self, game: str) -> str:
@@ -254,19 +256,22 @@ class GamePushService:
             else:
                 payload = await self.request("GET", self.check_url(game))
                 if game == "ww":
+                    main_config = (payload.get("default") or {}).get("config") or {}
+                    pre_config = (payload.get("predownload") or {}).get("config") or {}
                     await self._process_versions(
                         game,
-                        payload.get("default", {}).get("config", {}).get("version"),
-                        payload.get("predownload", {}).get("config", {}).get("version"),
+                        main_config.get("version"),
+                        pre_config.get("version"),
                     )
                 else:
-                    branch = payload.get("data", {}).get("game_branches", [{}])[0]
+                    branches = (payload.get("data") or {}).get("game_branches") or [{}]
+                    branch = branches[0] or {}
                     if not branch:
                         raise RuntimeError("游戏数据解析失败")
                     await self._process_versions(
                         game,
-                        branch.get("main", {}).get("tag"),
-                        branch.get("pre_download", {}).get("tag"),
+                        (branch.get("main") or {}).get("tag"),
+                        (branch.get("pre_download") or {}).get("tag"),
                     )
         return f"{game_name(game)}检查完成"
 
@@ -277,14 +282,14 @@ class GamePushService:
             "User-Agent": "Mozilla/5.0",
         }
         latest = await self.request("POST", HYPERGRYPH_API, body=_hyper_body(""), headers=headers)
-        response = latest.get("proxy_rsps", [{}])[0].get("get_latest_game_rsp", {})
+        response = ((latest.get("proxy_rsps") or [{}])[0] or {}).get("get_latest_game_rsp") or {}
         main = response.get("version")
         if not main:
             raise RuntimeError("终末地版本数据解析失败")
         old = await self.db.get_state(game, "main") or ""
         detail = await self.request("POST", HYPERGRYPH_API, body=_hyper_body(old), headers=headers)
-        detail_response = detail.get("proxy_rsps", [{}])[0].get("get_latest_game_rsp", {})
-        pre = detail_response.get("pre_patch", {}).get("version")
+        detail_response = ((detail.get("proxy_rsps") or [{}])[0] or {}).get("get_latest_game_rsp") or {}
+        pre = (detail_response.get("pre_patch") or {}).get("version")
         await self._process_versions(game, main, pre)
 
     async def _process_versions(self, game: str, main: str | None, pre: str | None) -> None:
@@ -377,12 +382,12 @@ class GamePushService:
         return data
 
     def _mhy_download(self, response: dict[str, Any], kind: str) -> dict[str, Any]:
-        package = response.get("data", {}).get("game_packages", [{}])[0]
-        section = package.get("pre_download" if kind == "pre" else "main", {})
+        package = ((response.get("data") or {}).get("game_packages") or [{}])[0] or {}
+        section = package.get("pre_download" if kind == "pre" else "main") or {}
         return {"data": section.get("major") or None, "patch": (section.get("patches") or [{}])[0]}
 
     def _ww_download(self, response: dict[str, Any], kind: str) -> dict[str, Any]:
-        config = response.get("predownload" if kind == "pre" else "default", {}).get("config")
+        config = (response.get("predownload" if kind == "pre" else "default") or {}).get("config")
         if not config:
             return {"data": None, "patch": {"game_pkgs": []}}
         cdn = (response.get("cdnList") or [{}])[0].get("url", "https://pcdownload-huoshan.aki-game.com").rstrip("/")
@@ -400,13 +405,14 @@ class GamePushService:
     async def _hyper_download(self, kind: str) -> dict[str, Any]:
         headers = {"x-hg-launcher-device-id": "83a5d5ca-7f0e-4277-ba71-c9e66dafd7e4", "User-Agent": "Mozilla/5.0"}
         latest = await self.request("POST", HYPERGRYPH_API, body=_hyper_body(""), headers=headers)
-        latest_version = latest.get("proxy_rsps", [{}])[0].get("get_latest_game_rsp", {}).get("version", "")
+        latest_response = ((latest.get("proxy_rsps") or [{}])[0] or {}).get("get_latest_game_rsp") or {}
+        latest_version = latest_response.get("version", "")
         version = latest_version if kind == "pre" else (await self.db.get_state("zmd", "main") or "")
         result = await self.request("POST", HYPERGRYPH_API, body=_hyper_body(version), headers=headers)
-        response = result.get("proxy_rsps", [{}])[0].get("get_latest_game_rsp", {})
-        patch = response.get("pre_patch" if kind == "pre" else "patch", {})
-        packs = response.get("pkg", {}).get("packs", [])
-        patch_packs = patch.get("patches", [])
+        response = ((result.get("proxy_rsps") or [{}])[0] or {}).get("get_latest_game_rsp") or {}
+        patch = response.get("pre_patch" if kind == "pre" else "patch") or {}
+        packs = (response.get("pkg") or {}).get("packs") or []
+        patch_packs = patch.get("patches") or []
         return {
             "data": {"version": latest_version, "game_pkgs": [{"url": item.get("url", ""), "size": item.get("package_size", 0)} for item in packs], "audio_pkgs": [], "total_size": sum(int(item.get("package_size", 0)) for item in packs)},
             "patch": {"game_pkgs": [{"url": item.get("url", ""), "size": item.get("package_size", 0), "version": patch.get("version", latest_version)} for item in patch_packs], "audio_pkgs": [], "total_size": sum(int(item.get("package_size", 0)) for item in patch_packs)},
@@ -446,9 +452,9 @@ class GamePushService:
         try:
             response = await self.request("GET", f"{GAME_API}?launcher_id=jGHBHlcOq1&language=zh-cn")
             target_id = GAME_CONFIG[game].get("id")
-            for item in response.get("data", {}).get("games", []):
+            for item in (response.get("data") or {}).get("games") or []:
                 if item.get("id") == target_id:
-                    return item.get("display", {}).get("icon", {}).get("url", "")
+                    return ((item.get("display") or {}).get("icon") or {}).get("url", "")
         except Exception as error:
             logger.warning(f"[{game_name(game)}] 获取图标失败: {error}")
         return ""
