@@ -87,9 +87,6 @@ class GamePushPlugin(Star):
         chain = MessageChain([
             Comp.Image.fromFileSystem(content) if is_image else Comp.Plain(text=content)
         ])
-        if target.get("umo"):
-            await self.context.send_message(target["umo"], chain)
-            return
         group_id = target.get("group_id")
         if not group_id:
             raise ValueError("推送目标缺少群组 ID")
@@ -169,32 +166,6 @@ class GamePushPlugin(Star):
                     return game, clean[len(alias):].strip()
         return None
 
-    def _target_from_event(self, event: AstrMessageEvent) -> dict[str, str] | None:
-        group_id = str(event.get_group_id() or "")
-        if not group_id:
-            return None
-        target = {"group_id": group_id, "platform": "aiocqhttp"}
-        umo = getattr(event, "unified_msg_origin", "")
-        if umo:
-            target["umo"] = str(umo)
-        return target
-
-    def _save_push_target(self, game: str, target: dict[str, str], enabled: bool) -> bool:
-        cfg = self.config.setdefault(game, {})
-        groups = cfg.setdefault("push_groups", [])
-        if not isinstance(groups, list):
-            groups = cfg["push_groups"] = []
-        existing = next((item for item in groups if isinstance(item, dict) and item.get("group_id") == target["group_id"]), None)
-        if enabled and not existing:
-            groups.append(target)
-        elif not enabled and existing:
-            groups.remove(existing)
-        else:
-            return False
-        if hasattr(self.config, "save_config"):
-            self.config.save_config()
-        return True
-
     async def _handle_game_command(self, event: AstrMessageEvent, action: str, value: str = "") -> str:
         parsed = self._parse_game_command(event.get_message_str())
         if not parsed or not self.service:
@@ -206,17 +177,6 @@ class GamePushPlugin(Star):
                     return "该命令仅限管理员使用"
                 await self.service.check_version(game)
                 return f"已完成 {game_name(game)} 版本检查"
-            elif action in ("开启版本推送", "关闭版本推送"):
-                if not event.is_admin():
-                    return "该命令仅限管理员使用"
-                target = self._target_from_event(event)
-                if not target:
-                    return "该功能仅限群聊中使用"
-                enabled = action.startswith("开启")
-                changed = self._save_push_target(game, target, enabled)
-                if changed:
-                    return f"已{'开启' if enabled else '关闭'}本群 {game_name(game)} 版本推送"
-                return "本群推送配置未发生变化"
             elif action == "当前版本":
                 main = await self.service.db.get_state(game, "main") or "未知"
                 pre = await self.service.db.get_state(game, "pre") or "未开启"
@@ -260,16 +220,6 @@ class GamePushPlugin(Star):
     async def version_monitor(self, event: AstrMessageEvent):
         event.stop_event()
         yield event.plain_result(await self._handle_game_command(event, "版本监控"))
-
-    @filter.command("原神开启版本推送", alias=_command_aliases("开启版本推送"))
-    async def enable_push(self, event: AstrMessageEvent):
-        event.stop_event()
-        yield event.plain_result(await self._handle_game_command(event, "开启版本推送"))
-
-    @filter.command("原神关闭版本推送", alias=_command_aliases("关闭版本推送"))
-    async def disable_push(self, event: AstrMessageEvent):
-        event.stop_event()
-        yield event.plain_result(await self._handle_game_command(event, "关闭版本推送"))
 
     @filter.command("原神当前版本", alias=_command_aliases("当前版本"))
     async def current_version(self, event: AstrMessageEvent):

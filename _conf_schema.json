@@ -7,7 +7,7 @@
       "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
       "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
       "html": { "description": "图片模板（default或Simple）", "type": "text", "default": "default" },
-      "push_groups": { "description": "推送群组", "type": "list", "default": [] }
+      "push_groups": { "description": "推送群号（仅配置）", "type": "list", "hint": "填写要接收推送的 QQ 群号，每行一个，例如 123456789。修改后请重载插件。", "default": [] }
     }
   },
   "sr": {
@@ -18,7 +18,7 @@
       "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
       "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
       "html": { "description": "图片模板（default或Simple）", "type": "text", "default": "default" },
-      "push_groups": { "description": "推送群组", "type": "list", "default": [] }
+      "push_groups": { "description": "推送群号（仅配置）", "type": "list", "hint": "填写要接收推送的 QQ 群号，每行一个，例如 123456789。修改后请重载插件。", "default": [] }
     }
   },
   "zzz": {
@@ -29,7 +29,7 @@
       "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
       "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
       "html": { "description": "图片模板（default或Simple）", "type": "text", "default": "default" },
-      "push_groups": { "description": "推送群组", "type": "list", "default": [] }
+      "push_groups": { "description": "推送群号（仅配置）", "type": "list", "hint": "填写要接收推送的 QQ 群号，每行一个，例如 123456789。修改后请重载插件。", "default": [] }
     }
   },
   "bh3": {
@@ -40,7 +40,7 @@
       "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
       "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
       "html": { "description": "图片模板（default或Simple）", "type": "text", "default": "default" },
-      "push_groups": { "description": "推送群组", "type": "list", "default": [] }
+      "push_groups": { "description": "推送群号（仅配置）", "type": "list", "hint": "填写要接收推送的 QQ 群号，每行一个，例如 123456789。修改后请重载插件。", "default": [] }
     }
   },
   "ww": {
@@ -51,7 +51,7 @@
       "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
       "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
       "html": { "description": "图片模板（default或Simple）", "type": "text", "default": "default" },
-      "push_groups": { "description": "推送群组", "type": "list", "default": [] }
+      "push_groups": { "description": "推送群号（仅配置）", "type": "list", "hint": "填写要接收推送的 QQ 群号，每行一个，例如 123456789。修改后请重载插件。", "default": [] }
     }
   },
   "zmd": {
@@ -62,7 +62,7 @@
       "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
       "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
       "html": { "description": "图片模板（default或Simple）", "type": "text", "default": "default" },
-      "push_groups": { "description": "推送群组", "type": "list", "default": [] }
+      "push_groups": { "description": "推送群号（仅配置）", "type": "list", "hint": "填写要接收推送的 QQ 群号，每行一个，例如 123456789。修改后请重载插件。", "default": [] }
     }
   }
 }

@@ -357,14 +357,16 @@ class GamePushService:
         result: list[dict[str, str]] = []
         for value in values if isinstance(values, list) else []:
             if isinstance(value, dict):
-                target = {key: str(item) for key, item in value.items() if item is not None}
+                # Read old command-created entries without requiring a manual migration.
+                group_id = str(value.get("group_id", "")).strip()
             elif isinstance(value, str):
-                group_id = value.rsplit(":", 1)[-1]
-                target = {"group_id": group_id, "platform": "aiocqhttp"}
+                group_id = value.strip()
+                if ":" in group_id:
+                    group_id = group_id.rsplit(":", 1)[-1]
             else:
                 continue
-            if target.get("umo") or target.get("group_id"):
-                result.append(target)
+            if group_id:
+                result.append({"group_id": group_id, "platform": "aiocqhttp"})
         return result
 
     async def get_download_data(self, game: str, kind: str = "main") -> dict[str, Any]:
