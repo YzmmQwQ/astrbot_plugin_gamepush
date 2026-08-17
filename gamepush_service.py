@@ -33,7 +33,7 @@ DEFAULT_GAME_CONFIG = {
     "enable": True,
     "cron": "0 0/5 * * * *",
     "push_change_type": "1",
-    "html": "default",
+    "html": "ys",
     "push_groups": [],
 }
 
@@ -325,7 +325,7 @@ class GamePushService:
         if kind != "pre-remove" and str(cfg.get("push_change_type")) == "1":
             try:
                 icon = await self.inline_image(await self.game_icon(game))
-                image_path = await self.render_image(str(cfg.get("html", "default")), {
+                image_path = await self.render_image(str(cfg.get("html", "ys")), {
                     "gameName": game_name(game), "type": kind, "newVersion": new_version,
                     "oldVersion": old_version, "formattedTotalSize": total or "",
                     "incrementalSize": incremental or "", "date": datetime.now().strftime("%Y-%m-%d"),
@@ -480,8 +480,12 @@ class GamePushService:
             return url
 
     def template(self, style: str) -> str:
-        style = "Simple" if style.lower() == "simple" else "default"
+        style = str(style).strip().lower()
+        if style in {"", "default", "simple"}:
+            style = "ys"
         html_path = self.plugin_dir / "resources" / "html" / "GamePush-Plugin" / f"GamePush-Plugin-{style}.html"
+        if not html_path.exists():
+            html_path = self.plugin_dir / "resources" / "html" / "GamePush-Plugin" / "GamePush-Plugin-ys.html"
         css_path = html_path.with_suffix(".css")
         html = html_path.read_text(encoding="utf-8")
         css = css_path.read_text(encoding="utf-8")

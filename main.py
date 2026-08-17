@@ -287,7 +287,7 @@ class GamePushPlugin(Star):
                 assert self.service
                 icon = await self.service.inline_image(await self.service.game_icon(game))
                 image = await self._render_card(
-                    str(self.service.game_config(game).get("html", "default")),
+                    str(self.service.game_config(game).get("html", "ys")),
                     {
                         "gameName": game_name(game),
                         "type": "main",

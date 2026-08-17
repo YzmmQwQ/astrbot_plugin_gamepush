@@ -23,7 +23,7 @@ AstrBot/data/plugins/astrbot_plugin_gamepush/
 - `enable`：是否参与自动检查。
 - `cron`：检查计划，支持五位或六位 cron，默认 `0 0/5 * * * *`，即每五分钟检查一次。
 - `push_change_type`：`1` 为图片卡片，`2` 为纯文本。
-- `html`：图片模板，`default` 或 `Simple`。
+- `html`：图片模板，当前使用 `ys`。
 - `push_groups`：推送群号列表，每行填写一个 QQ 群号。该配置只能由管理员在插件配置中修改，插件不提供群内开启或关闭推送的命令。
 
 主动群推送目前使用 OneBot / AIOCQHTTP 平台。修改配置后请重载插件使其生效。

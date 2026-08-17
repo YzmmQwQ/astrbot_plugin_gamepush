@@ -56,7 +56,18 @@ class LocalCardRenderer:
                 await page.set_content(html, wait_until="domcontentloaded")
                 await page.evaluate("document.fonts.ready")
                 height = await page.evaluate(
-                    "Math.ceil(Math.max(document.body.scrollHeight, document.documentElement.scrollHeight))"
+                    """
+                    () => {
+                        const container = document.querySelector('.container');
+                        if (!container) {
+                            return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+                        }
+                        const bodyStyle = getComputedStyle(document.body);
+                        const verticalPadding = parseFloat(bodyStyle.paddingTop || '0')
+                            + parseFloat(bodyStyle.paddingBottom || '0');
+                        return Math.ceil(container.getBoundingClientRect().height + verticalPadding);
+                    }
+                    """
                 )
                 await page.set_viewport_size({"width": 860, "height": max(1, int(height))})
                 await page.screenshot(path=str(output), full_page=True)
