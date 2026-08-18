@@ -77,44 +77,13 @@ body {
   position: absolute;
 }
 
-.header::before {
-  border: 1px solid rgba(181, 152, 83, 0.42);
-  content: "";
-  height: 72px;
-  position: absolute;
-  right: 42px;
-  top: 72px;
-  transform: rotate(45deg);
-  width: 72px;
-}
-
-.header-topline {
-  align-items: center;
-  border-bottom: 1px solid rgba(18, 18, 18, 0.18);
-  color: var(--sr-ink);
-  display: flex;
-  font-size: 12px;
-  font-weight: 700;
-  justify-content: space-between;
-  letter-spacing: 0.04em;
-  min-height: 46px;
-  position: relative;
-  z-index: 1;
-}
-
-.route-code {
-  color: var(--sr-gold);
-  font-size: 10px;
-  font-weight: 600;
-}
-
 .header-main {
   align-items: flex-start;
   display: flex;
   gap: 14px;
   justify-content: flex-end;
-  min-height: 276px;
-  padding: 76px 0 0 370px;
+  min-height: 322px;
+  padding: 122px 0 0 315px;
   position: relative;
   z-index: 1;
 }
@@ -134,13 +103,6 @@ body {
   flex-direction: column;
   gap: 5px;
   min-width: 0;
-}
-
-.eyebrow {
-  color: var(--sr-gold);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
 }
 
 .header .title {
@@ -168,26 +130,6 @@ body {
   padding: 5px 9px;
 }
 
-.signal-mark {
-  align-items: flex-end;
-  border-left: 1px solid rgba(181, 152, 83, 0.6);
-  display: flex;
-  gap: 4px;
-  height: 30px;
-  margin: 4px 0 0 4px;
-  padding-left: 10px;
-}
-
-.signal-mark span {
-  background: var(--sr-gold);
-  display: block;
-  width: 3px;
-}
-
-.signal-mark span:nth-child(1) { height: 10px; opacity: 0.45; }
-.signal-mark span:nth-child(2) { height: 20px; opacity: 0.7; }
-.signal-mark span:nth-child(3) { height: 30px; }
-
 .main-content {
   background: var(--sr-paper);
   padding: 24px 42px 30px;
@@ -202,13 +144,6 @@ body {
   gap: 10px;
   letter-spacing: 0.04em;
   margin-bottom: 14px;
-}
-
-.manifest-heading > span:last-child {
-  color: var(--sr-gold);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
 }
 
 .manifest-line {
@@ -388,15 +323,11 @@ body {
     padding: 0 22px 24px;
   }
 
-  .header-topline {
-    font-size: 10px;
-  }
-
   .header-main {
     align-items: flex-start;
     justify-content: flex-start;
     min-height: 252px;
-    padding: 150px 0 0;
+    padding: 196px 0 0;
   }
 
   .header .game-icon {
@@ -406,10 +337,6 @@ body {
 
   .header .title {
     font-size: 22px;
-  }
-
-  .signal-mark {
-    display: none;
   }
 
   .main-content {
