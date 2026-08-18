@@ -17,7 +17,7 @@
       "enable": { "description": "启用监控", "type": "bool", "default": true },
       "cron": { "description": "检查计划", "type": "text", "default": "0 0/5 * * * *" },
       "push_change_type": { "description": "推送类型（1图片，2文字）", "type": "text", "default": "1" },
-      "html": { "description": "图片模板", "type": "text", "default": "ys" },
+      "html": { "description": "图片模板", "type": "text", "default": "sr" },
       "push_groups": { "description": "推送群号（仅配置）", "type": "list", "hint": "填写要接收推送的 QQ 群号，每行一个，例如 123456789。修改后请重载插件。", "default": [] }
     }
   },

@@ -489,11 +489,15 @@ class GamePushService:
         css_path = html_path.with_suffix(".css")
         html = html_path.read_text(encoding="utf-8")
         css = css_path.read_text(encoding="utf-8")
-        for font in ("NotoColorEmoji.ttf", "HYWenHei-55W.ttf"):
+        for font in ("NotoColorEmoji.ttf", "NotoSansSC-VF.ttf", "UncutSans-Variable.ttf", "HYWenHei-55W.ttf"):
             font_path = self.plugin_dir / "resources" / "fonts" / font
             if font_path.exists():
                 payload = base64.b64encode(font_path.read_bytes()).decode("ascii")
                 css = css.replace(f'url("../../fonts/{font}")', f'url("data:font/ttf;base64,{payload}")')
+        hero_path = self.plugin_dir / "resources" / "images" / "sr-hero.png"
+        if hero_path.exists():
+            payload = base64.b64encode(hero_path.read_bytes()).decode("ascii")
+            css = css.replace('url("../../images/sr-hero.png")', f'url("data:image/png;base64,{payload}")')
         html = re.sub(r'<link[^>]+href="\{\{pluResPath\}\}html/GamePush-Plugin/[^>]+>', f"<style>{css}</style>", html)
         return self._legacy_template_to_jinja(html)
 
