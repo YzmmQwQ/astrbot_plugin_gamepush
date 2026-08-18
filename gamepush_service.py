@@ -494,14 +494,6 @@ class GamePushService:
             if font_path.exists():
                 payload = base64.b64encode(font_path.read_bytes()).decode("ascii")
                 css = css.replace(f'url("../../fonts/{font}")', f'url("data:font/ttf;base64,{payload}")')
-        for image_name, mime_type in (("sr-hero.webp", "image/webp"),):
-            image_path = self.plugin_dir / "resources" / "images" / image_name
-            if image_path.exists():
-                payload = base64.b64encode(image_path.read_bytes()).decode("ascii")
-                css = css.replace(
-                    f'url("../../images/{image_name}")',
-                    f'url("data:{mime_type};base64,{payload}")',
-                )
         html = re.sub(r'<link[^>]+href="\{\{pluResPath\}\}html/GamePush-Plugin/[^>]+>', f"<style>{css}</style>", html)
         return self._legacy_template_to_jinja(html)
 

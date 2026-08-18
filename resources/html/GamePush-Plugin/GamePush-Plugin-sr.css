@@ -55,35 +55,36 @@ body {
 }
 
 .header {
-  background-color: var(--sr-paper);
-  background-image:
-    linear-gradient(90deg, rgba(18, 18, 18, 0) 34%, rgba(244, 245, 245, 0.16) 48%, rgba(244, 245, 245, 0.92) 75%, var(--sr-paper) 100%),
-    url("../../images/sr-hero.webp");
-  background-position: center, center;
-  background-size: cover, cover;
+  background:
+    repeating-linear-gradient(135deg, rgba(18, 18, 18, 0.045) 0 1px, transparent 1px 9px),
+    var(--sr-paper);
   border-bottom: 1px solid var(--sr-gold-light);
   display: block;
-  min-height: 354px;
+  min-height: 224px;
   overflow: hidden;
-  padding: 0 42px 32px;
+  padding: 0 42px 22px;
   position: relative;
 }
 
 .header::after {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.48), transparent 20%);
+  background:
+    linear-gradient(90deg, var(--sr-ink) 0 104px, transparent 104px);
   content: "";
-  inset: 0;
+  height: 8px;
+  left: 0;
   pointer-events: none;
   position: absolute;
+  right: 0;
+  top: 0;
 }
 
 .header-main {
   align-items: flex-start;
   display: flex;
   gap: 14px;
-  justify-content: flex-end;
-  min-height: 322px;
-  padding: 122px 0 0 315px;
+  justify-content: flex-start;
+  min-height: 192px;
+  padding: 78px 0 0;
   position: relative;
   z-index: 1;
 }
@@ -318,16 +319,15 @@ body {
   }
 
   .header {
-    background-position: 35% center, 35% center;
-    min-height: 320px;
+    min-height: 208px;
     padding: 0 22px 24px;
   }
 
   .header-main {
     align-items: flex-start;
     justify-content: flex-start;
-    min-height: 252px;
-    padding: 196px 0 0;
+    min-height: 176px;
+    padding: 72px 0 0;
   }
 
   .header .game-icon {
