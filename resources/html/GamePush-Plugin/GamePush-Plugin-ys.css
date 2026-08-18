@@ -14,8 +14,8 @@
   src: url("../../fonts/NotoColorEmoji.ttf");
 }
 @font-face {
-  font-family: "HYWenHei";
-  src: url("../../fonts/HYWenHei-55W.ttf");
+  font-family: "AlimamaShuHeiTi";
+  src: url("../../fonts/AlimamaShuHeiTi-Bold.ttf");
 }
 .emoji-text {
   font-family: "NotoColorEmoji", sans-serif;
@@ -31,7 +31,7 @@
 
 html, body {
   height: 100%;
-  font-family: "HYWenHei", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
+  font-family: "AlimamaShuHeiTi", -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 

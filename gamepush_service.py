@@ -489,15 +489,19 @@ class GamePushService:
         css_path = html_path.with_suffix(".css")
         html = html_path.read_text(encoding="utf-8")
         css = css_path.read_text(encoding="utf-8")
-        for font in ("NotoColorEmoji.ttf", "UncutSans-Variable.ttf", "HYWenHei-55W.ttf"):
+        for font in ("NotoColorEmoji.ttf", "UncutSans-Variable.ttf", "AlimamaShuHeiTi-Bold.ttf"):
             font_path = self.plugin_dir / "resources" / "fonts" / font
             if font_path.exists():
                 payload = base64.b64encode(font_path.read_bytes()).decode("ascii")
                 css = css.replace(f'url("../../fonts/{font}")', f'url("data:font/ttf;base64,{payload}")')
-        hero_path = self.plugin_dir / "resources" / "images" / "sr-hero.webp"
-        if hero_path.exists():
-            payload = base64.b64encode(hero_path.read_bytes()).decode("ascii")
-            css = css.replace('url("../../images/sr-hero.webp")', f'url("data:image/webp;base64,{payload}")')
+        for image_name, mime_type in (("sr-hero.webp", "image/webp"),):
+            image_path = self.plugin_dir / "resources" / "images" / image_name
+            if image_path.exists():
+                payload = base64.b64encode(image_path.read_bytes()).decode("ascii")
+                css = css.replace(
+                    f'url("../../images/{image_name}")',
+                    f'url("data:{mime_type};base64,{payload}")',
+                )
         html = re.sub(r'<link[^>]+href="\{\{pluResPath\}\}html/GamePush-Plugin/[^>]+>', f"<style>{css}</style>", html)
         return self._legacy_template_to_jinja(html)
 
